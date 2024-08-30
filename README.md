@@ -3,7 +3,7 @@ Custom Discord Bot
 
 commands.py consists of the commands, uncontested commands, and loop commands for the Greg discord bot. The handler scripts, which interpret user and server actions and pass them off to the correct command (if necessary), and other supporting-role files are ommitted here. 
 
-- Commands are run when a user calls them by name with the $ prefix. For example, the info() command function is run when a user in the server types "$info". Greg implements minimal typo detection as well; if a user's command call is within 75% accurate of the actual spelling, the command will call nontheless, e.g. "$infp" calls info.
+- Commands are run when a user calls them by name with the $ prefix. For example, the info() command function is run when a user in the server types "$info". Greg implements minimal typo detection as well: if a user's command call is within 75% accurate of the actual spelling, the command will call nontheless, e.g. "$infp" calls info.
 <img width="942" alt="Screenshot 2024-08-30 at 8 15 23 AM" src="https://github.com/user-attachments/assets/f03c0479-8b07-4f20-9ee2-d8073cf2574b">
 
 - Uncontested commands fall into two categories: reaction responses and message responses. These functions run on every reaction or every message respectively. An example would be the XP incrementer command function message_xp() runs every time a message is sent in the server in order to increment the XP of the associated member.
