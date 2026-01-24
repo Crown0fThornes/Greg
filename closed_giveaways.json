@@ -1,0 +1,167 @@
+{
+  "giveaways": [
+    {
+      "message_id": "1452147536209907772",
+      "channel_id": "704366328089280623",
+      "guild_id": "647883751853916162",
+      "host_id": "355169964027805698",
+      "winners": 1,
+      "duration_hours": 0,
+      "created_utc": "2025-12-21T03:55:52Z",
+      "end_utc": "2025-12-21T04:00:00Z",
+      "end_epoch": 1766289600,
+      "prize_text": "$give test",
+      "used_channel_override": true,
+      "closed_utc": "2025-12-21T04:00:33Z",
+      "winner_ids": [
+        "355169964027805698"
+      ],
+      "winner_announce_message_id": "1452148715715559506"
+    },
+    {
+      "message_id": "1452149406236414075",
+      "channel_id": "704366328089280623",
+      "guild_id": "647883751853916162",
+      "host_id": "355169964027805698",
+      "winners": 2,
+      "duration_hours": 1,
+      "created_utc": "2025-12-21T04:03:18Z",
+      "end_utc": "2025-12-21T05:00:00Z",
+      "end_epoch": 1766293200,
+      "prize_text": "$give test",
+      "used_channel_override": true,
+      "closed_utc": "2025-12-21T05:02:24Z",
+      "winner_ids": [
+        "220427859229933568",
+        "355169964027805698"
+      ],
+      "winner_announce_message_id": "1452164278374105190"
+    },
+    {
+      "message_id": "1452784780449157191",
+      "channel_id": "1328869590758981713",
+      "guild_id": "647883751853916162",
+      "host_id": "355169964027805698",
+      "winners": 1,
+      "duration_hours": 24,
+      "created_utc": "2025-12-22T22:08:03Z",
+      "end_utc": "2025-12-23T22:00:00Z",
+      "end_epoch": 1766527200,
+      "prize_text": "1 month farm pass",
+      "used_channel_override": true,
+      "closed_utc": "2025-12-23T22:03:00Z",
+      "winner_ids": [
+        "1156012904869527602"
+      ],
+      "winner_announce_message_id": "1453145895594889438"
+    },
+    {
+      "message_id": "1452947279848931478",
+      "channel_id": "784803565151453214",
+      "guild_id": "647883751853916162",
+      "host_id": "355169964027805698",
+      "winners": 1,
+      "duration_hours": 24,
+      "created_utc": "2025-12-23T08:53:46Z",
+      "end_utc": "2025-12-24T09:00:00Z",
+      "end_epoch": 1766566800,
+      "prize_text": "25 Jams",
+      "used_channel_override": true,
+      "closed_utc": "2025-12-24T09:03:00Z",
+      "winner_ids": [
+        "376343175863992320"
+      ],
+      "winner_announce_message_id": "1453311988263424172"
+    },
+    {
+      "message_id": "1452947315487805552",
+      "channel_id": "784803565151453214",
+      "guild_id": "647883751853916162",
+      "host_id": "355169964027805698",
+      "winners": 1,
+      "duration_hours": 24,
+      "created_utc": "2025-12-23T08:53:55Z",
+      "end_utc": "2025-12-24T09:00:00Z",
+      "end_epoch": 1766566800,
+      "prize_text": "50 sauces",
+      "used_channel_override": true,
+      "closed_utc": "2025-12-24T09:03:02Z",
+      "winner_ids": [
+        "312019945913319424"
+      ],
+      "winner_announce_message_id": "1453311997671374958"
+    },
+    {
+      "message_id": "1452947339231756350",
+      "channel_id": "784803565151453214",
+      "guild_id": "647883751853916162",
+      "host_id": "355169964027805698",
+      "winners": 1,
+      "duration_hours": 24,
+      "created_utc": "2025-12-23T08:54:00Z",
+      "end_utc": "2025-12-24T09:00:00Z",
+      "end_epoch": 1766566800,
+      "prize_text": "50 iron bars",
+      "used_channel_override": true,
+      "closed_utc": "2025-12-24T09:03:04Z",
+      "winner_ids": [
+        "1033786928279081061"
+      ],
+      "winner_announce_message_id": "1453312005984358430"
+    },
+    {
+      "message_id": "1452947362644365364",
+      "channel_id": "784803565151453214",
+      "guild_id": "647883751853916162",
+      "host_id": "355169964027805698",
+      "winners": 1,
+      "duration_hours": 24,
+      "created_utc": "2025-12-23T08:54:06Z",
+      "end_utc": "2025-12-24T09:00:00Z",
+      "end_epoch": 1766566800,
+      "prize_text": "100 dynamite",
+      "used_channel_override": true,
+      "closed_utc": "2025-12-24T09:03:06Z",
+      "winner_ids": [
+        "954129064577339453"
+      ],
+      "winner_announce_message_id": "1453312013181784136"
+    },
+    {
+      "message_id": "1452947383590846609",
+      "channel_id": "784803565151453214",
+      "guild_id": "647883751853916162",
+      "host_id": "355169964027805698",
+      "winners": 1,
+      "duration_hours": 24,
+      "created_utc": "2025-12-23T08:54:11Z",
+      "end_utc": "2025-12-24T09:00:00Z",
+      "end_epoch": 1766566800,
+      "prize_text": "50 sandwhiches",
+      "used_channel_override": true,
+      "closed_utc": "2025-12-24T09:03:12Z",
+      "winner_ids": [
+        "1322905749139226656"
+      ],
+      "winner_announce_message_id": "1453312022040150111"
+    },
+    {
+      "message_id": "1452947405011030130",
+      "channel_id": "784803565151453214",
+      "guild_id": "647883751853916162",
+      "host_id": "355169964027805698",
+      "winners": 1,
+      "duration_hours": 24,
+      "created_utc": "2025-12-23T08:54:16Z",
+      "end_utc": "2025-12-24T09:00:00Z",
+      "end_epoch": 1766566800,
+      "prize_text": "50 salads",
+      "used_channel_override": true,
+      "closed_utc": "2025-12-24T09:03:18Z",
+      "winner_ids": [
+        "853967186145837077"
+      ],
+      "winner_announce_message_id": "1453312047667216464"
+    }
+  ]
+}

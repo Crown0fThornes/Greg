@@ -1,0 +1,449 @@
+[
+    {
+        "name": "Special Offers",
+        "emoji": "gift",
+        "description": "Some amooozing deals only available for a short period.",
+        "unlock": 5,
+        "items": [
+            {
+                "name": "*Higher XP I* -- Best Seller",
+                "type": "expand",
+                "emoji": 1,
+                "special_offer": 0,
+                "description": "Increases average XP per message, and maximum XP possible per message. `$info higher` can tell you more information.",
+                "cost": 0,
+                "duration": 86400,
+                "duration_label": "1 day",
+                "value": 11
+            },
+            {
+                "name": "*Rainbow Role* -- Best Seller",
+                "type": "role",
+                "emoji": "rainbow",
+                "special_offer": 1,
+                "description": "Sometimes, being the same color for more than 5 minutes is boring. Every additional level you spend adds a day to how long you keep this item.",
+                "warning": "The WFO requires a warning on this product that it may be addictive to some audiences. Use $info WFO to learn more.",
+                "cost": 0,
+                "duration": 86400,
+                "duration_label": "1 day"
+            },
+            {
+                "name": "*Family Logo Tag* -- Best Seller",
+                "type": "family tag",
+                "emoji": "fox",
+                "special_offer": 2,
+                "description": "Tired of the [B], [C], [F], [H], or [P]? Well you're in luck. Replace it today with your family's emoji logo!",
+                "cost": 0,
+                "duration": 86400,
+                "duration_label": "1 day"
+            },
+            {
+                "name": "Phoenix Merch",
+                "server": "Phoenix",
+                "type": "nh tag",
+                "emoji": "fire",
+                "special_offer": 3,
+                "description": "Show off your NH pride with this nickname emoji tag!",
+                "cost": 0,
+                "duration": 86400,
+                "duration_label": "1 day"
+            }
+        ]
+    },
+    {
+        "name": "Recommended",
+        "emoji": "rainbow",
+        "description": "My favorite options! React with the emoji associated with an item to see more information or purchase.",
+        "unlock": 0,
+        "items": [
+            {
+                "name": "*Higher XP I* -- Best Seller",
+                "type": "expand",
+                "emoji": 1,
+                "description": "Increases average XP per message, and maximum XP possible per message. `$info higher` can tell you more information.",
+                "cost": 5,
+                "duration": 604800,
+                "duration_label": "1 week",
+                "value": 11
+            },
+            {
+                "name": "Hire Rose and Earnest",
+                "type": "passive",
+                "emoji": "rice",
+                "description": "These farmers would love to harvest XP for you! Over time, they will help you to recoup the number of levels you pay them, plus two.",
+                "cost": 15,
+                "duration": 604800,
+                "duration_label": "10 Days"
+            },
+            {
+                "name": "*Rainbow Role* -- Best Seller",
+                "type": "role",
+                "emoji": "rainbow",
+                "description": "Sometimes, being the same color for more than 5 minutes is boring. Every additional level you spend adds a day to how long you keep this item.",
+                "warning": "The WFO requires a warning on this product that it may be addictive to some audiences. Use $info WFO to learn more.",
+                "cost": 3,
+                "duration": 259200,
+                "duration_label": "3 days"
+            },
+            {
+                "name": "*Family Logo Tag* -- Best Seller",
+                "type": "family tag",
+                "emoji": "fox",
+                "description": "Tired of the [B], [C], [F], [H], or [P]? Well you're in luck. Replace it today with your family's emoji logo!",
+                "cost": 5,
+                "duration": 1209600,
+                "duration_label": "2 weeks"
+            },
+            {
+                "name": "Greg Wordle Minigame",
+                "type": "minigame",
+                "emoji": "letters",
+                "description": "Play my very own Wordle minigame using $wordle!",
+                "cost": 3,
+                "duration": 1209600,
+                "duration_label": "2 weeks"
+            }
+        ]
+    },
+    {
+        "name": "Boosters",
+        "emoji": "boost",
+        "description": "You gotta spend XP to make XP! I here afford you many different XP boosting and gaining options. React with the emoji associated with an item to see more information or purchase.",
+        "unlock": 15,
+        "items": [
+            {
+                "name": "*Higher XP I* -- Best Seller",
+                "type": "expand",
+                "emoji": 1,
+                "description": "Increases average XP per message, and maximum XP possible per message. `$info higher` can tell you more information.",
+                "cost": 5,
+                "duration": 604800,
+                "duration_label": "1 week",
+                "value": 11
+            },
+            {
+                "name": "Higher XP II",
+                "emoji": 2,
+                "type": "expand",
+                "description": "Increases average XP more per message, and maximum XP possible more per message. `$info higher` can tell you more information.",
+                "cost": 10,
+                "duration": 604800,
+                "duration_label": "1 week",
+                "value": 12
+            },
+            {
+                "name": "Higher XP III",
+                "type": "expand",
+                "emoji": 3,
+                "description": "Increases average XP even more per message, and maximum XP possible even more per message. `$info higher` can tell you more information. *Brand new with Greg 3.0!*",
+                "cost": 15,
+                "duration": 604800,
+                "duration_label": "1 week",
+                "value": 13
+            },
+            {
+                "name": "Higher XP IV",
+                "type": "expand",
+                "emoji": 4,
+                "description": "I've outdone myself!",
+                "cost": 20,
+                "duration": 604800,
+                "duration_label": "1 week",
+                "value": 14
+            },
+            {
+                "name": "Hire Rose and Earnest",
+                "type": "passive",
+                "emoji": "rice",
+                "description": "These farm helpers would love to harvest XP for you! Over time, they will help you to recoup the number of levels you pay them, plus two.",
+                "cost": 15,
+                "duration": 864000,
+                "duration_label": "10 Days"
+            },
+            {
+                "name": "GregBanking(TM)",
+                "type": "bank",
+                "emoji": "bank",
+                "description": "Open a GregBanking(TM) savings account. XP stored in a GregBanking(TM) savings account is immune from the reckoning. Use `$info bank` to learn more. *Brand new with Greg 3.0!*",
+                "cost": 20,
+                "duration_label": "Until you withdrawal all XP"
+            }
+        ]
+    },
+    {
+        "name": "Perks",
+        "emoji": "perk",
+        "description": "An assortment of items to buy and enjoy around the server. React with the emoji associated with an item to see more information or purchase.",
+        "unlock": 10,
+        "items": [
+            {
+                "name": "*Rainbow Role* -- Best Seller",
+                "type": "role",
+                "emoji": "rainbow",
+                "description": "Sometimes, being the same color for more than 5 minutes is boring. Every additional level you spend adds a day to how long you keep this item.",
+                "warning": "The WFO requires a warning on this product that it may be addictive to some audiences. Use $info WFO to learn more.",
+                "cost": 3,
+                "duration": 259200,
+                "duration_label": "3 days"
+            },
+            {
+                "name": "Invisibility Cloak",
+                "type": "role",
+                "emoji": "ghost",
+                "description": "An annoying yet fun role that will hide your server nickname (and your nickname tags). You can diable and enable it using `$cloak off/on`. *Brand new with Greg 3.0!*",
+                "cost": 5,
+                "duration": 259200,
+                "duration_label": "3 days"
+            },
+            {
+                "name": "Hype Man",
+                "type": "hype",
+                "emoji": "selfie",
+                "description": "If you're ever feeling down or like the world is against you, I am more than happy to provide you a morale boost... for a price. I will hype you up!",
+                "cost": 8,
+                "duration": 259200,
+                "duration_label": "3 days"
+            },
+            {
+                "name": "Prettier Profile",
+                "type": "profile",
+                "emoji": "nails",
+                "description": "Spruce up your $profile! *Brand new with Greg 3.0!*",
+                "cost": 5,
+                "duration": 1209600,
+                "duration_label": "2 weeks"
+            },
+            {
+                "name": "Legendary Greg User",
+                "type": "tag",
+                "emoji": "crown",
+                "description": "The coveted Legend role/color, crown tag, and XP booster. It has been said that the person who wields this item has unimaginable power and the ability to command bot armies... Not really but it is pretty cool.",
+                "cost": 100,
+                "duration_label": "Forever"
+            }
+        ]
+    },
+    {
+        "name": "Tags",
+        "emoji": "t_rex",
+        "description": "A fantastic variety of (mostly) decorative emoji tags for your server nickname. React with the emoji associated with an item to see more information or purchase.",
+        "unlock": 5,
+        "items": [
+            {
+                "name": "*Family Logo Tag* -- Best Seller",
+                "server": "FF",
+                "type": "family tag",
+                "emoji": "fox",
+                "description": "Tired of the [B], [C], [F], [H], or [P]? Well you're in luck. Replace it today with your family's emoji logo!",
+                "cost": 5,
+                "duration": 1209600,
+                "duration_label": "2 weeks"
+            },
+            {
+                "name": "Phoenix Merch",
+                "server": "Phoenix",
+                "type": "nh tag",
+                "emoji": "fire",
+                "description": "Show off your NH pride with this nickname emoji tag!",
+                "cost": 5,
+                "duration": 1209600,
+                "duration_label": "2 weeks"
+            },
+            {
+                "name": "The Derby Collection",
+                "type": "tag",
+                "emoji": "horse",
+                "description": "Some Neighbors are stronger in derby than others. Show off your prowess with this derby themed tag collection.",
+                "cost": 8,
+                "duration": 432000,
+                "duration_label": "5 days",
+                "emojis": ["1F434", "1F3AF", "1F338", "02753", "1F430", "1F431", "1F4AA"]
+            },
+            {
+                "name": "The Heart Collection",
+                "type": "tag",
+                "emoji": "red_heart",
+                "description": "A tag that cycles through the whole rainbow of hearts. *Brand new with Greg 3.0!*",
+                "cost": 10,
+                "duration": 604800,
+                "duration_label": "1 week",
+                "emojis": ["02764", "1F9E1", "1F49B", "1F49A", "1F499", "1F49C", "1F90E", "1F5A4", "1F90D"]
+            },
+            {
+                "name": "Bluberry Tag",
+                "type": "tag",
+                "emoji": "blueberry",
+                "description": "Add some antioxidants to your diet! Spending more levels will supply you with berries for more days! *Brand new with Greg 3.0!*",
+                "warning": "The WFO advises farmers that this produce is artificially dyed with BLUE #01CDFE, which has been found to be highly infectious.  Use `$info WFO` to learn more.",
+                "cost": 5,
+                "duration": 432000,
+                "duration_label": "5 days"
+            },
+            {
+                "name": "Strawberry Tag",
+                "type": "tag",
+                "emoji": "strawberry",
+                "description": "Add some antioxidants to your diet! Spending more levels will supply you with berries for more days!  *Brand new with Greg 3.0!*",
+                "warning": "The WFO advises farmers that this produce is artificially dyed with PINK #FF71CE, which has been found to be highly infectious. Use `$info WFO` to learn more.",
+                "cost": 5,
+                "duration": 432000,
+                "duration_label": "5 days"
+            },
+            {
+                "name": "PYO Tag",
+                "type": "custom_tag",
+                "emoji": "bot",
+                "description": "Pick whatever emoji you want to add to your server nickname!",
+                "cost": 20,
+                "duration": 1209600,
+                "duration_label": "2 weeks"
+            }
+        ]
+    },
+    {
+        "name": "Icons",
+        "emoji": "diamond",
+        "description": "Available only to servers that have role icons unlocked, these offerings can be expensive but are no doubt fun, luxurious, and last indefinitely. React with the emoji associated with an item to see more information or purchase.",
+        "unlock": 25,
+        "items": [
+            {
+                "name": "Hay Day Chicken",
+                "type": "icon",
+                "emoji": "chicken",
+                "description": "A role icon: the classic Hay Day chicken. *Brand new with Greg 3.0!*",
+                "cost": 20,
+                "duration_label": "Until you purchase a different icon."
+            },
+            {
+                "name": "Hay Day Coin",
+                "type": "icon",
+                "emoji": "coin",
+                "description": "A role icon: the classic Hay Day coin. *Brand new with Greg 3.0!*",
+                "cost": 20,
+                "duration_label": "Until you purchase a different icon."
+            },
+            {
+                "name": "Hay Day Diamond",
+                "type": "icon",
+                "emoji": "diamond",
+                "description": "A role icon: the classic Hay Day diamond. *Brand new with Greg 3.0!*",
+                "cost": 20,
+                "duration_label": "Until you purchase a different icon."
+            },
+            {
+                "name": "The Barns of Friendly Farmers Collection",
+                "type": "icon",
+                "emoji": "crayon",
+                "description": "A role icon that cycles through barn drawings created by Friendly Farmers neighbors. *Brand new with Greg 3.0!*",
+                "cost": 25,
+                "duration_label": "Until you purchase a different icon."
+            },
+            {
+                "name": "Hay Day Greg",
+                "type": "icon",
+                "emoji": "bot",
+                "description": "A role icon: a portrait of yours truly. *Brand new with Greg 3.0!*",
+                "cost": 50,
+                "duration_label": "Until you purchase a different icon."
+            }
+        ]
+    },
+    {
+        "name": "Minigames",
+        "emoji": "rice",
+        "description": "Using $harvest, and the farmers market channel that occasionally pops up, Neighbors can harvest and sell crops. These items are related to this feature. React with the emoji associated with an item to see more information or purchase.",
+        "unlock": 3,
+        "items" : [
+            {
+                "name": "Greg Wordle Minigame",
+                "type": "minigame",
+                "emoji": "letters",
+                "description": "Play my very own Wordle minigame using $wordle!",
+                "cost": 3,
+                "duration": 1209600,
+                "duration_label": "2 weeks"
+            },
+            {
+                "name": "Wordle 2 (Hard Mode)",
+                "type": "minigame",
+                "emoji": "anger",
+                "description": "Wordle, but harder! Harder words, no blue letters, and play against Rose instead of Tom--all for Double XP.",
+                "warning": "If you own this item and regular wordle, $wordle will default to Wordle 2.0",
+                "cost": 6,
+                "duration": 1209600,
+                "duration_label": "2 weeks"
+            }, 
+            {
+                "name": "GMO Crops",
+                "type": "harvest",
+                "emoji": "mushroom",
+                "description": "The latest GMO technology improves your chances of a fruitful harvest. Nearly 2x chance of harvesting 100 crops.",
+                "cost": 13,
+                "duration": 1209600,
+                "duration_label": "2 weeks"
+            },
+            {
+                "name": "SiloGuard(TM) Level 1 Security",
+                "type": "security",
+                "emoji": 1,
+                "description": "Greg will install security cameras and a theft alarm in your silo, reducing the liklihood of theft by 50%. Use `$info theft` to learn more.",
+                "cost": 5,
+                "duration": 1209600,
+                "duration_label": "2 weeks"
+            },
+            {
+                "name": "SiloGuard(TM) Level 2 Security",
+                "type": "security",
+                "emoji": 2,
+                "description": "Greg will install fingerprint-scanning locks on your silo doors and hire a Strongman from the town to guard your Silo, reducing the liklihood of theft by 75%. Does not compound with Level 1 security. Use `$info theft` to learn more.",
+                "cost": 15,
+                "duration": 1209600,
+                "duration_label": "2 weeks"
+            }
+        ]
+    },
+    {
+        "name": "In-Game Items",
+        "emoji": "fire",
+        "description": "In game items that can be collected from Lincoln",
+        "unlock": 10,
+        "items" : [
+            {
+                "name": "20 BEMs",
+                "type": "irl",
+                "emoji": "star",
+                "description": "Collect 20 BEMs from Lincoln",
+                "cost": 20,
+                "duration": 1209600,
+                "duration_label": "2 weeks"
+            },
+            {
+                "name": "89 BEMs",
+                "type": "irl",
+                "emoji": "nails",
+                "description": "Collect 89 BEMs from Lincoln",
+                "cost": 40,
+                "duration": 2419200,
+                "duration_label": "4 weeks"
+            },
+            {
+                "name": "Discord Nitro, Basic, 1 Month",
+                "type": "irl",
+                "emoji": "fire",
+                "description": "Collect free discord Nitro from Lincoln",
+                "cost": 35,
+                "duration": 2419200,
+                "duration_label": "4 weeks"
+            },
+            {
+                "name": "Farm Pass 1 Month",
+                "type": "irl",
+                "emoji": "check",
+                "description": "Collect free farm pass from Lincoln",
+                "cost": 35,
+                "duration": 2419200,
+                "duration_label": "4 weeks"
+            }
+        ]
+    }
+]

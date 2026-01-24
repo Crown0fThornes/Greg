@@ -1,0 +1,1685 @@
+[
+  {
+    "name": "\ud83d\udc10Frosty",
+    "id": 1243211103375196201,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 3160888.843512
+  },
+  {
+    "name": "\ud83d\udc06Xavi",
+    "id": 712392530750341150,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 2251497.281597
+  },
+  {
+    "name": "dezerker",
+    "id": 360602074054131714,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 10040255.922636
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dlea\u2077",
+    "id": 913823853787119639,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 44724668.549704
+  },
+  {
+    "name": "\ud83d\udc10Xturnia",
+    "id": 539972799452676116,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 20336064.320787
+  },
+  {
+    "name": "\ud83d\udc06l Alex\u2122",
+    "id": 783068480190414868,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 1045641.462848
+  },
+  {
+    "name": "\ud83d\udc06Synfulact",
+    "id": 114608156335800329,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 3301666.37589
+  },
+  {
+    "name": "\ud83d\udc383ddie2000",
+    "id": 534449351389347840,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 3304775.278923
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dMeet",
+    "id": 834326999489052703,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 24947174.434004
+  },
+  {
+    "name": "\ud83d\udc08Mayberry Farms",
+    "id": 684817848719245321,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 11244784.35104
+  },
+  {
+    "name": "\ud83d\udc38Panda",
+    "id": 336806742610411522,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 3261886.327091
+  },
+  {
+    "name": "\ud83c\udf53\ud83e\udd9aGraytr Grayns",
+    "id": 316114265645776896,
+    "class": [
+      "1034248720058945577",
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Resort FFR",
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 36589789.146268
+  },
+  {
+    "name": "midnight/hummel",
+    "id": 757913364709244999,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 42166997.358321
+  },
+  {
+    "name": "\ud83d\udc38rekkovi",
+    "id": 372546860755189769,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 15405919.342356
+  },
+  {
+    "name": "PSN F2Recoil-",
+    "id": 695833188529995797,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 706611.616377
+  },
+  {
+    "name": "Pinky",
+    "id": 930613622621749309,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 28181074.668429
+  },
+  {
+    "name": "\ud83d\udc10Jenny",
+    "id": 220427859229933568,
+    "class": [
+      "1173325157767589988",
+      "656112994392080384",
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Garden FFG",
+      "(Main) FF",
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 129789933.099622
+  },
+  {
+    "name": "\ud83d\udc08Pumpkin Patch",
+    "id": 703066136824119316,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 2377079.02167
+  },
+  {
+    "name": "\ud83d\udc38tessaduck",
+    "id": 1133914166772649984,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 29139016.496733
+  },
+  {
+    "name": "Judy's Farm",
+    "id": 653560842683416586,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 143744795.619775
+  },
+  {
+    "name": "\ud83d\udc08Yo",
+    "id": 854262244748427266,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 5779296.733823
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dUnknownKri",
+    "id": 964990145835204608,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 11575079.861877
+  },
+  {
+    "name": "\ud83d\udc38cb farmer",
+    "id": 710593673385082890,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 6445177.578922
+  },
+  {
+    "name": "\ud83d\udc08aftonish",
+    "id": 1003787384783110254,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 4614842.146986
+  },
+  {
+    "name": "zizok007",
+    "id": 848745573447499867,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 20790240.006069
+  },
+  {
+    "name": "\ud83d\udc10yoshifarm",
+    "id": 799819969503428659,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 4608854.286108
+  },
+  {
+    "name": "\ud83d\udc10e13",
+    "id": 1086147167913267251,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 8241893.762156
+  },
+  {
+    "name": "\ud83d\udc9c\ud83d\udc38AlyTheGrayt / Grayt Grayns",
+    "id": 374979463789805570,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 103759.108239
+  },
+  {
+    "name": "\ud83d\udc38RRGruntJack",
+    "id": 540254243374891018,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 375306.79033
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dKINGLoRD {70}",
+    "id": 868514487983030272,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 40021428.431416
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dLincoln",
+    "id": 355169964027805698,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 145098411.697587
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dMr. bv",
+    "id": 1198995646456287325,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 13703046.395623
+  },
+  {
+    "name": "\ud83d\udc10Imjustconfused",
+    "id": 932610009790025728,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 14270536.819716
+  },
+  {
+    "name": "\ud83d\udc08Alexis\u2019 Farm",
+    "id": 930879531122847774,
+    "class": [
+      "689928709683150909",
+      "656112994392080384"
+    ],
+    "NH": [
+      "Junior FFJ",
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 3742207.775799
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dLucid",
+    "id": 732301008126083149,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 11351329.606825
+  },
+  {
+    "name": "\ud83e\udd9amads mill",
+    "id": 609186051474456606,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 723801.565849
+  },
+  {
+    "name": "\ud83e\udd9aBuy Wheat",
+    "id": 611155409092345856,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 12683488.467879
+  },
+  {
+    "name": "zouu",
+    "id": 683770363817099284,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 1133411.030929
+  },
+  {
+    "name": "\ud83e\udd9achaseryan08",
+    "id": 417865600841416707,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 9031604.421961
+  },
+  {
+    "name": "\ud83d\udc08River Ranch",
+    "id": 339004938837557249,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 4584359.153993
+  },
+  {
+    "name": "\ud83e\udd9aMarcus Bondg\u00e5rd Level 63",
+    "id": 564432589801259023,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 1012557.186027
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dQuidd",
+    "id": 524238398513217547,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 15710988.167113
+  },
+  {
+    "name": "\ud83d\udc08Owlan (Roskos Farms)",
+    "id": 376006453233713154,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 11270682.122166
+  },
+  {
+    "name": "\ud83d\udc08Matthew",
+    "id": 491986565153685525,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 2810529.975208
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dMrGlitter42",
+    "id": 892588889334775808,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 561824.918246
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dMoji's Farm",
+    "id": 789854796429000725,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 1482965.459298
+  },
+  {
+    "name": "\ud83d\udc10xNahNew",
+    "id": 653329917836263443,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 33386155.862372
+  },
+  {
+    "name": "\ud83d\udc08xCCSNx",
+    "id": 1069423681417248909,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 38603594.740417
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dKenneth",
+    "id": 718586817204715690,
+    "class": [
+      "1173325157767589988",
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Garden FFG",
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 38055182.246522
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dI eat dandelions",
+    "id": 1236505424258400301,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 813409.581564
+  },
+  {
+    "name": "\ud83d\udc10Loz Pep",
+    "id": 481968077500579850,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 10227704.666598
+  },
+  {
+    "name": "\ud83d\udc08LuckyGreenFarm/Cactus",
+    "id": 963533131854532638,
+    "class": [
+      "1173325157767589988",
+      "656112994392080384"
+    ],
+    "NH": [
+      "Garden FFG",
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 21042457.304713
+  },
+  {
+    "name": "BlueS",
+    "id": 243505119629410304,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 8654260.292745
+  },
+  {
+    "name": "CaCO3",
+    "id": 437163344525393920,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 96993969.47882
+  },
+  {
+    "name": "\ud83d\udc38Archie",
+    "id": 240899039749603328,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 14331494.483882
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dLeo |48|",
+    "id": 1241123704528699413,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 3656084.978916
+  },
+  {
+    "name": "\ud83d\udc08the.mudblood.prince",
+    "id": 731500369863245894,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 2525225.092942
+  },
+  {
+    "name": "Barnyard (56)",
+    "id": 1033786928279081061,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 10072578.943962
+  },
+  {
+    "name": "\ud83d\udc06KiKiHD",
+    "id": 808040012909379585,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 599098.203013
+  },
+  {
+    "name": "\ud83e\udd9alia zone",
+    "id": 395922912139542528,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 23131083.176054
+  },
+  {
+    "name": "\ud83d\udc06Tom",
+    "id": 277496538450624512,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 1254835.662085
+  },
+  {
+    "name": "\ud83e\udd9aBelle",
+    "id": 526526146947317800,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 58527484.158135
+  },
+  {
+    "name": "\ud83e\udd9aCesar~79",
+    "id": 991065750003413053,
+    "class": [
+      "1034248720058945577",
+      "689928709683150909",
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Resort FFR",
+      "Junior FFJ",
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 18499499.888268
+  },
+  {
+    "name": "\ud83e\udd9aBayview Farm",
+    "id": 760609784247484458,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 14436588.620342
+  },
+  {
+    "name": "\ud83d\udc38Tee.wethu",
+    "id": 976512180306452490,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 26371744.95538
+  },
+  {
+    "name": "\ud83d\udc10ShawnLee96",
+    "id": 297406373652856832,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 1806581.916413
+  },
+  {
+    "name": "\ud83d\udc08daisy",
+    "id": 255294242585444353,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 8437294.08345
+  },
+  {
+    "name": "\ud83e\udd9aMatt",
+    "id": 782109120672038952,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 3730735.324522
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dLos Pollos Hermanos",
+    "id": 408264209072128001,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 24960624.892561
+  },
+  {
+    "name": "\ud83d\udc06pat",
+    "id": 840077393683021824,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 19781567.262617
+  },
+  {
+    "name": "\ud83d\udc10Kylo",
+    "id": 1020467661584478220,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 25146087.12766
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dSugarDairies",
+    "id": 640762334167564298,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 1182492.207732
+  },
+  {
+    "name": "\ud83d\udc10Molly's Ranch",
+    "id": 346934600007811073,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 17289703.355798
+  },
+  {
+    "name": "\ud83e\udd9adelilah",
+    "id": 969072183114625026,
+    "class": [
+      "1173325157767589988",
+      "689928709683150909"
+    ],
+    "NH": [
+      "Garden FFG",
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 3143460.647968
+  },
+  {
+    "name": "\ud83d\udc06Meadowview",
+    "id": 455173094278168580,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 14699969.81201
+  },
+  {
+    "name": "\ud83e\udd9aFree Spirit",
+    "id": 1084581921444593828,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 7035655.711051
+  },
+  {
+    "name": "\ud83e\udd9aRedDragon",
+    "id": 1011941542287650856,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 1879493.917103
+  },
+  {
+    "name": "Pacman",
+    "id": 1008950143309062174,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 28451293.564144
+  },
+  {
+    "name": "\ud83d\udc06Spectre | #RR9L0JCU",
+    "id": 348653115228028940,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 2123803.182183
+  },
+  {
+    "name": "\ud83d\udc06Dans Farm",
+    "id": 796827295260213318,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 2983146.610231
+  },
+  {
+    "name": "\ud83d\udc38Eastwood Farm",
+    "id": 266336174644133888,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 1574284.50328
+  },
+  {
+    "name": "\ud83d\udc08Sakura\u208a\u2027\u00b0\u00b0\u2027\u208a",
+    "id": 591596015543386125,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 2044616.168303
+  },
+  {
+    "name": "Terriland (Terry)",
+    "id": 160144010642587648,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 20239922.450351
+  },
+  {
+    "name": "\ud83d\udc08Ch33seCurdz (LiteWaffle)",
+    "id": 528379103007735809,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 19312676.814402
+  },
+  {
+    "name": "\ud83d\udc08Vi_Sh",
+    "id": 529757149593731087,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 8353665.007442
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dmilky",
+    "id": 913291381605277716,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 22775432.515484
+  },
+  {
+    "name": "\ud83e\udd9aHillTop and Kingdom",
+    "id": 535121871411085332,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 30625495.836529
+  },
+  {
+    "name": "\ud83d\udc38I am farm",
+    "id": 1160071011513946172,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 12999799.040574
+  },
+  {
+    "name": "Farm Topia (50)",
+    "id": 802756655585689611,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 13901143.382633
+  },
+  {
+    "name": "\ud83d\udc06Presh",
+    "id": 863037754164903946,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 43712746.863709
+  },
+  {
+    "name": "\ud83d\udc08Hayley",
+    "id": 605235104599769098,
+    "class": [
+      "689928709683150909",
+      "656112994392080384",
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Junior FFJ",
+      "(Main) FF",
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 58693378.080881
+  },
+  {
+    "name": "nola (dragonfly acres)",
+    "id": 434059545858539520,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 5583476.185926
+  },
+  {
+    "name": "\ud83d\udc38the miller farm",
+    "id": 1245526440271810641,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 385479.291958
+  },
+  {
+    "name": "\ud83e\udd9aphil",
+    "id": 679651890262310965,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 37076821.365005
+  },
+  {
+    "name": "sagebh",
+    "id": 744226074329874855,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 97581682.783058
+  },
+  {
+    "name": "koolwiza / 68",
+    "id": 774352602678558790,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 26741315.892125
+  },
+  {
+    "name": "\ud83d\udc38keila",
+    "id": 765334549483356221,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 1597061.034153
+  },
+  {
+    "name": "\ud83d\udc10Fancy",
+    "id": 287705818462289922,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 14327692.089229
+  },
+  {
+    "name": "\ud83d\udc38kv_farm",
+    "id": 996485240354779147,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 35598945.024263
+  },
+  {
+    "name": "\ud83d\udc38Tinna Farm",
+    "id": 651310508829573120,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 6594119.783296
+  },
+  {
+    "name": "\ud83e\udd9adarksta5",
+    "id": 183303968963690496,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 15710386.19932
+  },
+  {
+    "name": "\ud83d\udc10Double Trouble",
+    "id": 750144418169880606,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 38578730.486352
+  },
+  {
+    "name": "\ud83d\udc08SpicyJack (69)",
+    "id": 527633575655243796,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 13698958.874432
+  },
+  {
+    "name": "\ud83e\udd9aNish",
+    "id": 455602407771078683,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 14528212.162462
+  },
+  {
+    "name": "\ud83d\udc10anni :) | e",
+    "id": 412902091443535872,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 12648660.942521
+  },
+  {
+    "name": "Smallfry5545",
+    "id": 167006983986085888,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 33523630.209583
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1danntieque",
+    "id": 516969515486019604,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 20617889.445614
+  },
+  {
+    "name": "\ud83d\udc10Anatea",
+    "id": 361834124060655616,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 8422379.117638
+  },
+  {
+    "name": "\ud83e\udd9axRIPz",
+    "id": 238621448678146048,
+    "class": [
+      "656112994392080384"
+    ],
+    "NH": [
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 45933743.641683
+  },
+  {
+    "name": "\ud83c\udf81\ud83d\udc08Ajay",
+    "id": 788800859101331519,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 48735262.672736
+  },
+  {
+    "name": "\ud83d\udc06Linda",
+    "id": 576017741757153290,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 56642862.866803
+  },
+  {
+    "name": "\ud83d\udc10pigpig",
+    "id": 660204032362545152,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 14108015.58184
+  },
+  {
+    "name": "bookeid",
+    "id": 427952012198674445,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 21360436.400884
+  },
+  {
+    "name": "shinchan",
+    "id": 1092069385570623601,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 18811017.769914
+  },
+  {
+    "name": "\ud83d\udc06De Korenbloem",
+    "id": 203177382218039296,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 1367290.191937
+  },
+  {
+    "name": "\ud83e\udd9aMatt3232",
+    "id": 626581146624327692,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 2360969.011962
+  },
+  {
+    "name": "\ud83d\udc38slurmy 33",
+    "id": 534022307107307568,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 1069662.227986
+  },
+  {
+    "name": "Edoebzd",
+    "id": 253877182739382274,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 31342080.228034
+  },
+  {
+    "name": "\ud83d\udc10Lolzies",
+    "id": 296100775795621888,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 5380631.001075
+  },
+  {
+    "name": "\ud83d\udc38Peasant's Haven (59)",
+    "id": 514413698761359400,
+    "class": [
+      "1173325157767589988"
+    ],
+    "NH": [
+      "Garden FFG"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 18526205.572113
+  },
+  {
+    "name": "Dari - CityGrove",
+    "id": 679177801105932310,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 14521923.40615
+  },
+  {
+    "name": "Victoria",
+    "id": 692318994610520084,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 28210246.391187
+  },
+  {
+    "name": "\ud83c\udfc6\ud83d\udc1dRodatnavel (Chickentopia)",
+    "id": 1153900938898194562,
+    "class": [
+      "689928709683150909"
+    ],
+    "NH": [
+      "Junior FFJ"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 3845665.13523
+  },
+  {
+    "name": "ocean\u2019s farm",
+    "id": 790274606724415538,
+    "class": [
+      "1034248720058945577"
+    ],
+    "NH": [
+      "Resort FFR"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 2301712.30225
+  },
+  {
+    "name": "\ud83d\udc38quinn",
+    "id": 160694804534132736,
+    "class": [
+      "1034248720058945577",
+      "689928709683150909",
+      "656112994392080384"
+    ],
+    "NH": [
+      "Resort FFR",
+      "Junior FFJ",
+      "(Main) FF"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 32679771.610408
+  },
+  {
+    "name": "\ud83d\udc10William E",
+    "id": 1110653205689405545,
+    "class": [
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 34683163.493445
+  },
+  {
+    "name": "\ud83c\udfaf\ud83d\udc06Momma Cheetah / Theresa",
+    "id": 648229959973994506,
+    "class": [
+      "1034248720058945577",
+      "1173325157767589988",
+      "656112994392080384",
+      "1024052938752151552"
+    ],
+    "NH": [
+      "Resort FFR",
+      "Garden FFG",
+      "(Main) FF",
+      "Pro FFP"
+    ],
+    "activity": 0,
+    "level": 0,
+    "experience": 145015779.736702
+  }
+]

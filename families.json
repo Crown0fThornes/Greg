@@ -1,0 +1,72 @@
+[
+    {
+        "name" : "Bunny",
+        "old_tag" : "[B]",
+        "tag": "{B}",
+        "emoji" : "🐰",
+        "description" : "",
+        "role_id" : 1454591136860471346,
+        "honorary_role_id": 1454593292531531847,
+        "chat": 1454622198416543896
+    },
+    {
+        "name" : "Cheetah",
+        "old_tag" : "[C]",
+        "tag": "{C}",
+        "emoji" : "🐆",
+        "description" : "",
+        "role_id" : 1454590857591132314,
+        "honorary_role_id": 1454593209073275001,
+        "chat": 1454622310505119816
+    },
+    {
+        "name" : "Donkey",
+        "old_tag" : "[D]",
+        "tag": "{D}",
+        "emoji" : "🫏",
+        "description" : "",
+        "role_id" : 1454591042278920304,
+        "honorary_role_id": 1454593163464544396,
+        "chat": 1454622388917633250
+    },
+    {
+        "name" : "Fox",
+        "old_tag" : "[F]",
+        "tag": "{F}",
+        "emoji" : "🦊",
+        "description" : "",
+        "role_id" : 1342333037509214259,
+        "honorary_role_id": 1454593266124325015,
+        "chat": 1454622475639066665
+    },
+    {
+        "name" : "Giraffe",
+        "old_tag" : "[G]",
+        "tag": "{G}",
+        "emoji" : "🦒",
+        "description" : "",
+        "role_id" : 1454591075757985853,
+        "honorary_role_id": 1454593324391338212,
+        "chat": 1454622574565920768
+    },
+    {
+        "name" : "Hippo",
+        "old_tag" : "[H]",
+        "tag": "{H}",
+        "emoji" : "🦛",
+        "description" : "",
+        "role_id" : 1454593861643931684,
+        "honorary_role_id": 1454593518357057651,
+        "chat": 1454622704589344931
+    },
+    {
+        "name" : "Penguin",
+        "old_tag" : "[P]",
+        "tag": "{P}",
+        "emoji" : "🐧",
+        "description" : "",
+        "role_id" : 1454590623532191774,
+        "honorary_role_id": 1454590996699545741,
+        "chat": 1454622847522574337
+    }
+]

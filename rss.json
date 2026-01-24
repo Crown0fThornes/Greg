@@ -1,0 +1,150 @@
+[
+    {
+      "name": "Recommended",
+      "emoji": "🌈",
+      "description": "My favorite options! React with the emoji associated with an item to see more information or purchase.",
+      "unlock": 0,
+      "items": [
+        {
+          "name": "*Family Logo Tag* -- Best Seller",
+          "type": "family tag",
+          "emoji": "🦊",
+          "description": "Tired of the [B], [C], [F], [H], or [P]? Well you're in luck. Replace it today with your family's emoji logo!",
+          "cost": 5,
+          "duration": 1209600,
+          "duration_label": "2 weeks"
+        },
+        {
+          "name": "*Higher XP I* -- Best Seller",
+          "type": "expand",
+          "emoji": "📈",
+          "description": "Increases average XP per message, and maximum XP possible per message. `$info higher` can tell you more information.",
+          "cost": 5,
+          "duration": 604800,
+          "duration_label": "1 week",
+          "value": 11
+        },
+        {
+          "name": "Greg Wordle Minigame",
+          "type": "minigame",
+          "emoji": "🔤",
+          "description": "Play my very own Wordle minigame using $wordle!",
+          "cost": 3,
+          "duration": 1209600,
+          "duration_label": "2 weeks"
+        }
+      ]
+    },
+    {
+      "name": "Boosters",
+      "emoji": "📊",
+      "description": "Get more XP per message with these timed XP boosters!",
+      "unlock": 0,
+      "items": [
+        {
+          "name": "*Higher XP I* -- Best Seller",
+          "type": "expand",
+          "emoji": "📈",
+          "description": "Increases average XP per message, and maximum XP possible per message. `$info higher` can tell you more information.",
+          "cost": 5,
+          "duration": 604800,
+          "duration_label": "1 week",
+          "value": 11
+        },
+        {
+          "name": "Higher XP II",
+          "emoji": "📉",
+          "type": "expand",
+          "description": "Increases average XP more per message, and maximum XP possible more per message. `$info higher` can tell you more information.",
+          "cost": 10,
+          "duration": 604800,
+          "duration_label": "1 week",
+          "value": 12
+        },
+        {
+          "name": "Higher XP III",
+          "type": "expand",
+          "emoji": "🚀",
+          "description": "Increases average XP even more per message, and maximum XP possible even more per message. `$info higher` can tell you more information. *Brand new with Greg 3.0!*",
+          "cost": 15,
+          "duration": 604800,
+          "duration_label": "1 week",
+          "value": 13
+        },
+        {
+          "name": "Higher XP IV",
+          "type": "expand",
+          "emoji": "💥",
+          "description": "I've outdone myself!",
+          "cost": 20,
+          "duration": 604800,
+          "duration_label": "1 week",
+          "value": 14
+        }
+      ]
+    },
+    {
+      "name": "Minigames",
+      "emoji": "🎮",
+      "description": "Try your luck and test your brain with fun games!",
+      "unlock": 0,
+      "items": [
+        {
+          "name": "Greg Wordle Minigame",
+          "type": "minigame",
+          "emoji": "🔤",
+          "description": "Play my very own Wordle minigame using $wordle!",
+          "cost": 3,
+          "duration": 1209600,
+          "duration_label": "2 weeks"
+        },
+        {
+          "name": "Wordle 2 (Hard Mode)",
+          "type": "minigame",
+          "emoji": "😡",
+          "description": "Wordle, but harder! Harder words, no purple letters, and play against Rose instead of Tom--all for Double XP.",
+          "warning": "If you own Hard Mode *and* regular mode, the $wordle command will default to Hard Mode",
+          "cost": 6,
+          "duration": 1209600,
+          "duration_label": "2 weeks"
+        }
+      ]
+    },
+    {
+      "name": "Server Perks",
+      "emoji": "✨",
+      "description": "Exclusive customization and perks for your family and server status.",
+      "unlock": 0,
+      "items": [
+        {
+          "name": "*Family Logo Tag* -- Best Seller",
+          "type": "family tag",
+          "emoji": "🦊",
+          "description": "Tired of the [B], [C], [F], [H], or [P]? Well you're in luck. Replace it today with your family's emoji logo!",
+          "cost": 5,
+          "duration": 1209600,
+          "duration_label": "2 weeks"
+        },
+        {
+          "name": "Upgraded NH Role",
+          "type": "role_upgrade",
+          "emoji": "⚡",
+          "description": "Gives your Neighborhood role a glowing upgrade! Show off your status in style.",
+          "cost": 5,
+          "warning": "Superceded by Holographic role color!",
+          "duration": 604800,
+          "duration_label": "1 week"
+        },
+        {
+          "name": "Holographic Role",
+          "type": "role_upgrade",
+          "emoji": "💎",
+          "description": "Gain the exclusive, animated Holographic role. It's shiny, it's rare, it's flex-worthy.",
+          "cost": 10,
+          "warning": "Same role as attained from Set 2 Task 4 in the '25 FF Fair",
+          "duration": 604800,
+          "duration_label": "1 week"
+        }
+      ]
+    }
+  ]

@@ -1,0 +1,42 @@
+.env
+config.local.json
+*.local
+.rustup/
+.local/
+.apollo/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+greg-venv/
+exported_model/
+data/
+onnx_model/
+presaved_model/
+
+# OS / editor
+.DS_Store
+.vscode/
+
+*.db
+*.sqlite
+*.sqlite3
+*.shelve
+*.log
+storage/
+
+.env
+.env.*
+creds.json
+*service_account*.json
+
+# --- Transcripts / archives ---
+transcript*
+archive*
+
+answers.txt
+hangman.txt
+messages.txt
+words.txt
