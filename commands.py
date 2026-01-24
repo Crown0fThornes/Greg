@@ -933,6 +933,7 @@ async def carnival_submission_counter(activator: Neighbor, context: Context):
 @command_handler.Command(access_type=AccessType.DEVELOPER)
 async def test(activator: Neighbor, context: Context):
     await context.send("Testing, 1 2, testing!", reply=True)
+    await context.send("next!")
 
 # @command_handler.Command(access_type=AccessType.DEVELOPER)
 async def derby(n, c):
