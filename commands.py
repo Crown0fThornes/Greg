@@ -10063,6 +10063,8 @@ async def pick_family(after):
         if neighborhood_after == "ffr":
             role = guild.get_role(int(honorary_role_id))
     
+    return;
+    
     # tg_msg = await targetAF.send(f"In 2025, <@{after.id}> will be part of the {family_decision} family!")
     # await tg_msg.add_reaction() #add reaction 
 
