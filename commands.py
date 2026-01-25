@@ -9906,8 +9906,9 @@ async def count_family(guild, member_ids, nh = None):
             cur_member = await guild.fetch_member(id);
         except:
             continue;
-        if nh_role and has_role(cur_member, neighbors_role) and has_role(cur_member, nh_role):
-            count += 1;
+        if nh_role:
+            if has_role(cur_member, neighbors_role) and has_role(cur_member, nh_role):
+                count += 1;
         elif has_role(cur_member, neighbors_role) and not has_role(cur_member, resort_role):
             count += 1;
     return count
@@ -9923,7 +9924,7 @@ async def count_all(client, families_ids, nh = None):
     for family, member_ids in families_ids.items():
         for id in member_ids:
             cur_member = await guild.fetch_member(id);
-            if nh_role and has_role(cur_member, neighbors_role, nh_role):
+            if nh_role and has_role(cur_member, neighbors_role) and has_role (cur_member, nh_role):
                 count += 1;
             elif has_role(cur_member, neighbors_role) and not has_role(cur_member, resort_role):
                 count += 1;
