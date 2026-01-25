@@ -1,7 +1,11 @@
 # "Greg"
-Custom Discord Bot 
+Custom Discord Bot for Friendly Farmers discord server
 
-commands.py consists of the commands, uncontested commands, and loop commands for the Greg discord bot. greg3.py intercepts actions in the server and passes them to command_handler for distribution to the correct command. 
+greg3.py is the "main" script which activates the bot and intercepts events on the server, sending them to:
+
+command_handler.py processes events and distributes them to the correct command in:
+
+commands.py consists of all commands, uncontested commands, loop commands, and now scheduled commands for greg!
 
 - Commands are run when a user calls them by name with the $ prefix. For example, the info() command function is run when a user in the server types "$info". Greg implements minimal typo detection as well: if a user's command call is within 75% accurate of the actual spelling, the command will call nontheless, e.g. "$infp" calls info.
 <img width="942" alt="Screenshot 2024-08-30 at 8 15 23 AM" src="https://github.com/user-attachments/assets/f03c0479-8b07-4f20-9ee2-d8073cf2574b">
