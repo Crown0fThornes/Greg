@@ -6,7 +6,6 @@ import string
 import traceback
 from typing import Counter
 from command_handler import Context, AccessType, CommandArgsError, PardonOurDustError
-from command_handler import AccessType
 import command_handler
 import random
 from custom_types import Neighbor, Item
@@ -95,116 +94,6 @@ unicodes = {
     "goat" : "\U0001F410",
     "kitten" : "\U0001F408",
     "peacock" : "\U0001F99A",
-}
-
-crops = {
-   "wheat" : 1,
-    "corn" : 1,
-    "soybean" : 2,
-    "sugarcane" : 3,
-    "carrot" : 1,
-    "indigo" : 5,
-    "pumpkin" : 6,
-    "cotton" : 6,
-    "chilli pepper" : 7,
-    "tomato" : 8,
-    "strawberry" : 10,
-    "potato" : 7,
-    "sesame" : 4,
-    "pineapple" : 3,
-    "lily" : 5,
-    "rice" : 3,
-    "lettuce" : 7,
-    "garlic" : 3,
-    "sunflower" : 5,
-    "cabbage" : 3,
-    "onion" : 8,
-    "cucumber" : 3,
-    "beetroot" : 3,
-    "bell pepper" : 7,
-    "ginger" : 6,
-    "tea leaf" : 9,
-    "peony" : 7,
-    "broccoli" : 4,
-    "grapes" : 6,
-    "mint" : 6,
-    "mushroom" : 2,
-    "eggplant" : 3,
-    "watermelon" : 8,
-    "clay" : 5,
-    "chickpea" : 4,
-    "apple" : 7,
-    "raspberry" : 9,
-    "cherry" : 13,
-    "blackberry" : 16,
-    "cacao" : 16,
-    "coffee beans" : 12,
-    "olive" : 17,
-    "lemon" : 18,
-    "orange" : 19,
-    "peach" : 20,
-    "banana" : 20,
-    "passion fruit" : 4,
-    "plum" : 16,
-    "mango" : 20,
-    "coconut" : 21,
-    "guava" : 22,
-    "pomegranate" : 22,
-}
-
-crop_emojis = {
-    "wheat" : unicodes["bot"],
-    "corn" : "<:Corn:1106752626382618644>",
-    "soybean" : "<:Soybean:1106753002615865364>",
-    "sugarcane" : "<:Sugarcane:1106753005237325824>",
-    "carrot" : "<:Carrot:1106752384778117231>",
-    "indigo" : "<:Indigo:1106752701590675496>",
-    "pumpkin" : "<:Pumpkin:1106752899184349224>",
-    "cotton" : "<:Cotton:1106752627330531338>",
-    "chilli pepper" : "<:Chili_Pepper:1106752487865716838>",
-    "tomato" : "<:Tomato:1106753009607774330>",
-    "strawberry" : "<:Strawberry:1106753004209709219>",
-    "potato" : "<:Potato:1106752897959596052>",
-    "sesame" : "<:Sesame:1106753001303052399>",
-    "pineapple" : "<:Pineapple:1106752893975015494>",
-    "lily" : "<:Lily:1106752640945246278>",
-    "rice" : "<:Rice:1106752999428198470>",
-    "lettuce" : "<:Lettuce:1106752702865744013>",
-    "garlic" : "<:Garlic:1106752631298338846>",
-    "sunflower" : "<:Sunflower:1106753005983899730>",
-    "cabbage" : "<:Cabbage:1106752382039228496>",
-    "onion" : "<:Onion:1106752786584055809>",
-    "cucumber" : "<:Cucumber:1106752628735627344>",
-    "beetroot" : "<:Beetroot:1106752376783786094>",
-    "bell pepper" : unicodes["bot"],
-    "ginger" : "<:Ginger:1106752632267223060>",
-    "tea leaf" : "<:Tea_Leaf:1106753007758082058>",
-    "peony" : "<:Peony:1106752791524937758>",
-    "broccoli" : "<:Broccoli:1106752380814491689>",
-    "grapes" : "<:Grapes:1106752700114280488>",
-    "mint" : "<:Mint:1106752782322630756>",
-    "mushroom" : "<:Mushroom:1106752783333478511>",
-    "eggplant" : "<:Eggplant:1106752630354608158>",
-    "watermelon" : unicodes["bot"],
-    "clay" : "<:Clay:1106752387135320134>",
-    "chickpea" : "<:Chickpea:1106752447692677240>",
-    "apple" : "<:Apple:1106752372790788156>",
-    "raspberry" : "<:Raspberry:1106752997922439178>",
-    "cherry" : "<:Cherry:1106752487010082846>",
-    "blackberry" : "<:Blackberry:1106752379405213820>",
-    "cacao" : "<:Cacao:1106752383612112907>",
-    "coffee beans" : "<:Coffee_Bean:1106752625229180959>",
-    "olive" : "<:Olive:1106752784906334289>",
-    "lemon" : "<:Lemon:1106752639468847142>",
-    "orange" : "<:Orange:1106752787615850506>",
-    "peach" : "<:Peach:1106752790061137991>",
-    "banana" : "<:Banana:1106752375164764200>",
-    "passion fruit" : unicodes["bot"],
-    "plum" : "<:Plum:1106752793974419456>",
-    "mango" : "<:Mango:1106752779793465524>",
-    "coconut" : "<:Coconut:1106752623421440001>",
-    "guava" : "<:Guava:1106752635656216656>",
-    "pomegranate" : "<:Pomegranate:1106752896462237706>",
 }
 
 red_wordle_emojis = {
@@ -8004,7 +7893,7 @@ async def meme(activator: Neighbor, context: Context):
         
             
 
-@command_handler.Command(AccessType.PRIVATE, desc = "Lets a Neighbor harvest crops.", generic = True, active=False)
+# @command_handler.Command(AccessType.PRIVATE, desc = "Lets a Neighbor harvest crops.", generic = True, active=False)
 async def harvest(activator: Neighbor, context: Context, response: ResponsePackage = None):
 
     raise PardonOurDustError();
@@ -10123,26 +10012,26 @@ async def pick_family(after):
     
     if not new_family_name:
         
-        nj = await get_role_count(guild, nh_role);
-        nt = await get_role_count(guild, 1181330910747054211);
+        nj = await get_role_count(guild, nh_role); # disparity for joining neighborhood 
+        nt = await get_role_count(guild, 1181330910747054211); # disparity for total neighbors
         
         for family in family_info:
             
             family_in_dict = next(k for k, v in matchup.items() if v == family["name"])
         
             # fj = await get_role_count(guild, family["role_id"], nh_role);
-            fj = await count_family(guild, already_picked[family_in_dict], nh_role)
+            fj = await count_family(guild, already_picked[family_in_dict], nh_role) # disparity for joining neighborhood family only
             # ft = await get_role_count(guild, family["role_id"]);
-            ft = await count_family(guild, already_picked[family_in_dict])
+            ft = await count_family(guild, already_picked[family_in_dict]) # disparity for total neighbors family only
             
             dj = max(int(nj/7) - fj, 0);
             dt = max(int((nt - 25)/7) - ft, 0);
             r = (dj ** 2 + dt + 1) ** 2
             
-            votes[family['name']] = {'weight': r, 'role_id': family['role_id']};
+            votes[family['name']] = {'weight': r, 'role_id': family['role_id'], "dj": dj, "dt": dt};
         await targetBC.send(f"<@{after.id}> was assigned according to the following weights:")
         # Create a string with family names and their weights
-        votes_summary = "\n".join([f"{family}: {info['weight']}" for family, info in votes.items()])
+        votes_summary = "\n".join([f"{family}: {info['weight']}; joining disparity: {info["dj"]}; total disparity: {info["dt"]}" for family, info in votes.items()])
 
         # Send the formatted string to the target channel
         await targetBC.send(votes_summary)

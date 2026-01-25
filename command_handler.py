@@ -9,7 +9,6 @@ import discord
 from enum import Enum
 import random
 import discord
-import commands as commands
 from custom_types import Neighbor
 from importlib import reload as sync
 import inspect
@@ -641,5 +640,8 @@ class Scheduled:
                 await asyncio.sleep(0.1);
     
 Command.set_prefix("$");
+
+import commands 
+import harvest
 
 print(Command.available_commands);
