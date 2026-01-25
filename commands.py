@@ -10029,12 +10029,18 @@ async def pick_family(after):
             r = (dj ** 2 + dt + 1) ** 2
             
             votes[family['name']] = {'weight': r, 'role_id': family['role_id'], "dj": dj, "dt": dt};
+            
+            await targetBC.send(f"{family["name"]}: {r}\n"
+                                "dj{dj} = nj{nj}/7 - fj{fj}\n"
+                                "dt{dt} = nt{nt} - 25/7 - ft{ft}");
+            
+            
         await targetBC.send(f"<@{after.id}> was assigned according to the following weights:")
         # Create a string with family names and their weights
         votes_summary = "\n".join([f"{family}: {info['weight']}; joining disparity: {info["dj"]}; total disparity: {info["dt"]}" for family, info in votes.items()])
 
         # Send the formatted string to the target channel
-        await targetBC.send(votes_summary)
+        # await targetBC.send(votes_summary)
     else:
         await targetBC.send(f"<@{after.id}>'s family was predestined.")
 
