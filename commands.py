@@ -1225,7 +1225,7 @@ async def assign_some_families(client):
         print(f"Trying: {assignee.name}")
         answer = await pick_family(assignee)
         if not answer in ["Alrdy has family", "FFJ2", "No NH"]:
-            # return
+            return
             pass
     
 # @command_handler.Loop(days = 1)
@@ -9900,6 +9900,8 @@ async def count_family(guild, member_ids, nh = None):
     resort = nh == 1034248720058945577;
     resort_role = guild.get_role(1034248720058945577);
     
+    member_ids = list(set(member_ids))
+    
     count = 0;
     for id in member_ids:
         try:
@@ -10066,7 +10068,7 @@ async def pick_family(after):
         if neighborhood_after == "ffr":
             role = guild.get_role(int(honorary_role_id))
     
-    return;
+    # return;
     
     # tg_msg = await targetAF.send(f"In 2025, <@{after.id}> will be part of the {family_decision} family!")
     # await tg_msg.add_reaction() #add reaction 
