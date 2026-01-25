@@ -1213,7 +1213,7 @@ async def update_tasks(client):
             worksheet.insert_row([str(row_data['id']), row_data['value']], next_row_index)
             next_row_index += 1
     
-# @command_handler.Loop(hours=3)
+@command_handler.Loop(hours=3)
 async def assign_some_families(client):
     # if not chance(5):
     #     return
