@@ -438,7 +438,15 @@ async def manage_timed_commands():
     await Loop.execute(client);
 
 import os
-BOT_TOKEN = os.environ["BOT_TOKEN"]  # crashes clearly if missing
-# or: os.getenv("API_KEY") with a custom error
-# run the client
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Always load .env from the same directory as this file
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
+# try:
+BOT_TOKEN = os.environ["BOT_TOKEN"] 
 client.run(BOT_TOKEN, reconnect=True);
+# except:
+#     print("Get development bot token from Lincoln & set env variable")
+    
