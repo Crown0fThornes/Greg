@@ -1225,7 +1225,7 @@ async def assign_some_families(client):
         print(f"Trying: {assignee.name}")
         answer = await pick_family(assignee)
         if not answer in ["Alrdy has family", "FFJ2", "No NH"]:
-            return
+            # return
     
 # @command_handler.Loop(days = 1)
 async def beefamily(client):
