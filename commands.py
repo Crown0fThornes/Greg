@@ -1222,6 +1222,7 @@ async def assign_some_families(client):
     guild = client.get_guild(647883751853916162)
     members = guild.members;
     for assignee in members:
+        print(f"Trying: {assignee.username}")
         answer = await pick_family(assignee)
         if not answer in ["Alrdy has family", "FFJ2", "No NH"]:
             return
