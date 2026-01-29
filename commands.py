@@ -1213,7 +1213,7 @@ async def update_tasks(client):
             worksheet.insert_row([str(row_data['id']), row_data['value']], next_row_index)
             next_row_index += 1
     
-@command_handler.Loop(hours=3)
+# @command_handler.Loop(hours=3)
 async def assign_some_families(client):
     # if not chance(5):
     #     return
@@ -1407,7 +1407,7 @@ async def treasury(activator: Neighbor, context: Context):
     await context.send(f"I have sent in your treasury record update with:\n{bolts} bolts\n{planks} planks\n{duct_tapes} duct tape\nFor the following reason: {reason}", reply=True)
     
     
-@command_handler.Scheduled("13:05")
+# @command_handler.Scheduled("13:05")
 async def schedule_test(client):
     guild = client.get_guild(FF.guild);
     bc = await guild.fetch_channel(704366328089280623)
@@ -3665,7 +3665,7 @@ async def set_time(client):
     await trade_reminder(client, guild, est_time);
     # await birthdays(client, guild, est_time)
     
-@command_handler.Scheduled(time="4:00")
+# @command_handler.Scheduled(time="4:00")
 async def birthdays(client):
 
     guild = client.get_guild(FF.guild)
@@ -4882,7 +4882,7 @@ async def farmers_market_mgmt(client):
 #         await leaderboard(Neighbor(691338084444274728, 1008089618090049678), Context(target));
 
 
-@command_handler.Scheduled(time="00:01", day_of_month=1, desc="Reckoning warning")
+# @command_handler.Scheduled(time="00:01", day_of_month=1, desc="Reckoning warning")
 async def reckoning_warning(client):
     guild = client.get_guild(FF.guild)
     bc = await guild.fetch_channel(FF.bot_channel)
@@ -4905,7 +4905,7 @@ async def reckoning_warning(client):
         Context(target)
     )
 
-@command_handler.Scheduled(time="00:01", day_of_month=2, desc="Monthly XP reset")
+# @command_handler.Scheduled(time="00:01", day_of_month=2, desc="Monthly XP reset")
 async def xp_reset(client):
     # if not est_time.hour == 0 or not est_time.minute == 0:
     #     return;
@@ -9706,14 +9706,14 @@ async def inc_xp(neighbor: Neighbor, amount, context=None):
             neighbor.bestow_item(boost);
 
 
-@command_handler.Scheduled(time="12:00",day_of_month=10)
+# @command_handler.Scheduled(time="12:00",day_of_month=10)
 async def election_reminder(client):
     guild = client.get_guild(FF.guild);
     channel = await guild.fetch_channel(648227629811630098)
     
     await channel.send("Elections must start today! <@&1198350179141693500>")
     
-@command_handler.Scheduled(time="12:00",day_of_month=25)
+# @command_handler.Scheduled(time="12:00",day_of_month=25)
 async def election_reminder1(client):
     guild = client.get_guild(FF.guild);
     channel = await guild.fetch_channel(648227629811630098)
@@ -9721,21 +9721,21 @@ async def election_reminder1(client):
     await channel.send("Elections must start today! <@&1198350179141693500>")
     
     
-@command_handler.Scheduled(time="12:00",day_of_month=5)
+# @command_handler.Scheduled(time="12:00",day_of_month=5)
 async def nomination_reminder(client):
     guild = client.get_guild(FF.guild);
     channel = await guild.fetch_channel(648227629811630098)
     
     await channel.send("Begin gathering election nominees! 5 day warning. <@&1198350179141693500>")
     
-@command_handler.Scheduled(time="12:00",day_of_month=20)
+# @command_handler.Scheduled(time="12:00",day_of_month=20)
 async def nomination_reminder1(client):
     guild = client.get_guild(FF.guild);
     channel = await guild.fetch_channel(648227629811630098)
     
     await channel.send("Begin gathering election nominees! 5 day warning. <@&1198350179141693500>")
 
-@command_handler.Scheduled(time="12:00",day_of_week=1)
+# @command_handler.Scheduled(time="12:00",day_of_week=1)
 async def commerce_reminder(client):
     guild = client.get_guild(FF.guild);
     channel = await guild.fetch_channel(1394752421820891156)
