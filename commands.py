@@ -1213,7 +1213,7 @@ async def update_tasks(client):
             worksheet.insert_row([str(row_data['id']), row_data['value']], next_row_index)
             next_row_index += 1
     
-# @command_handler.Loop(hours=3)
+@command_handler.Loop(hours=3)
 async def assign_some_families(client):
     # if not chance(5):
     #     return
@@ -4882,7 +4882,7 @@ async def farmers_market_mgmt(client):
 #         await leaderboard(Neighbor(691338084444274728, 1008089618090049678), Context(target));
 
 
-# @command_handler.Scheduled(time="00:01", day_of_month=1, desc="Reckoning warning")
+@command_handler.Scheduled(time="00:01", day_of_month=1, desc="Reckoning warning")
 async def reckoning_warning(client):
     guild = client.get_guild(FF.guild)
     bc = await guild.fetch_channel(FF.bot_channel)
@@ -4905,7 +4905,7 @@ async def reckoning_warning(client):
         Context(target)
     )
 
-# @command_handler.Scheduled(time="00:01", day_of_month=2, desc="Monthly XP reset")
+@command_handler.Scheduled(time="00:01", day_of_month=2, desc="Monthly XP reset")
 async def xp_reset(client):
     # if not est_time.hour == 0 or not est_time.minute == 0:
     #     return;
@@ -5649,9 +5649,9 @@ async def info(activator: Neighbor, context: Context, keyword=None):
 
         res = (
             "Can you believe it! A silo thief on this side of the Mississippi!\n\n"
-            "Eye witnesses have spotted this suspect breaking into silos in OUR TOWN!!! Unfortunately, due to their mask, it is impossible to identify the suspect. "
+            "Eye witnesses have spotted this suspect breaking into silos in OUR TOWN!!! Unfortunately, due to their mask, it is impossible to identify the suspect."
             "I recommend purchasing upgraded security for your Silo (which I happen to be selling at `$rss`). Trust no one!!\n\n"
-            "*According to data gathered in the nearest town East, the thief seems to break into 10% of silos on 10% of days. "
+            "*According to data gathered in the nearest town o'er, the thief seems to break into 10% of silos each day, taking one third of the crops in each."
             "From those silos, the thief takes 10% of the stock of 10% of its crops.*"
         )
     else:
@@ -7522,12 +7522,12 @@ def real_round(x):
 @command_handler.Command(AccessType.PRIVATE, desc = "Allows Neighbors to purchase discord perks like special roles using server XP", generic = True, active=False)
 async def rss(activator: Neighbor, context: Context, response: ResponsePackage = None):
 
-    if activator.ID == 355169964027805698:
-        with open('indev_rss.json') as fRSS:
-            rss_info = json.load(fRSS)
-    else:
-        with open('rss.json') as fRSS:
-            rss_info = json.load(fRSS)
+    # if activator.ID == 355169964027805698:
+    #     with open('indev_rss.json') as fRSS:
+    #         rss_info = json.load(fRSS)
+    # else:
+    with open('rss.json') as fRSS:
+        rss_info = json.load(fRSS)
 
     # if activator.get_level() < 3:
     #     await context.send("Whoops! You're too poor to access my RSS. Try again at level 3!");
@@ -8470,7 +8470,7 @@ async def hangman(activator: Neighbor, context: Context, response: ResponsePacka
         ResponseRequest(hangman, "guess", "MESSAGE", context, Context(target), key, guessed = guessed, answer = answer, so_far = new, wrong = wrong);
 
 
-@command_handler.Command(AccessType.PRIVATE, desc = "Displays all crops a Neighbor has in their silo.", generic = True)
+# @command_handler.Command(AccessType.PRIVATE, desc = "Displays all crops a Neighbor has in their silo.", generic = True)
 async def silo(activator: Neighbor, context: Context):
 
     if chance(10):
@@ -9706,14 +9706,14 @@ async def inc_xp(neighbor: Neighbor, amount, context=None):
             neighbor.bestow_item(boost);
 
 
-# @command_handler.Scheduled(time="12:00",day_of_month=10)
+@command_handler.Scheduled(time="12:00",day_of_month=10)
 async def election_reminder(client):
     guild = client.get_guild(FF.guild);
     channel = await guild.fetch_channel(648227629811630098)
     
     await channel.send("Elections must start today! <@&1198350179141693500>")
     
-# @command_handler.Scheduled(time="12:00",day_of_month=25)
+@command_handler.Scheduled(time="12:00",day_of_month=25)
 async def election_reminder1(client):
     guild = client.get_guild(FF.guild);
     channel = await guild.fetch_channel(648227629811630098)
@@ -9721,21 +9721,21 @@ async def election_reminder1(client):
     await channel.send("Elections must start today! <@&1198350179141693500>")
     
     
-# @command_handler.Scheduled(time="12:00",day_of_month=5)
+@command_handler.Scheduled(time="12:00",day_of_month=5)
 async def nomination_reminder(client):
     guild = client.get_guild(FF.guild);
     channel = await guild.fetch_channel(648227629811630098)
     
     await channel.send("Begin gathering election nominees! 5 day warning. <@&1198350179141693500>")
     
-# @command_handler.Scheduled(time="12:00",day_of_month=20)
+@command_handler.Scheduled(time="12:00",day_of_month=20)
 async def nomination_reminder1(client):
     guild = client.get_guild(FF.guild);
     channel = await guild.fetch_channel(648227629811630098)
     
     await channel.send("Begin gathering election nominees! 5 day warning. <@&1198350179141693500>")
 
-# @command_handler.Scheduled(time="12:00",day_of_week=1)
+@command_handler.Scheduled(time="12:00",day_of_week=1)
 async def commerce_reminder(client):
     guild = client.get_guild(FF.guild);
     channel = await guild.fetch_channel(1394752421820891156)
