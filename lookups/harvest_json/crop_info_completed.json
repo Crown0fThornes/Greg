@@ -1,7 +1,7 @@
 {
   "wheat": {
     "xp": 1,
-    "emoji": "🤖"
+    "emoji": "<:Wheat:1467223115858710559>"
   },
   "corn": {
     "xp": 1,
@@ -45,7 +45,7 @@
   },
   "black bean": {
     "xp": 2,
-    "emoji": "🤖"
+    "emoji": "<:Black_Bean:1467223345014767667>"
   },
   "blackberry": {
     "xp": 16,
@@ -57,7 +57,7 @@
   },
   "blueberry": {
     "xp": 16,
-    "emoji": "🤖"
+    "emoji": "<:Blueberry:1467223322650738934>"
   },
   "strawberry": {
     "xp": 10,
@@ -77,11 +77,11 @@
   },
   "chamomile": {
     "xp": 2,
-    "emoji": "🤖"
+    "emoji": "<:Chamomile:1467223282439815169>"
   },
   "asparagus": {
     "xp": 8,
-    "emoji": "🤖"
+    "emoji": "<:Asparagus:1467223401654518023>"
   },
   "sesame": {
     "xp": 4,
@@ -141,7 +141,7 @@
   },
   "bell pepper": {
     "xp": 7,
-    "emoji": "🤖"
+    "emoji": "<:Bell_Pepper:1467223373569462465>"
   },
   "peach": {
     "xp": 20,
@@ -177,7 +177,7 @@
   },
   "passion fruit": {
     "xp": 4,
-    "emoji": "🤖"
+    "emoji": "<:Passion_Fruit:1467223214781501522>"
   },
   "mushroom": {
     "xp": 2,
@@ -189,7 +189,7 @@
   },
   "watermelon": {
     "xp": 8,
-    "emoji": "🤖"
+    "emoji": "<:Watermelon:1467223158091153420>"
   },
   "plum": {
     "xp": 16,
@@ -221,6 +221,6 @@
   },
   "oats": {
     "xp": 1,
-    "emoji": "🤖"
+    "emoji": "<:Oats:1467223243705548800>"
   }
 }

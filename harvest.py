@@ -133,12 +133,15 @@ async def silo(activator: Neighbor, context: Context):
             
             if activator.get_item_of_name("Silo Security Lvl 1"):
                 await target.react("<:strongman2:1248819697747497042>")
+                ResponseRequest(strongman,"strongman","REACTION",context,target)
             
             # sorted_crops_by_count = sorted(list(record.items()),key=lambda x: x[1])
-            
-            
     except ConnectionError:
         raise ConnectionError("Could not connect to databse")
+    
+async def strongman(activator: Neighbor, context: Context, responsePackage: ResponsePackage):
+    await context.send("The Strongman is guarding this silo from The Silo Thief! <:strongman2:1248819697747497042>")
+    
         
 def update_silo(neighbor_ID, crop_to_update, change: int):
     try:
@@ -198,9 +201,10 @@ def create_silo_table():
 async def open_farmers_market(client):
     
     guild = client.get_guild(647883751853916162)
+    town_square = await guild.fetch_channel(648223363600351263);
     # guild = context.guild;
     
-    market_channel = await guild.create_text_channel('🚜farmers-market')
+    market_channel = await guild.create_text_channel('🚜farmers-market', category=town_square)
     await market_channel.send("# 🚜 Welcome to the farmers market! 🌾")
     await market_channel.send("Here, farmers are buying crops you've `$harvest`ed in exchange for XP. The farmers market comes to town every sunday trading 5 select crops, so don't miss out.")
     await market_channel.send("Look below at the offerings and react accoringly to sell your stock if you like the price. Partials not accepted, but you can make the same sale multiple times.")
