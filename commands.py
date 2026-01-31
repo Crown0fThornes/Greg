@@ -5727,7 +5727,10 @@ async def info(activator: Neighbor, context: Context, keyword=None):
             ranked_blurbs = sorted(zip(cache.items(), scores), key=lambda x: x[1], reverse=True)
             
             bestkw, bestv = ranked_blurbs[0][0]
-            message = await channel.fetch_message(bestv['id']);
+            try:
+                message = await channel.fetch_message(bestv['id']);
+            except:
+                message = ""
             if message and ":" in message.content:
                 # Split once per line into keyword and content
                 raw_keywords, *content_parts = message.content.split(':')
