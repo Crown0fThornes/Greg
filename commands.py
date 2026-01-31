@@ -5731,6 +5731,7 @@ async def info(activator: Neighbor, context: Context, keyword=None):
                 message = await channel.fetch_message(bestv['id']);
             except:
                 message = ""
+            res = ""
             if message and ":" in message.content:
                 # Split once per line into keyword and content
                 raw_keywords, *content_parts = message.content.split(':')
