@@ -4888,15 +4888,12 @@ async def reckoning_warning(client):
     bc = await guild.fetch_channel(FF.bot_channel)
 
     message = (
-        "⚠️ **ATTENTION, FARMERS.** ⚠️\n\n"
-        "The month turns. The clock resets. The paperwork is filed.\n\n"
-        "**The Reckoning** arrives in **24 hours**.\n\n"
-        "At that time, all players’ **server levels will be cleanly cut in half**, "
-        "resulting in a dramatic reduction in XP.\n\n"
-        "Of course, this event is *completely outside my control* and definitely not "
-        "the result of a scheduled process that runs with impeccable timing every month, so take any complaints up with the universe itself.\n\n"
-        "…Unrelated, my `$rss` shop remains fully stocked: rain or shine, reckoning or no; "
-        "should anyone feel an urge to convert levels into tangible rewards before destiny intervenes please make a visit.\n\n"
+        "**The reckoning is upon you!**\n"
+        "In one day's time, all Neighbors' server levels are to be cut in half!\n"
+        "This is a disastrous act of nature, which I cannot prevent and have no control over.\n"
+        "You all are best off accepting its coming!\n"
+        "It may be wise to spend those levels before the reckoning, and I have plenty of great deals in my `$rss`!\n\n"
+        "-# Notably, a reduction in half of one's levels results in a much worse reduction in XP, since each level up is worth more XP than the last."
     )
 
     target = await bc.send(message)
