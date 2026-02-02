@@ -90,6 +90,24 @@
       "unlock": 0,
       "items": [
         {
+          "name": "Expanded Fields",
+          "type": "harvest_item",
+          "emoji": "🌾",
+          "description": "`$plant` 3 crops at once, tripling your yield!",
+          "cost": 10,
+          "duration": 604800,
+          "duration_label": "1 week"
+        },
+        {
+          "name": "Silo Security Lvl 1",
+          "type": "harvest_item",
+          "emoji": "🚨",
+          "description": "Hire the town Strongman to defend your silo from the silo thief (`$info thief`). It's not guarunteed safety, the thief seems to get away with half as much crops vs no security.",
+          "cost": 3,
+          "duration": 1814400,
+          "duration_label": "3 weeks"
+        },
+        {
           "name": "Greg Wordle Minigame",
           "type": "minigame",
           "emoji": "🔤",

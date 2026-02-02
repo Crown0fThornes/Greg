@@ -1,3 +1,4 @@
+from math import floor
 from command_handler import Context, AccessType, CommandArgsError, PardonOurDustError
 import command_handler
 from custom_types import Neighbor, Item
@@ -5,266 +6,341 @@ from responses import ResponsePackage, ResponseRequest
 import commands
 import time
 import random
+import sqlite3
+import json
 
-unicodes = {
-    0 : "\U00000030\U0000FE0F\U000020E3",
-    1 : "\U00000031\U0000FE0F\U000020E3",
-    2 : "\U00000032\U0000FE0F\U000020E3",
-    3 : "\U00000033\U0000FE0F\U000020E3",
-    4 : "\U00000034\U0000FE0F\U000020E3",
-    5 : "\U00000035\U0000FE0F\U000020E3",
-    6 : "\U00000036\U0000FE0F\U000020E3",
-    7 : "\U00000037\U0000FE0F\U000020E3",
-    8 : "\U00000038\U0000FE0F\U000020E3",
-    9 : "\U00000039\U0000FE0F\U000020E3",
-    "boost" : "\U0001F4B0",
-    "perk" : "\U0001F5FF",
-    "tag" : "\U0001F996",
-    "icon" : "\U0001F48E",
-    "mail" : "\U00002709",
-    "rice" : "\U0001F33E",
-    "rainbow" : "\U0001F308",
-    "bee" : "\U0001F41D",
-    "mushroom" : "\U0001F344",
-    "selfie" : "\U0001F933",
-    "crown" : "\U0001F451",
-    "fox" : "\U0001F98A",
-    "snowflake" : "\U00002744",
-    "fries" : "\U0001F35F",
-    "red_heart" : "\U00002764",
-    "blueberry" : "\U0001FAD0",
-    "strawberry" : "\U0001F353",
-    "coffee" : "\U00002615",
-    "t_rex" : "\U0001F996",
-    "chicken" : "\U0001F414",
-    "coin" : "\U0001FA99",
-    "diamond" : "\U0001F48E",
-    "crayon" : "\U0001F58D",
-    "robot" : "\U0001F916",
-    "nails" : "\U0001F485",
-    "bank" : "\U0001F3E6",
-    "check" : "\U00002705",
-    "bot" : "\U0001F916",
-    "ant" : "\U0001FAB3",
-    "ghost" : "\U0001F47B",
-    "back" : "\U000023CF",
-    "butterfly" : "\U0001F98B",
-    "cheetah" : "\U0001F406",
-    "fox" : "\U0001F98A",
-    "horse" : "\U0001F40E",
-    "puppy" : "\U0001F436",
-    "cabinet" : "\U0001F5C4",
-    "trophy" : "\U0001F3C6",
-    "first" : "\U0001F947",
-    "second" : "\U0001F948",
-    "third" : "\U0001F949",
-    "clover" : "\U00001F34",
-    "locked" : "🔒",
-    "unlocked" : "🔓",
-    "letters" : "\U0001F520",
-    "gift" : "\U0001F381",
-    "fire" : "\U0001F525",
-    "star" : "\U00002B50",
-    "anger" : "\U0001F620",
-    "bee" : "\U0001F41D",
-    "frog" : "\U0001F438",
-    "goat" : "\U0001F410",
-    "kitten" : "\U0001F408",
-    "peacock" : "\U0001F99A",
-}
+def random_crop_amt(mu: int, highend_of_range: int):
+    '''
+    Generates a random number of crops to harvest between 1 and high-end,
+    with a distribution centered close to mu (tends to be slightly higher than mu due to method used)
+    '''
+    
+    lowend = mu * 2 if mu * 2 < 100 else 100
+    mid = mu * 4 if mu * 4 < 100 else 100
+    highend = 100;
+    
+    # 3/6 chance that lowend bucket is chosen (1 - 2mu range; mu average)
+    # 2/6 chance that mid bucket is chosen (1-4mu range; 2mu average)
+    # 1/6 chance that highend bucket is chosen (1-100 range; 50 average)
+    bucket = random.choice([lowend, lowend, lowend, mid, mid, highend]) 
+        
+    return(random.randint(1, bucket))
+        
+@command_handler.Command(AccessType.DEVELOPER, desc = "give yourself an item")
+async def give(activator: Neighbor, context: Context):
+    if int(context.args[2]) == -1:
+        expiration = -1
+    else:
+        expiration = time.time() + int(context.args[2])
+    
+    item = Item(context.args[0], context.args[1], expiration)
+    activator.bestow_item(Item())
 
-crops = {
-   "wheat" : 1,
-    "corn" : 1,
-    "soybean" : 2,
-    "sugarcane" : 3,
-    "carrot" : 1,
-    "indigo" : 5,
-    "pumpkin" : 6,
-    "cotton" : 6,
-    "chilli pepper" : 7,
-    "tomato" : 8,
-    "strawberry" : 10,
-    "potato" : 7,
-    "sesame" : 4,
-    "pineapple" : 3,
-    "lily" : 5,
-    "rice" : 3,
-    "lettuce" : 7,
-    "garlic" : 3,
-    "sunflower" : 5,
-    "cabbage" : 3,
-    "onion" : 8,
-    "cucumber" : 3,
-    "beetroot" : 3,
-    "bell pepper" : 7,
-    "ginger" : 6,
-    "tea leaf" : 9,
-    "peony" : 7,
-    "broccoli" : 4,
-    "grapes" : 6,
-    "mint" : 6,
-    "mushroom" : 2,
-    "eggplant" : 3,
-    "watermelon" : 8,
-    "clay" : 5,
-    "chickpea" : 4,
-    "apple" : 7,
-    "raspberry" : 9,
-    "cherry" : 13,
-    "blackberry" : 16,
-    "cacao" : 16,
-    "coffee beans" : 12,
-    "olive" : 17,
-    "lemon" : 18,
-    "orange" : 19,
-    "peach" : 20,
-    "banana" : 20,
-    "passion fruit" : 4,
-    "plum" : 16,
-    "mango" : 20,
-    "coconut" : 21,
-    "guava" : 22,
-    "pomegranate" : 22,
-}
+@command_handler.Command(AccessType.DEVELOPER, desc = "Clear inventory")
+async def clear(activator: Neighbor, context: Context):
+    while (item := activator.get_item_of_name(context.args[0])):
+        activator.vacate_item(item)
+        
+    for item in activator.get_items_of_type(context.args[0]):
+        activator.vacate_item(item);
 
-crop_emojis = {
-    "wheat" : unicodes["bot"],
-    "corn" : "<:Corn:1106752626382618644>",
-    "soybean" : "<:Soybean:1106753002615865364>",
-    "sugarcane" : "<:Sugarcane:1106753005237325824>",
-    "carrot" : "<:Carrot:1106752384778117231>",
-    "indigo" : "<:Indigo:1106752701590675496>",
-    "pumpkin" : "<:Pumpkin:1106752899184349224>",
-    "cotton" : "<:Cotton:1106752627330531338>",
-    "chilli pepper" : "<:Chili_Pepper:1106752487865716838>",
-    "tomato" : "<:Tomato:1106753009607774330>",
-    "strawberry" : "<:Strawberry:1106753004209709219>",
-    "potato" : "<:Potato:1106752897959596052>",
-    "sesame" : "<:Sesame:1106753001303052399>",
-    "pineapple" : "<:Pineapple:1106752893975015494>",
-    "lily" : "<:Lily:1106752640945246278>",
-    "rice" : "<:Rice:1106752999428198470>",
-    "lettuce" : "<:Lettuce:1106752702865744013>",
-    "garlic" : "<:Garlic:1106752631298338846>",
-    "sunflower" : "<:Sunflower:1106753005983899730>",
-    "cabbage" : "<:Cabbage:1106752382039228496>",
-    "onion" : "<:Onion:1106752786584055809>",
-    "cucumber" : "<:Cucumber:1106752628735627344>",
-    "beetroot" : "<:Beetroot:1106752376783786094>",
-    "bell pepper" : unicodes["bot"],
-    "ginger" : "<:Ginger:1106752632267223060>",
-    "tea leaf" : "<:Tea_Leaf:1106753007758082058>",
-    "peony" : "<:Peony:1106752791524937758>",
-    "broccoli" : "<:Broccoli:1106752380814491689>",
-    "grapes" : "<:Grapes:1106752700114280488>",
-    "mint" : "<:Mint:1106752782322630756>",
-    "mushroom" : "<:Mushroom:1106752783333478511>",
-    "eggplant" : "<:Eggplant:1106752630354608158>",
-    "watermelon" : unicodes["bot"],
-    "clay" : "<:Clay:1106752387135320134>",
-    "chickpea" : "<:Chickpea:1106752447692677240>",
-    "apple" : "<:Apple:1106752372790788156>",
-    "raspberry" : "<:Raspberry:1106752997922439178>",
-    "cherry" : "<:Cherry:1106752487010082846>",
-    "blackberry" : "<:Blackberry:1106752379405213820>",
-    "cacao" : "<:Cacao:1106752383612112907>",
-    "coffee beans" : "<:Coffee_Bean:1106752625229180959>",
-    "olive" : "<:Olive:1106752784906334289>",
-    "lemon" : "<:Lemon:1106752639468847142>",
-    "orange" : "<:Orange:1106752787615850506>",
-    "peach" : "<:Peach:1106752790061137991>",
-    "banana" : "<:Banana:1106752375164764200>",
-    "passion fruit" : unicodes["bot"],
-    "plum" : "<:Plum:1106752793974419456>",
-    "mango" : "<:Mango:1106752779793465524>",
-    "coconut" : "<:Coconut:1106752623421440001>",
-    "guava" : "<:Guava:1106752635656216656>",
-    "pomegranate" : "<:Pomegranate:1106752896462237706>",
-}
+@command_handler.Command(AccessType.PRIVATE, desc = "Plant crops to harvest later!")
+async def plant(activator: Neighbor, context: Context):
+    
+    activator.expire_items();
+    
+    planted = activator.get_items_of_type("crops planted");
+    has_expanded_fields = activator.get_item_of_name("Expanded Fields")
+    
+    max_fields = 1 if not has_expanded_fields else 3;
+    if len(planted) < max_fields:
+        for _ in range(len(planted), max_fields):
+            item = Item(f"Crops Planted! {len(planted)}", "crops planted", -1,ready=str(time.time() + 0))
+            activator.bestow_item(item);
+            await context.send("Your crops are planted! Come back in one hour to $harvest!", reply=True)
+    else:
+        await context.send("Hmm... short term memory loss? You've already got crops planted.",reply=True)
+        for planted_item in planted:
+            expiration = float(planted_item.get_value("ready"))
+            if time.time() > expiration:
+                await context.send("In fact, you've got crops ready to $harvest!")
+                break
+        
 
 @command_handler.Command(AccessType.PRIVATE, desc = "Lets a Neighbor harvest crops.", generic = True, active=False)
 async def harvest(activator: Neighbor, context: Context, response: ResponsePackage = None):
+    
+    create_silo_table();
+    
+    with open("lookups/harvest_json/crop_info_completed.json", "r") as f:
+        crop_info = json.load(f)
 
-    if response is None:
-        if commands.chance(10):
-            await context.send("Did you know? Try `$sell` to sell the entire contents of your silo! Or wait for the farmers market channel to appear for potentially much higher returns.", reply = True);
-
-        activator.expire_items();
-
-        GMO_item = activator.get_item_of_name("GMO Crops");
+    activator.expire_items();
+    planted = activator.get_items_of_type("crops planted");
+    
+    if not planted:
+        await context.send("You can't reap what you sow, if you don't sow first buddy. Use $plant to plant some crops.")
+        return
+    for planted_item in planted:
+        expiration = float(planted_item.get_value("ready"))
+        print(expiration);
+        print(time.time());
+        if time.time() > expiration:
+            activator.vacate_item(planted_item)
+            crop_to_harvest = random.choice(list(crop_info.keys()));
+            rarity_score = crop_info[crop_to_harvest]["xp"]
+            # mu = round(50 / rarity_score)
+            
+            # if activator.get_item_of_name("GMO Crops"):
+            #     amt_to_harvest = random_crop_amt(4 * mu, 400)
+            # else:
+            #     amt_to_harvest = random_crop_amt(2*mu, 200);
+            
+            amt_to_harvest = random.randint(1, 100);
+            update_silo(activator.ID,crop_to_harvest,amt_to_harvest)
+                
+            res = await context.send(f"Wohoo! You harvested {amt_to_harvest} {crop_to_harvest}",reply=True);
+            await res.add_reaction(crop_info[crop_to_harvest]["emoji"])
         
-        activator.vacate_item(activator.get_item_of_name("Harvest Cooldown"))
-
-        if activator.get_item_of_name("Harvest Cooldown") and not activator.get_item_of_name("HarvestNow(TM) Fertilizer"):
-
-            await context.send(f"Whoops! You've already harvested in the past hour. Crops don't grow overnight you know! Well...");
-            return;
-        elif activator.get_item_of_name("Harvest Cooldown") and activator.get_item_of_name("HarvestNow(TM) Fertilizer"):
-            await context.send("Your HarvestNow(TM) Fertilizer is being used now.")
-            harvest_block_item = activator.get_item_of_name("Harvest Cooldown");
-            fertilizer_item = activator.get_item_of_name("HarvestNow(TM) Fertilizer");
-            activator.vacate_item(harvest_block_item);
-            activator.vacate_item(fertilizer_item);
-            activator.bestow_item(Item("HarvestNowBlock", "block", time.time() + 3600));
-        cur = time.time();
-        # print(activator.get_inventory());
-        new_bock = Item("Harvest Cooldown", "harvest", (cur + 3600));
-        activator.bestow_item(new_bock);
-        # print(activator.get_inventory());
-
-        silo_item = activator.get_item_of_name("Silo");
-        if silo_item is None:
-            current_silo = {name: 0 for name, val in crops.items()};
-            temp = Item("Silo", "silo", -1, **current_silo);
-            activator.bestow_item(temp);
-
         else:
-            old_silo = {name: int(val) for name, val in silo_item.values.items()}
-            old_values = list(old_silo.values());
+            await context.send("Patience is key! Crops don't grow overnight you know! Well...", reply=True)
+        
+@command_handler.Command(access_type=AccessType.PRIVATE, desc="View my silo!")
+async def silo(activator: Neighbor, context: Context):
+    try:
+        create_silo_table();
+        
+        with sqlite3.connect("data/silo.db") as conn:            
+            conn.row_factory = sqlite3.Row;
+            cursor = conn.cursor();
+            
+            cursor.execute("SELECT * FROM silo WHERE neighbor_ID = ?", (activator.ID,))
+            row = cursor.fetchone()
+            if row:
+                record = dict(row);
+                
+                output = "Your silo: \n"
+                for crop_count in list(record.items())[1:]:
+                    if crop_count[1] < 3:
+                        continue;
+                    else:
+                        output += f"> {crop_count[0]}: {crop_count[1]}\n"
+            else:     
+                output = "Your silo: \n"
+                output += f"> Empty!\n"
+                output += f"Try `$plant`ing some crops to fill your silo! & `$info harvest` to learn more!"
+            target = Context(await context.send(output, reply=True));
+            
+            if activator.get_item_of_name("Silo Security Lvl 1"):
+                await target.react("<:strongman2:1248819697747497042>")
+                ResponseRequest(strongman,"strongman","REACTION",context,target)
+            
+            # sorted_crops_by_count = sorted(list(record.items()),key=lambda x: x[1])
+    except ConnectionError:
+        raise ConnectionError("Could not connect to databse")
+    
+async def strongman(activator: Neighbor, context: Context, responsePackage: ResponsePackage):
+    await context.send("The Strongman is guarding this silo from The Silo Thief! <:strongman2:1248819697747497042>")
+    
+        
+def update_silo(neighbor_ID, crop_to_update, change: int):
+    try:
+        create_silo_table();
+        
+        with sqlite3.connect("data/silo.db") as conn:
+            cursor = conn.cursor();
+            
+            cursor.execute("INSERT OR IGNORE INTO silo (neighbor_ID) VALUES (?)", (neighbor_ID,));
+            
+            cursor.execute(f"UPDATE silo SET \"{crop_to_update}\" = \"{crop_to_update}\" + ? WHERE neighbor_ID = ?", (change,neighbor_ID,))
+            
+    except:
+        raise ConnectionError("Could not connect to databse")
+    
+def check_silo(neighbor_ID, crop_to_check):
+    try:
+        create_silo_table();
+        
+        with sqlite3.connect("data/silo.db") as conn:
+            cursor = conn.cursor();
+            
+            cursor.execute(f'SELECT "{crop_to_check}" FROM silo WHERE neighbor_ID = ?', (neighbor_ID,))
+            row = cursor.fetchone()
 
-            current_silo = {name: 0 for name, val in crops.items()};
-            for i, key in enumerate(current_silo.keys()):
-                if i < len(old_values):
-                    current_silo[key] = old_values[i]
+            return row[0] if row is not None else 0;      
+    except:
+        raise ConnectionError("Could not connect to databse")
+    
 
-
-        list_crops = list(crops.items());
-        list_with_probabilities = [];
-        for crop in list_crops:
-            for i in range(int((50 - crop[1]) ** 1.5)):
-                list_with_probabilities.append(crop);
-
-        to_harvest, xp_per_harvest = random.choice(list_with_probabilities);
-
-        amt_to_harvest = random.randint(1, 100);
-
-        if GMO_item:
-            amt_to_harvest *= 2;
-            if amt_to_harvest > 100:
-                amt_to_harvest -= random.randint(0,100);
-
-        current_silo[to_harvest] += amt_to_harvest;
-
-
-        new_silo_item = Item("Silo", "silo", -1, **current_silo);
-        activator.update_item(new_silo_item)
-
-        res = f"Wohoo! You harvested {amt_to_harvest} {to_harvest}"
-        target = await context.send(res);
-
-        random_key = random.choice(list(crop_emojis.keys()))
-        random_value = crop_emojis[random_key];
-        await target.add_reaction(random_value);
-        if to_harvest == random_key:
-            def key(ctx):
-                if not ctx.message.id == target.id:
-                    return False;
-                if not ctx.emoji.name == random_value:
-                    return False;
-                return True;
-            ResponseRequest(harvest, "crop", "REACTION", context, Context(target), key);
-        await commands.harvest_xp(context);
-    else:
-        await context.send("It's a perfect match! Enjoy 1000xp as your reward.");
-        await commands.inc_xp(activator, 1000, context);
+def create_silo_table():
+    with open("lookups/harvest_json/crop_info_completed.json", "r") as f:
+        crop_info = json.load(f)
+    
+    crop_names = list(crop_info.keys());
+    
+    try:
+        with sqlite3.connect("data/silo.db") as conn:
+            print("Opened")
+            cursor = conn.cursor();
+            
+            sql_statement = """CREATE TABLE IF NOT EXISTS silo (\nneighbor_ID INTEGER PRIMARY KEY"""
+            
+            for crop in crop_names:
+                sql_statement += ",\n"
+                sql_statement += f"\"{crop}\" INTEGER NOT NULL DEFAULT 0"
+                
+            sql_statement += "\n);"
+            
+            cursor.execute(sql_statement)
+    except:
+        raise ConnectionError("Could not connect to databse")
+    
+    
+# @command_handler.Command(access_type=AccessType.DEVELOPER)
+@command_handler.Scheduled("20:00", day_of_week=5)
+async def open_farmers_market(client):
+    
+    guild = client.get_guild(647883751853916162)
+    town_square = await guild.fetch_channel(648223363600351263);
+    # guild = context.guild;
+    
+    market_channel = await guild.create_text_channel('🚜farmers-market', category=town_square)
+    await market_channel.send("# 🚜 Welcome to the farmers market! 🌾")
+    await market_channel.send("Here, farmers are buying crops you've `$harvest`ed in exchange for XP. The farmers market comes to town every sunday trading 5 select crops, so don't miss out.")
+    await market_channel.send("Look below at the offerings and react accoringly to sell your stock if you like the price. Partials not accepted, but you can make the same sale multiple times.")
+    await market_channel.send("Not sure what you have in stock? Check `$silo` in <#784150346397253682>")
+    
+    with open("lookups/harvest_json/crop_info_completed.json", "r") as f:
+        crop_info = json.load(f)
+        
+    crop_names = list(crop_info.keys())
+    crops_demanded = random.sample(crop_names, 5)
+    demand_quantity = [random.randint(1,10), random.randint(1,10), random.randint(1,100),random.randint(1,100),random.randint(1,500)]
+    demand_price_per_crop = [random.uniform(1,3), random.uniform(1,3),random.uniform(1,5),random.uniform(1,5),random.uniform(1,10)]
+    demand_price = [];
+    res = ""
+    
+    market = {
+        "market_channel_id": market_channel.id
+    }
+    
+    for i, _ in enumerate(demand_quantity):
+        demand_price.append(round(demand_quantity[i] * demand_price_per_crop[i]))
+        
+        res += f"Offer {i+1}: {demand_quantity[i]} {crops_demanded[i]} for {demand_price[i]}xp\n"
+        market[f"Offer {i+1}"] = {
+            "crop": crops_demanded[i],
+            "quantity": demand_quantity[i],
+            "price": demand_price[i]
+        }
+    
+    target = Context(await market_channel.send(res));
+    
+    market["market_message_id"] = target.message.id;
+        
+    with open("data/farmers_market.json", "w") as f:
+            json.dump(market, f, indent=4)
+        
+    for crop in crops_demanded:
+        await target.react(crop_info[crop]["emoji"])
+        
+@command_handler.Scheduled("20:00", day_of_week=0)
+async def close_farmers_market(client):
+    guild = client.get_guild(647883751853916162)
+    
+    with open("data/farmers_market.json", "r") as f:
+        market_info = json.load();
+        
+    channel_id = market_info["market_channel_id"]
+    await guild.delete_channel(channel_id);
+    
+    
+@command_handler.Uncontested(type="REACTION", desc="Grants farmers market trades")
+async def sell_at_farmers_market(context: Context):
+    with open("lookups/harvest_json/crop_info_completed.json", "r") as f:
+        crop_info = json.load(f)
+        
+    with open("data/farmers_market.json", "r") as f:
+        market_info = json.load(f)
+        
+    intended_channel = market_info["market_channel_id"]
+    intended_message = market_info["market_message_id"]
+    
+    if not context.message.channel.id == intended_channel:
+        print("Wrong channel")
+        return False;
+    
+    if not context.message.id == intended_message:
+        print("Wrong message")
+        return False;
+    
+    purchase = None
+    for i in range(0,5):
+        cur_offer = f"Offer {i+1}"
+        cur_offer_emoji = crop_info[market_info[cur_offer]["crop"]]["emoji"];
+        if str(context.emoji) == cur_offer_emoji:
+            purchase = market_info[cur_offer]
+            break;
+        
+    if not purchase: # user selected 1 of 5 offers?
+        await context.message.remove_reaction(context.emoji, context.user);
+        return False;
+    
+    crop = purchase["crop"]
+    quantity = purchase["quantity"]
+    price = purchase["price"]
+    
+    if check_silo(context.user.id, crop) >= quantity: # user has enough to sell?
+        update_silo(context.user.id, crop, -quantity)
+        await commands.inc_xp(Neighbor(context.user.id,647883751853916162),price,context)
+    
+    
+    await context.message.remove_reaction(context.emoji, context.user);
+    
+@command_handler.Scheduled("16:00")
+async def silo_thief(client):
+    # guild = context.guild;
+    guild = client.get_guild(647883751853916162)
+    bot_channel = await guild.fetch_channel(784150346397253682);
+    try:
+        with sqlite3.connect("data/silo.db") as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor();
+    
+            cursor.execute("SELECT neighbor_ID FROM silo")
+            neighbor_ids = [row[0] for row in cursor.fetchall()]
+            
+            ten_percent = floor(len(neighbor_ids)/10) + 1;
+            
+            neighbors_to_steal_from = random.sample(neighbor_ids, ten_percent)
+            
+            for neighbor_id in neighbors_to_steal_from:
+                cursor.execute("SELECT * FROM silo WHERE neighbor_ID = ?", (neighbor_id,))
+                row = cursor.fetchone()
+                record = dict(row);
+                del record["neighbor_ID"]
+                
+                for crop_name, quantity in record.items():
+                    if not quantity > 0:
+                        continue;
+                    neighbor = Neighbor(neighbor_id,647883751853916162);
+                    has_security = False;
+                    if neighbor.get_item_of_name("Silo Security Lvl 1"):
+                        has_security = True;
+                    
+                    if has_security:
+                        quantity_to_take = round(quantity/1.5)
+                    else:
+                        quantity_to_take = round(quantity/3)
+                        
+                    
+                    update_silo(neighbor_id, crop_name,-quantity_to_take)
+                    # taken.append(f"{quantity_to_take} {crop_name}")
+                    # cursor.execute(f"UPDATE silo SET \"{crop_name}\" = \"{crop_name}\" + ? WHERE neighbor_ID = ?", (-quantity_to_take,neighbor_id,))
+                
+                if has_security:
+                    await bot_channel.send(f"The thief has come to town and taken 17% of <@{neighbor_id}>'s crops!")
+                else:
+                    await bot_channel.send(f"The thief has come to town and taken 33% of <@{neighbor_id}>'s crops!")
+    except:
+        raise ConnectionError("Could not connect to databse")

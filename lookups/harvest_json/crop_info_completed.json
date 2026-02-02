@@ -1,0 +1,226 @@
+{
+  "wheat": {
+    "xp": 1,
+    "emoji": "<:Wheat:1467223115858710559>"
+  },
+  "corn": {
+    "xp": 1,
+    "emoji": "<:Corn:1106752626382618644>"
+  },
+  "soybean": {
+    "xp": 2,
+    "emoji": "<:Soybean:1106753002615865364>"
+  },
+  "sugarcane": {
+    "xp": 3,
+    "emoji": "<:Sugarcane:1106753005237325824>"
+  },
+  "carrot": {
+    "xp": 1,
+    "emoji": "<:Carrot:1106752384778117231>"
+  },
+  "indigo": {
+    "xp": 5,
+    "emoji": "<:Indigo:1106752701590675496>"
+  },
+  "pumpkin": {
+    "xp": 6,
+    "emoji": "<:Pumpkin:1106752899184349224>"
+  },
+  "apple": {
+    "xp": 7,
+    "emoji": "<:Apple:1106752372790788156>"
+  },
+  "cotton": {
+    "xp": 6,
+    "emoji": "<:Cotton:1106752627330531338>"
+  },
+  "raspberry": {
+    "xp": 9,
+    "emoji": "<:Raspberry:1106752997922439178>"
+  },
+  "chilli pepper": {
+    "xp": 7,
+    "emoji": "<:Chili_Pepper:1106752487865716838>"
+  },
+  "black bean": {
+    "xp": 2,
+    "emoji": "<:Black_Bean:1467223345014767667>"
+  },
+  "blackberry": {
+    "xp": 16,
+    "emoji": "<:Blackberry:1106752379405213820>"
+  },
+  "tomato": {
+    "xp": 8,
+    "emoji": "<:Tomato:1106753009607774330>"
+  },
+  "blueberry": {
+    "xp": 16,
+    "emoji": "<:Blueberry:1467223322650738934>"
+  },
+  "strawberry": {
+    "xp": 10,
+    "emoji": "<:Strawberry:1106753004209709219>"
+  },
+  "potato": {
+    "xp": 7,
+    "emoji": "<:Potato:1106752897959596052>"
+  },
+  "cacao": {
+    "xp": 16,
+    "emoji": "<:Cacao:1106752383612112907>"
+  },
+  "coffee bean": {
+    "xp": 12,
+    "emoji": "<:Coffee_Bean:1106752625229180959>"
+  },
+  "chamomile": {
+    "xp": 2,
+    "emoji": "<:Chamomile:1467223282439815169>"
+  },
+  "asparagus": {
+    "xp": 8,
+    "emoji": "<:Asparagus:1467223401654518023>"
+  },
+  "sesame": {
+    "xp": 4,
+    "emoji": "<:Sesame:1106753001303052399>"
+  },
+  "pineapple": {
+    "xp": 3,
+    "emoji": "<:Pineapple:1106752893975015494>"
+  },
+  "lily": {
+    "xp": 5,
+    "emoji": "<:Lily:1106752640945246278>"
+  },
+  "rice": {
+    "xp": 3,
+    "emoji": "<:Rice:1106752999428198470>"
+  },
+  "olive": {
+    "xp": 17,
+    "emoji": "<:Olive:1106752784906334289>"
+  },
+  "lettuce": {
+    "xp": 7,
+    "emoji": "<:Lettuce:1106752702865744013>"
+  },
+  "garlic": {
+    "xp": 3,
+    "emoji": "<:Garlic:1106752631298338846>"
+  },
+  "sunflower": {
+    "xp": 5,
+    "emoji": "<:Sunflower:1106753005983899730>"
+  },
+  "cabbage": {
+    "xp": 3,
+    "emoji": "<:Cabbage:1106752382039228496>"
+  },
+  "lemon": {
+    "xp": 18,
+    "emoji": "<:Lemon:1106752639468847142>"
+  },
+  "onion": {
+    "xp": 8,
+    "emoji": "<:Onion:1106752786584055809>"
+  },
+  "cucumber": {
+    "xp": 3,
+    "emoji": "<:Cucumber:1106752628735627344>"
+  },
+  "orange": {
+    "xp": 19,
+    "emoji": "<:Orange:1106752787615850506>"
+  },
+  "beetroot": {
+    "xp": 3,
+    "emoji": "<:Beetroot:1106752376783786094>"
+  },
+  "bell pepper": {
+    "xp": 7,
+    "emoji": "<:Bell_Pepper:1467223373569462465>"
+  },
+  "peach": {
+    "xp": 20,
+    "emoji": "<:Peach:1106752790061137991>"
+  },
+  "ginger": {
+    "xp": 6,
+    "emoji": "<:Ginger:1106752632267223060>"
+  },
+  "tea leaf": {
+    "xp": 9,
+    "emoji": "<:Tea_Leaf:1106753007758082058>"
+  },
+  "peony": {
+    "xp": 7,
+    "emoji": "<:Peony:1106752791524937758>"
+  },
+  "broccoli": {
+    "xp": 4,
+    "emoji": "<:Broccoli:1106752380814491689>"
+  },
+  "grapes": {
+    "xp": 6,
+    "emoji": "<:Grapes:1106752700114280488>"
+  },
+  "mint": {
+    "xp": 6,
+    "emoji": "<:Mint:1106752782322630756>"
+  },
+  "banana": {
+    "xp": 20,
+    "emoji": "<:Banana:1106752375164764200>"
+  },
+  "passion fruit": {
+    "xp": 4,
+    "emoji": "<:Passion_Fruit:1467223214781501522>"
+  },
+  "mushroom": {
+    "xp": 2,
+    "emoji": "<:Mushroom:1106752783333478511>"
+  },
+  "eggplant": {
+    "xp": 3,
+    "emoji": "<:Eggplant:1106752630354608158>"
+  },
+  "watermelon": {
+    "xp": 8,
+    "emoji": "<:Watermelon:1467223158091153420>"
+  },
+  "plum": {
+    "xp": 16,
+    "emoji": "<:Plum:1106752793974419456>"
+  },
+  "clay": {
+    "xp": 5,
+    "emoji": "<:Clay:1106752387135320134>"
+  },
+  "chickpea": {
+    "xp": 4,
+    "emoji": "<:Chickpea:1106752447692677240>"
+  },
+  "mango": {
+    "xp": 20,
+    "emoji": "<:Mango:1106752779793465524>"
+  },
+  "coconut": {
+    "xp": 21,
+    "emoji": "<:Coconut:1106752623421440001>"
+  },
+  "guava": {
+    "xp": 22,
+    "emoji": "<:Guava:1106752635656216656>"
+  },
+  "pomegranate": {
+    "xp": 22,
+    "emoji": "<:Pomegranate:1106752896462237706>"
+  },
+  "oats": {
+    "xp": 1,
+    "emoji": "<:Oats:1467223243705548800>"
+  }
+}

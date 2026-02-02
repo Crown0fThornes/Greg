@@ -1,0 +1,17 @@
+ $silo $silo $silo $silo $silo $silo $silo Welcome in👋👋 $plant $harvest $silo & server Wya $!clear 10 Maybe i will be 1234 in 40 years $silo $info thief $silo $rss $silo $level 5 $rss $plant $rss It's Pras' farm in carnival. Her main farm is in FF pro. $rss harvest or plant or silo
+"harvest" is what people call our Greg discord bot's farming minigame.
+
+
+**Core mechanic**
+Use `$plant` to plant a random crop, then `$harvest` it an hour later to get crops.
+
+Use `$silo` to view all collected crops.
+
+**Farmers Market**
+Every week on Sunday (midday Saturday to midday Monday for good measure), a "farmers market" channel in the server will appear where you can sell a subset of your crops in exchange for Greg xp, which can increase your server level or be used to buy things in the `$rss`.
+
+**Thief**
+A silo thief likes to steal crops to discourage hoarding. Learn more at `$info thief`.
+
+**RSS**
+Purchase upgrades for your harvesting experience using `$rss` and opening the minigames section. Ola $silo $harvest $silo $silo

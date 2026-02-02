@@ -1407,7 +1407,7 @@ async def treasury(activator: Neighbor, context: Context):
     await context.send(f"I have sent in your treasury record update with:\n{bolts} bolts\n{planks} planks\n{duct_tapes} duct tape\nFor the following reason: {reason}", reply=True)
     
     
-@command_handler.Scheduled("13:05")
+# @command_handler.Scheduled("13:05")
 async def schedule_test(client):
     guild = client.get_guild(FF.guild);
     bc = await guild.fetch_channel(704366328089280623)
@@ -3665,7 +3665,7 @@ async def set_time(client):
     await trade_reminder(client, guild, est_time);
     # await birthdays(client, guild, est_time)
     
-@command_handler.Scheduled(time="4:00")
+# @command_handler.Scheduled(time="4:00")
 async def birthdays(client):
 
     guild = client.get_guild(FF.guild)
@@ -5646,9 +5646,9 @@ async def info(activator: Neighbor, context: Context, keyword=None):
 
         res = (
             "Can you believe it! A silo thief on this side of the Mississippi!\n\n"
-            "Eye witnesses have spotted this suspect breaking into silos in OUR TOWN!!! Unfortunately, due to their mask, it is impossible to identify the suspect. "
+            "Eye witnesses have spotted this suspect breaking into silos in OUR TOWN!!! Unfortunately, due to their mask, it is impossible to identify the suspect."
             "I recommend purchasing upgraded security for your Silo (which I happen to be selling at `$rss`). Trust no one!!\n\n"
-            "*According to data gathered in the nearest town East, the thief seems to break into 10% of silos on 10% of days. "
+            "*According to data gathered in the nearest town o'er, the thief seems to break into 10% of silos each day, taking one third of the crops in each."
             "From those silos, the thief takes 10% of the stock of 10% of its crops.*"
         )
     else:
@@ -7523,12 +7523,12 @@ def real_round(x):
 @command_handler.Command(AccessType.PRIVATE, desc = "Allows Neighbors to purchase discord perks like special roles using server XP", generic = True, active=False)
 async def rss(activator: Neighbor, context: Context, response: ResponsePackage = None):
 
-    if activator.ID == 355169964027805698:
-        with open('indev_rss.json') as fRSS:
-            rss_info = json.load(fRSS)
-    else:
-        with open('rss.json') as fRSS:
-            rss_info = json.load(fRSS)
+    # if activator.ID == 355169964027805698:
+    #     with open('indev_rss.json') as fRSS:
+    #         rss_info = json.load(fRSS)
+    # else:
+    with open('rss.json') as fRSS:
+        rss_info = json.load(fRSS)
 
     # if activator.get_level() < 3:
     #     await context.send("Whoops! You're too poor to access my RSS. Try again at level 3!");
@@ -8471,7 +8471,7 @@ async def hangman(activator: Neighbor, context: Context, response: ResponsePacka
         ResponseRequest(hangman, "guess", "MESSAGE", context, Context(target), key, guessed = guessed, answer = answer, so_far = new, wrong = wrong);
 
 
-@command_handler.Command(AccessType.PRIVATE, desc = "Displays all crops a Neighbor has in their silo.", generic = True)
+# @command_handler.Command(AccessType.PRIVATE, desc = "Displays all crops a Neighbor has in their silo.", generic = True)
 async def silo(activator: Neighbor, context: Context):
 
     if chance(10):

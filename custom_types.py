@@ -363,7 +363,7 @@ class Neighbor:
             for item in self.inventory:
                 if item.is_expired():
                     self.vacate_item(item);
-        # print("End exp" + str(self.XP));
+        # print("End exp" + str(self.XP));use 
 
 class Item:
     def __init__(self, name: str, type: str, expiration: int, **values):
