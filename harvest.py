@@ -55,7 +55,7 @@ async def plant(activator: Neighbor, context: Context):
     max_fields = 1 if not has_expanded_fields else 3;
     if len(planted) < max_fields:
         for _ in range(len(planted), max_fields):
-            item = Item(f"Crops Planted! {len(planted)}", "crops planted", -1,ready=str(time.time() + 0))
+            item = Item(f"Crops Planted! {len(planted)}", "crops planted", -1,ready=str(time.time() + 3600))
             activator.bestow_item(item);
             await context.send("Your crops are planted! Come back in one hour to $harvest!", reply=True)
     else:
