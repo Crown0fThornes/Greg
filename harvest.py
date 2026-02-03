@@ -121,7 +121,7 @@ async def silo(activator: Neighbor, context: Context):
                 
                 output = "Your silo: \n"
                 for crop_count in list(record.items())[1:]:
-                    if crop_count[1] < 3:
+                    if crop_count[1] <= 0:
                         continue;
                     else:
                         output += f"> {crop_count[0]}: {crop_count[1]}\n"
@@ -337,9 +337,13 @@ async def silo_thief(client):
                         has_security = True;
                     
                     if has_security:
-                        quantity_to_take = round(quantity/1.5)
+                        if quantity < 5:
+                            quantity_to_take = quantity
+                        quantity_to_take = floor(quantity/1.5)
                     else:
-                        quantity_to_take = round(quantity/3)
+                        if quantity < 10:
+                            quantity_to_take = quantity
+                        quantity_to_take = floor(quantity/3)
                         
                     
                     update_silo(neighbor_id, crop_name,-quantity_to_take)
@@ -347,8 +351,8 @@ async def silo_thief(client):
                     # cursor.execute(f"UPDATE silo SET \"{crop_name}\" = \"{crop_name}\" + ? WHERE neighbor_ID = ?", (-quantity_to_take,neighbor_id,))
                 
                 if has_security:
-                    await bot_channel.send(f"The thief has come to town and taken 17% of <@{neighbor_id}>'s crops!")
+                    await bot_channel.send(f"The thief has come to town and taken ~17% of <@{neighbor_id}>'s crops!")
                 else:
-                    await bot_channel.send(f"The thief has come to town and taken 33% of <@{neighbor_id}>'s crops!")
+                    await bot_channel.send(f"The thief has come to town and taken ~33% of <@{neighbor_id}>'s crops!")
     except:
         raise ConnectionError("Could not connect to databse")
