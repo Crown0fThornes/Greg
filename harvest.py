@@ -196,6 +196,15 @@ def create_silo_table():
         raise ConnectionError("Could not connect to databse")
     
     
+def create_data_trcking_table():
+    with sqlite3.connect("data/silo.db") as conn:
+        cursor = conn.cursor();
+        
+        sql_statement = str("CREATE TABLE IF NOT EXISTS data (\n"
+                            "\tneighbor_ID INTEGER PRIMARY KEY\n"
+                            "\tharvest_count INTEGER NOT NULL DEFAULT 0\n"
+                            "\txp_garnered INTEGER NOT NULL DEFAULT 0\n")
+    
 # @command_handler.Command(access_type=AccessType.DEVELOPER)
 @command_handler.Scheduled("20:00", day_of_week=5)
 async def open_farmers_market(client):
@@ -290,10 +299,14 @@ async def sell_at_farmers_market(context: Context):
     quantity = purchase["quantity"]
     price = purchase["price"]
     
+    bc = await context.guild.fetch_channel(1467679489625690218)
+    
     if check_silo(context.user.id, crop) >= quantity: # user has enough to sell?
         update_silo(context.user.id, crop, -quantity)
         await commands.inc_xp(Neighbor(context.user.id,647883751853916162),price,context)
-    
+        await bc.send(f"{context.user.display_name} sold {quantity} {crop} for {price} at the Farmers Market!")
+    else:
+        await bc.send(f"<@{context.user.id}>, you don't have enough {crop} to make this sale!")
     
     await context.message.remove_reaction(context.emoji, context.user);
     

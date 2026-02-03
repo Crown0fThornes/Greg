@@ -216,6 +216,27 @@ swear_words = [];
 test_list = ["some value"];
 active_expectations = [];
 
+@command_handler.Uncontested("Lets users select their own ticket type.", type="MESSAGE")
+async def ticket_type(context: Context):
+    if context.channel.topic == str(context.author.id):
+        new_tickets = remember("new_tickets")
+        print(new_tickets)
+        if context.channel.id in new_tickets:
+            new_tickets.remove(context.channel.id)
+            remember("new_tickets", new_tickets)
+            
+        else:
+            return
+        
+        await context.send("Hi there! Thanks for leaving a message. If you could help me out, what does it pertain to??\n"
+                            "<:ff_logo:1111011971953872976> Joining Friendly Farmers.\n"
+                            "↔️ Switching Neighborhoods within FF."
+                            ":<:plank:856295704740888616>: Collecting BEMs from the treasury or trading BEMS with the treasury.\n"
+                            "💸 Trading my BEMs for Council goods.\n"
+                            "If your needs pertain to any of the above, please react to this message accordingly. In any case, a Council Member will be with you when available (shouldn't be more than a few hours).")
+    
+    
+
 # If value given, stores to DB. If value None, retrieves data.
 def remember(key, value=Ellipsis, delete=False):
     with shelve.open("data/persistentdata") as db:

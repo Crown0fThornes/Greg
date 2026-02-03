@@ -81,4 +81,7 @@ async def open_ticket(emoji, user, guild, FF):
     await ticket.set_permissions(rank1, read_messages=True, send_messages=False)
     await ticket.send(f"Thank you for reaching out to the Council via Greg for the first time! Your private ticket channel is located here <@{user.id}>. Drop a message letting us know what we can help you with!")
     await mission_control.send(f"<@&{648188387836166168}> **be advised**: <@{user.id}> has opened a new support ticket at <#{ticket.id}>")
+    new_tickets = remember("new_tickets") or []
+    new_tickets.append(ticket.id);
+    remember("new_tickets", new_tickets)
     return ticket;
