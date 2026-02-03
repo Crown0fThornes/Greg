@@ -4909,15 +4909,12 @@ async def reckoning_warning(client):
     bc = await guild.fetch_channel(FF.bot_channel)
 
     message = (
-        "⚠️ **ATTENTION, FARMERS.** ⚠️\n\n"
-        "The month turns. The clock resets. The paperwork is filed.\n\n"
-        "**The Reckoning** arrives in **24 hours**.\n\n"
-        "At that time, all players’ **server levels will be cleanly cut in half**, "
-        "resulting in a dramatic reduction in XP.\n\n"
-        "Of course, this event is *completely outside my control* and definitely not "
-        "the result of a scheduled process that runs with impeccable timing every month, so take any complaints up with the universe itself.\n\n"
-        "…Unrelated, my `$rss` shop remains fully stocked: rain or shine, reckoning or no; "
-        "should anyone feel an urge to convert levels into tangible rewards before destiny intervenes please make a visit.\n\n"
+        "**The reckoning is upon you!**\n"
+        "In one day's time, all Neighbors' server levels are to be cut in half!\n"
+        "This is a disastrous act of nature, which I cannot prevent and have no control over.\n"
+        "You all are best off accepting its coming!\n"
+        "It may be wise to spend those levels before the reckoning, and I have plenty of great deals in my `$rss`!\n\n"
+        "-# Notably, a reduction in half of one's levels results in a much worse reduction in XP, since each level up is worth more XP than the last."
     )
 
     target = await bc.send(message)
@@ -5670,10 +5667,9 @@ async def info(activator: Neighbor, context: Context, keyword=None):
 
         res = (
             "Can you believe it! A silo thief on this side of the Mississippi!\n\n"
-            "Eye witnesses have spotted this suspect breaking into silos in OUR TOWN!!! Unfortunately, due to their mask, it is impossible to identify the suspect."
-            "I recommend purchasing upgraded security for your Silo (which I happen to be selling at `$rss`). Trust no one!!\n\n"
+            "Eye witnesses have spotted this suspect breaking into silos in OUR TOWN!!! Unfortunately, due to their mask, it is impossible to identify the suspect. "
+            "Trust no one!! I recommend purchasing upgraded security for your Silo (which I happen to be selling at `$rss`).\n\n"
             "*According to data gathered in the nearest town o'er, the thief seems to break into 10% of silos each day, taking one third of the crops in each."
-            "From those silos, the thief takes 10% of the stock of 10% of its crops.*"
         )
     else:
         
@@ -5748,7 +5744,11 @@ async def info(activator: Neighbor, context: Context, keyword=None):
             ranked_blurbs = sorted(zip(cache.items(), scores), key=lambda x: x[1], reverse=True)
             
             bestkw, bestv = ranked_blurbs[0][0]
-            message = await channel.fetch_message(bestv['id']);
+            try:
+                message = await channel.fetch_message(bestv['id']);
+            except:
+                message = ""
+            res = ""
             if message and ":" in message.content:
                 # Split once per line into keyword and content
                 raw_keywords, *content_parts = message.content.split(':')

@@ -55,7 +55,7 @@ async def plant(activator: Neighbor, context: Context):
     max_fields = 1 if not has_expanded_fields else 3;
     if len(planted) < max_fields:
         for _ in range(len(planted), max_fields):
-            item = Item(f"Crops Planted! {len(planted)}", "crops planted", -1,ready=str(time.time() + 0))
+            item = Item(f"Crops Planted! {len(planted)}", "crops planted", -1,ready=str(time.time() + 3600))
             activator.bestow_item(item);
             await context.send("Your crops are planted! Come back in one hour to $harvest!", reply=True)
     else:
@@ -121,7 +121,7 @@ async def silo(activator: Neighbor, context: Context):
                 
                 output = "Your silo: \n"
                 for crop_count in list(record.items())[1:]:
-                    if crop_count[1] < 3:
+                    if crop_count[1] <= 0:
                         continue;
                     else:
                         output += f"> {crop_count[0]}: {crop_count[1]}\n"
@@ -206,10 +206,12 @@ def create_data_trcking_table():
                             "\txp_garnered INTEGER NOT NULL DEFAULT 0\n")
     
 # @command_handler.Command(access_type=AccessType.DEVELOPER)
-@command_handler.Scheduled("20:00", day_of_week=5)
-async def open_farmers_market(client):
+# @command_handler.Scheduled("20:00", day_of_week=5)
+@command_handler.Command(access_type=AccessType.DEVELOPER)
+async def open_farmers_market(activator, context):
     
-    guild = client.get_guild(647883751853916162)
+    guild = context.guild;
+    # guild = client.get_guild(647883751853916162)
     town_square = await guild.fetch_channel(648223363600351263);
     # guild = context.guild;
     
@@ -253,15 +255,21 @@ async def open_farmers_market(client):
     for crop in crops_demanded:
         await target.react(crop_info[crop]["emoji"])
         
-@command_handler.Scheduled("20:00", day_of_week=0)
+    gc = await guild.fetch_channel(648223397205114910);
+    await gc.send(f"The Farmers Market has come to town once again! Check out the offers @ <#{market_channel.id}>")
+        
+        
+@command_handler.Scheduled("20:00", day_of_week=1)
 async def close_farmers_market(client):
     guild = client.get_guild(647883751853916162)
+    gc = await guild.fetch_channel(648223397205114910);
     
     with open("data/farmers_market.json", "r") as f:
         market_info = json.load();
         
     channel_id = market_info["market_channel_id"]
     await guild.delete_channel(channel_id);
+    await gc.send("The Farmers Market has left down! Check back next Sunday for more offers.")
     
     
 @command_handler.Uncontested(type="REACTION", desc="Grants farmers market trades")
@@ -342,9 +350,13 @@ async def silo_thief(client):
                         has_security = True;
                     
                     if has_security:
-                        quantity_to_take = round(quantity/1.5)
+                        if quantity < 5:
+                            quantity_to_take = quantity
+                        quantity_to_take = floor(quantity/1.5)
                     else:
-                        quantity_to_take = round(quantity/3)
+                        if quantity < 10:
+                            quantity_to_take = quantity
+                        quantity_to_take = floor(quantity/3)
                         
                     
                     update_silo(neighbor_id, crop_name,-quantity_to_take)
@@ -352,8 +364,8 @@ async def silo_thief(client):
                     # cursor.execute(f"UPDATE silo SET \"{crop_name}\" = \"{crop_name}\" + ? WHERE neighbor_ID = ?", (-quantity_to_take,neighbor_id,))
                 
                 if has_security:
-                    await bot_channel.send(f"The thief has come to town and taken 17% of <@{neighbor_id}>'s crops!")
+                    await bot_channel.send(f"The thief has come to town and taken ~17% of <@{neighbor_id}>'s crops!")
                 else:
-                    await bot_channel.send(f"The thief has come to town and taken 33% of <@{neighbor_id}>'s crops!")
+                    await bot_channel.send(f"The thief has come to town and taken ~33% of <@{neighbor_id}>'s crops!")
     except:
         raise ConnectionError("Could not connect to databse")
