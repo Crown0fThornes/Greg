@@ -246,15 +246,21 @@ async def open_farmers_market(activator, context):
     for crop in crops_demanded:
         await target.react(crop_info[crop]["emoji"])
         
-@command_handler.Scheduled("20:00", day_of_week=0)
+    gc = await guild.fetch_channel(648223397205114910);
+    await gc.send(f"The Farmers Market has come to town once again! Check out the offers @ <#{market_channel.id}>")
+        
+        
+@command_handler.Scheduled("20:00", day_of_week=1)
 async def close_farmers_market(client):
     guild = client.get_guild(647883751853916162)
+    gc = await guild.fetch_channel(648223397205114910);
     
     with open("data/farmers_market.json", "r") as f:
         market_info = json.load();
         
     channel_id = market_info["market_channel_id"]
     await guild.delete_channel(channel_id);
+    await gc.send("The Farmers Market has left down! Check back next Sunday for more offers.")
     
     
 @command_handler.Uncontested(type="REACTION", desc="Grants farmers market trades")
