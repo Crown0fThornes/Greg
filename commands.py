@@ -228,14 +228,38 @@ async def ticket_type(context: Context):
         else:
             return
         
-        await context.send("Hi there! Thanks for leaving a message. If you could help me out, what does it pertain to??\n"
-                            "<:ff_logo:1111011971953872976> Joining Friendly Farmers.\n"
-                            "↔️ Switching Neighborhoods within FF."
-                            ":<:plank:856295704740888616>: Collecting BEMs from the treasury or trading BEMS with the treasury.\n"
-                            "💸 Trading my BEMs for Council goods.\n"
-                            "If your needs pertain to any of the above, please react to this message accordingly. In any case, a Council Member will be with you when available (shouldn't be more than a few hours).")
+        with open("lookups/ticket_types.json", "r") as f:
+            ticket_types = json.load(f)
+            
+        res = "Hi there! Thanks for leaving a message. If you could help me out, what does it pertain to?\n"
+        
+        for ticket_type in ticket_types:
+            res += f"{ticket_type["emoji"]} **{ticket_type["prompt"]}**.\n"
+        
+        res += "In any case, a Council Member will be with you when available."
+        
+        target_context = Context(await context.send(res));
+        
+        for ticket_type in ticket_types:
+            await target_context.react(ticket_type["emoji"])
+            
+        ResponseRequest(sort_ticket, "ticket_type", type="MESSAGE",activation_context=context,response_context=target_context,timeout=time.time()+1200)
     
-    
+async def sort_ticket(activator: Neighbor, context: Context, response: ResponsePackage):
+        with open("lookups/ticket_types.json", "r") as f:
+            ticket_types = json.load(f)
+        
+        chosen_type = None;
+        for ticket_type in ticket_types:
+            if str(context.emoji) == ticket_type["emoji"]:
+                chosen_type = ticket_type
+                break
+        else:
+            return
+        
+        channel = await context.guild.fetch_channel(chosen_type["channel"])
+        await channel.send("Open ticket")
+        
 
 # If value given, stores to DB. If value None, retrieves data.
 def remember(key, value=Ellipsis, delete=False):

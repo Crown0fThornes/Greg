@@ -4,12 +4,16 @@ from discord import TextChannel
 
 # ──────── REMEMBER SYSTEM ───────────────────────────────────────────
 
-def remember(key, value=None):
-    os.makedirs("storage", exist_ok=True)
-    with shelve.open("storage/persistdata") as db:
-        if value is not None:
+# If value given, stores to DB. If value None, retrieves data.
+def remember(key, value=Ellipsis, delete=False):
+    with shelve.open("data/persistentdata") as db:
+        if value is not None and value is not Ellipsis:
             db[key] = value
-        return db.get(key)
+            return value;
+        elif value is None or delete:
+            return db.pop(key, None)
+        else:
+            return db.get(key)
 
 # ──────── CATEGORY MANAGEMENT ───────────────────────────────────────
 
@@ -46,6 +50,9 @@ async def restore_ticket(ticket: TextChannel, user, name, open_category, guild, 
     await ticket.set_permissions(rank1, read_messages=True, send_messages=False)
     await ticket.send(f"Thank you for reaching out to the Council. Your private ticket channel has been unarchived for you and is located here <@{user.id}>. Drop a message letting us know what we can help you with!")
     await mission_control.send(f"<@&{648188387836166168}> **be advised**: <@{user.id}> has reopened a support ticket at <#{ticket.id}>")
+    new_tickets = remember("new_tickets") or []
+    new_tickets.append(ticket.id);
+    remember("new_tickets", new_tickets)
 
 # ──────── OPEN TICKET LOGIC ─────────────────────────────────────────
 

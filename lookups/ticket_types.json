@@ -1,0 +1,34 @@
+[
+    {
+        "prompt": "Joining Friendly Farmers",
+        "emoji": "<:ff_logo:1111011971953872976>",
+        "ping": 1468422585510531123,
+        "channel": 1468425053107388640
+    },
+    {
+        "prompt": "Leaving; taking a break; switching Neighborhoods; etc",
+        "emoji": "↔️",
+        "ping": 1468422585510531123,
+        "channel": 1468425095642091763
+    },
+    {
+        "prompt": "Collecting BEMs from the treasury or trading BEMS with the treasury",
+        "emoji": "<:plank:856295704740888616>",
+        "ping": 1468422585510531123,
+        "channel": 1468425143960207500
+    },
+    {
+        "prompt": "Trading my BEMs for Council goods",
+        "emoji": "💰",
+        "ping": 1468422585510531123,
+        "channel": 1468425237786787891
+    },
+    {
+        "prompt": "Other",
+        "emoji": "ℹ️",
+        "ping": 1468422585510531123,
+        "channel": 1468425305881448634
+    }
+
+
+]
