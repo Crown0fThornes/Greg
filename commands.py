@@ -243,7 +243,10 @@ async def ticket_type(context: Context):
         for ticket_type in ticket_types:
             await target_context.react(ticket_type["emoji"])
             
-        ResponseRequest(sort_ticket, "ticket_type", type="MESSAGE",activation_context=context,response_context=target_context,timeout=time.time()+1200)
+        def key(ctx):
+            return ctx.user.id == context.author.id
+            
+        ResponseRequest(sort_ticket, "ticket_type", type="REACTION",activation_context=context,response_context=target_context,timeout=time.time()+1200,key=key)
     
 async def sort_ticket(activator: Neighbor, context: Context, response: ResponsePackage):
         with open("lookups/ticket_types.json", "r") as f:
@@ -251,15 +254,16 @@ async def sort_ticket(activator: Neighbor, context: Context, response: ResponseP
         
         chosen_type = None;
         for ticket_type in ticket_types:
-            if str(context.emoji) == ticket_type["emoji"]:
+            if str(response.content) == ticket_type["emoji"]:
                 chosen_type = ticket_type
                 break
         else:
             return
         
         channel = await context.guild.fetch_channel(chosen_type["channel"])
-        await channel.send("Open ticket")
-        
+        target_context = Context(await channel.send(f"**Open ticket from <@{context.user.id}> here: <#{context.guild.id}>**\n\nReact with ✅ to resolve; 🔄 to force reopen"))
+        await target_context.react("✅")
+        await target_context.react("🔄")
 
 # If value given, stores to DB. If value None, retrieves data.
 def remember(key, value=Ellipsis, delete=False):
