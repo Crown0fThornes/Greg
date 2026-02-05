@@ -3714,7 +3714,7 @@ async def set_time(client):
     await trade_reminder(client, guild, est_time);
     # await birthdays(client, guild, est_time)
     
-# @command_handler.Scheduled(time="4:00")
+@command_handler.Scheduled(time="12:00")
 async def birthdays(client):
 
     guild = client.get_guild(FF.guild)
