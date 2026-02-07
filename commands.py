@@ -266,10 +266,9 @@ async def ticket_type(context: Context):
         
         channel = await context.guild.fetch_channel(1468425305881448634)
         ping = FF.leaders_role
-        target_context = Context(await channel.send(f"**Unresolved ticket from <@{context.author.id}> here: <#{context.channel.id}>**\n\n<@&{ping}> react with ✅ to resolve; 🔄 to force reopen"))
+        target_context = Context(await channel.send(f"**Unresolved ticket from <@{context.author.id}> here: <#{context.channel.id}>**\n\nReact with ✅ to resolve; 🔄 to force reopen"))
         await target_context.react("✅")
         await target_context.react("🔄")
-
 
         open_tickets = remember("open_tickets") or {} #pull open_tickets list from db, or create new list if doesn't exist yet
         open_tickets[target_context.message.id] = context.channel.id #append new item
