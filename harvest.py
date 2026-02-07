@@ -223,7 +223,7 @@ def create_data_trcking_table():
         cursor.execute(sql_statement)
     
 # @command_handler.Command(access_type=AccessType.DEVELOPER)
-@command_handler.Scheduled("16:00", day_of_week=6)
+@command_handler.Scheduled("18:00", day_of_week=5)
 async def open_farmers_market(client):
     
     # guild = context.guild;
@@ -275,7 +275,7 @@ async def open_farmers_market(client):
     await gc.send(f"The Farmers Market has come to town once again! Check out the offers @ <#{market_channel.id}>")
         
         
-@command_handler.Scheduled("20:00", day_of_week=1)
+@command_handler.Scheduled("18:00", day_of_week=0)
 async def close_farmers_market(client):
     guild = client.get_guild(647883751853916162)
     gc = await guild.fetch_channel(648223397205114910);
