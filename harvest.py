@@ -223,12 +223,11 @@ def create_data_trcking_table():
         cursor.execute(sql_statement)
     
 # @command_handler.Command(access_type=AccessType.DEVELOPER)
-# @command_handler.Scheduled("20:00", day_of_week=5)
-@command_handler.Command(access_type=AccessType.DEVELOPER)
-async def open_farmers_market(activator, context):
+@command_handler.Scheduled("18:00", day_of_week=5)
+async def open_farmers_market(client):
     
-    guild = context.guild;
-    # guild = client.get_guild(647883751853916162)
+    # guild = context.guild;
+    guild = client.get_guild(647883751853916162)
     town_square = await guild.fetch_channel(648223363600351263);
     # guild = context.guild;
     
@@ -276,7 +275,7 @@ async def open_farmers_market(activator, context):
     await gc.send(f"The Farmers Market has come to town once again! Check out the offers @ <#{market_channel.id}>")
         
         
-@command_handler.Scheduled("20:00", day_of_week=1)
+@command_handler.Scheduled("18:00", day_of_week=0)
 async def close_farmers_market(client):
     guild = client.get_guild(647883751853916162)
     gc = await guild.fetch_channel(648223397205114910);
@@ -324,7 +323,7 @@ async def sell_at_farmers_market(context: Context):
     quantity = purchase["quantity"]
     price = purchase["price"]
     
-    bc = await context.guild.fetch_channel(1467679489625690218)
+    bc = await context.guild.fetch_channel(784150346397253682)
     
     if check_silo(context.user.id, crop) >= quantity: # user has enough to sell?
         update_silo(context.user.id, crop, -quantity)

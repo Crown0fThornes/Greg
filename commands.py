@@ -248,6 +248,56 @@ def remember(key, value=Ellipsis, delete=False):
         else:
             return db.get(key)
 
+@command_handler.Loop(hours = 1)
+async def publish_heart_react_msg(client):
+    
+    if remember("message_done"):
+        return
+    
+    guild = client.get_guild(FF.guild)
+    channel = await guild.fetch_channel(1218041302998974584)
+    target_context = Context(await channel.send("# Valentine's Day Tag Surprise\nTo celebrate Valentine's day, react to this message to add one of any of the available LTO heart emojis to your server nickname <:pink_red_hearts:856202296823250964> <@&1181330910747054211>"))
+
+    remember("heart_message_id", target_context.message.id);
+    
+    HEARTS = {"🩷","❤️","🧡","💛","💚","🩵","💙","💜","🖤","🩶","🤍","🤎"}
+    
+    for heart in HEARTS:
+        try:
+            await target_context.react(heart)
+        except:
+            pass
+        
+    remember("message_done", True)
+
+        
+@command_handler.Uncontested(type="REACTION", desc="Add heart LTO emoji to nickname")
+async def add_hearts(context: Context):
+    if not context.message.id == int(remember("heart_message_id")):
+        return
+    
+    HEARTS = {"🩷","❤️","🧡","💛","💚","🩵","💙","💜","🖤","🩶","🤍","🤎"}
+    if str(context.emoji) not in HEARTS:
+        return
+
+    now = datetime.datetime.now()
+
+    end_of_feb21 = now.replace(month=2, day=21, hour=23, minute=59, second=59, microsecond=0)
+
+    # If it's already past Feb 21 this year, use next year
+    if now > end_of_feb21:
+        end_of_feb21 = end_of_feb21.replace(year=now.year + 1)
+
+    seconds_left = int((end_of_feb21 - now).total_seconds())
+    
+    neighbor = Neighbor(context.user.id, FF.guild)
+    
+    while item := neighbor.get_item_of_name("Valentine's Heart"):
+        neighbor.vacate_item(item);
+        
+    item = Item("Valentine's Heart", "event_emoji", time.time() + seconds_left, emoji=str(context.emoji), display="True")
+    neighbor.bestow_item(item)
+
 # @command_handler.Loop(hours=1)
 async def free_money(client):
     guild = client.get_guild(647883751853916162)
@@ -3686,7 +3736,7 @@ async def set_time(client):
     await trade_reminder(client, guild, est_time);
     # await birthdays(client, guild, est_time)
     
-# @command_handler.Scheduled(time="4:00")
+@command_handler.Scheduled(time="12:00")
 async def birthdays(client):
 
     guild = client.get_guild(FF.guild)
@@ -3795,73 +3845,12 @@ async def check_emojis(client):
     async for member in guild.fetch_members():
         neighbor = Neighbor(member.id, guild.id)
         
-        if neighbor.ID in [220427859229933568, 430454367003475978, 1116699416389226577, 793099607222648852, 355169964027805698, 648230625966293002] and not neighbor.get_item_of_name("January Book Club"):
-            item = Item("January Book Club", "event_emoji", time.time() + 21086592, emoji="📚", display="None")
-            neighbor.bestow_item(item)   
-        
-        ls_pro_voters = [1322905749139226656,316114265645776896,430454367003475978,424503695674441728,1129393963430846595,220427859229933568,978586163147337728,1327592356542681109,312019945913319424,987955038804639744,648229959973994506,1116699416389226577,913823853787119639,1011941542287650856]
-        ls_main_voters = [376343175863992320,240899039749603328,1250644488649441291,404421544979464192,648229959973994506,963533131854532638,987955038804639744,1440021025843839026,863037754164903946]
-        ls_junior_voters = [816303446512369675,713227411927335012,398518029027377163,287705818462289922,793099607222648852,702140318115692634,680164335913664517,1282679887580102799,795304848181821481]
-        ls_garden_voters = [1033786928279081061,160694804534132736,1386052757147877513,300463822991392769,516969515486019604,648229959973994506,660204032362545152,220427859229933568,374979463789805570,749225745460625409]
-        ls_carnival_voters = [315947587024715776,1368089663910187118,844975416938856448,1286932135084687401,304579655489421312,1328004699672154194,715484789485994064,648229959973994506,514413698761359400,1322905749139226656,750373365927379044,754000375274799196]
-        
-        ls_all_voters = ls_pro_voters;
-        ls_all_voters.extend(ls_main_voters)
-        ls_all_voters.extend(ls_junior_voters)
-        ls_all_voters.extend(ls_garden_voters);
-        ls_all_voters.extend(ls_carnival_voters);
-        if neighbor.ID in ls_all_voters and not neighbor.get_item_of_name("I Voted! sticker"):
-            item = Item("I Voted! sticker", "event_emoji", time.time() + 21086592, emoji="🗳️", display="None")
-            neighbor.bestow_item(item)   
-        
-        cow_role = guild.get_role(1328866706294046720)
-        if has_role(member, cow_role) and not neighbor.get_item_of_name("2025 Family Winners!"):
-            item = Item("2025 Family Winners!", "event_emoji", time.time() + 21086592, emoji="👑", display="None")
-            neighbor.bestow_item(item)   
-        neighbor_role = guild.get_role(1181330910747054211);
-        
-        while item := neighbor.get_item_of_name("2025 Farmmas Treasure!"):
-            neighbor.vacate_item(item);
-            
-        if neighbor.ID == 374979463789805570:
-            item = Item("2025 Farmmas Treasure!", "event_emoji", time.time() + 21086592, emoji="🔎", display="None")
-            neighbor.bestow_item(item)   
-        
-        if has_role(member, neighbor_role) and not neighbor.get_item_of_name("Fair_Wheel"):
-            item = Item("Fair_Wheel", "event_emoji", time.time() + 7776000, emoji="🎡", display="None")
-            neighbor.bestow_item(item) 
-        if has_role(member, neighbor_role) and not neighbor.get_item_of_name("Fair_Horse"):
-            item = Item("Fair_Horse", "event_emoji$inv", time.time() + 7776000, emoji="🎠", display="None")
-            neighbor.bestow_item(item) 
-        if has_role(member, neighbor_role) and not neighbor.get_item_of_name("Fair_Juggler"):
-            item = Item("Fair_Juggler", "event_emoji", time.time() + 7776000, emoji="🤹", display="None")
-            neighbor.bestow_item(item) 
-            
-        if item := neighbor.get_item_of_name("Cactus tag Oct deco comp"):
-            item.update_value("emoji", "🌵")
-            neighbor.update_item(item)
-            
-            
-        while item := neighbor.get_item_of_name("Juggler"):
-            neighbor.vacate_item(item);
-            
-        while item := neighbor.get_item_of_name("Wheel"):
-            neighbor.vacate_item(item);
-            
-        while item := neighbor.get_item_of_name("Horse"):
-            neighbor.vacate_item(item);
-            
-        while item := neighbor.get_item_of_name("Role"):
-            neighbor.vacate_item(item);
-            
-        item_to_keep = neighbor.get_item_of_name("Earth_Day")
-
-        while (item := neighbor.get_item_of_name("Earth_Day")):
+        while item := neighbor.get_item_of_name("Farmmas1 tag"):
             neighbor.vacate_item(item)
-
-        if item_to_keep is not None:
-            neighbor.bestow_item(item_to_keep)
             
+        while item := neighbor.get_item_of_name("Farmmas2 tag"):
+            neighbor.vacate_item(item)    
+                       
             
 async def get_users_who_reacted(message, target_emoji):
     users = []
@@ -3882,28 +3871,7 @@ async def event_emojis(client):
     LOCAL_UTC_OFFSET = -4  # EDT
     LOCAL_TZ = datetime.timezone(datetime.timedelta(hours=LOCAL_UTC_OFFSET))
     
-    news_stand_channel = await guild.fetch_channel(1218041302998974584);
-    farmmas_message = await news_stand_channel.fetch_message(1445532298685452470);
-    
-    farmmas1 = await get_users_who_reacted(farmmas_message, "❄️")
-    farmmas2 = await get_users_who_reacted(farmmas_message, "⛄️")
-    
-    for user in farmmas1:
-        neighbor = Neighbor(user.id, guild.id)
-        if neighbor.get_item_of_name("Farmmas1 tag"):
-            continue;
-        item = Item("Farmmas1 tag", "event_emoji", time.time() + 5184000, emoji="❄️", display=True)
-        neighbor.bestow_item(item) 
-        await set_nick(user, guild) 
-        
-    for user in farmmas2:
-        neighbor = Neighbor(user.id, guild.id)
-        if neighbor.get_item_of_name("Farmmas2 tag"):
-            continue;
-        item = Item("Farmmas2 tag", "event_emoji", time.time() + 5184000, emoji="⛄️", display=True)
-        neighbor.bestow_item(item)  
-        await set_nick(user, guild)
-    
+    news_stand_channel = await guild.fetch_channel(1218041302998974584);    
     
     async for message in deco_comp_channel.history(limit=None, oldest_first=False):
         msg_time = message.created_at
@@ -3923,11 +3891,11 @@ async def event_emojis(client):
         if month == 12:
             break;
             
-        if month == 1: 
+        if month == 2: 
             neighbor = Neighbor(message.author.id, message.guild.id)
-            if neighbor.get_item_of_name("Fireworks tag Jan deco comp"):
+            if neighbor.get_item_of_name("Heart Pulse tag Feb deco comp"):
                 continue;
-            item = Item("Fireworks tag Jan deco comp", "event_emoji", time.time() + 21086592, emoji="🎇", display=True)
+            item = Item("Heart Pulse tag Feb deco comp", "event_emoji", time.time() + 21086592, emoji="💗", display="None")
             neighbor.bestow_item(item)  
             
         await set_nick(message.author, message.guild)
