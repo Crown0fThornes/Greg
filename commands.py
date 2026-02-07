@@ -237,18 +237,25 @@ async def publish_heart_react_msg(client):
     channel = await guild.fetch_channel(1218041302998974584)
     target_context = Context(await channel.send("# Valentine's Day Tag Surprise\nTo celebrate Valentine's day, react to this message to add one of any of the available LTO heart emojis to your server nickname <:pink_red_hearts:856202296823250964> <@&1181330910747054211>"))
     
-    for heart in "🩷❤️🧡💛💚🩵💙💜🖤🩶🤍🤎":
-        await target_context.react(heart)
-        
     remember("message_done", True)
     remember("heart_message_id", target_context.message.id);
+    
+    HEARTS = {"🩷","❤️","🧡","💛","💚","🩵","💙","💜","🖤","🩶","🤍","🤎"}
+    
+    for heart in HEARTS:
+        try:
+            await target_context.react(heart)
+        except:
+            pass
+
         
 @command_handler.Uncontested(type="REACTION", desc="Add heart LTO emoji to nickname")
 async def add_hearts(context: Context):
     if not context.message.id == int(remember("heart_message_id")):
         return
     
-    if not str(context.emoji) in "🩷❤️🧡💛💚🩵💙💜🖤🩶🤍🤎":
+    HEARTS = {"🩷","❤️","🧡","💛","💚","🩵","💙","💜","🖤","🩶","🤍","🤎"}
+    if str(context.emoji) not in HEARTS:
         return
 
     now = datetime.datetime.now()
