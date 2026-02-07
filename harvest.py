@@ -323,7 +323,7 @@ async def sell_at_farmers_market(context: Context):
     quantity = purchase["quantity"]
     price = purchase["price"]
     
-    bc = await context.guild.fetch_channel(1467679489625690218)
+    bc = await context.guild.fetch_channel(784150346397253682)
     
     if check_silo(context.user.id, crop) >= quantity: # user has enough to sell?
         update_silo(context.user.id, crop, -quantity)
