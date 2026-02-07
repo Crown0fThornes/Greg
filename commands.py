@@ -235,7 +235,7 @@ async def publish_heart_react_msg(client):
     
     guild = client.get_guild(FF.guild)
     channel = await guild.fetch_channel(1218041302998974584)
-    target_context = await channel.send("# Valentine's Day Tag Surprise\nTo celebrate Valentine's day, react to this message to add one of any of the available LTO heart emojis to your server nickname <:pink_red_hearts:856202296823250964>")
+    target_context = Context(await channel.send("# Valentine's Day Tag Surprise\nTo celebrate Valentine's day, react to this message to add one of any of the available LTO heart emojis to your server nickname <:pink_red_hearts:856202296823250964> <@&1181330910747054211>"))
     
     for heart in "🩷❤️🧡💛💚🩵💙💜🖤🩶🤍🤎":
         await target_context.react(heart)
