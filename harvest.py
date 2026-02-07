@@ -223,7 +223,7 @@ def create_data_trcking_table():
         cursor.execute(sql_statement)
     
 # @command_handler.Command(access_type=AccessType.DEVELOPER)
-@command_handler.Scheduled("20:00", day_of_week=6)
+@command_handler.Scheduled("16:00", day_of_week=6)
 async def open_farmers_market(client):
     
     # guild = context.guild;
