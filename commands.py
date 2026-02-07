@@ -216,6 +216,22 @@ swear_words = [];
 test_list = ["some value"];
 active_expectations = [];
 
+# If value given, stores to DB. If value None, retrieves data.
+def remember(key, value=Ellipsis, delete=False):
+    """Persistent key/value storage.
+    
+    Args:
+        key: key
+    """
+    with shelve.open("data/persistentdata") as db:
+        if value is not None and value is not Ellipsis:
+            db[key] = value
+            return value;
+        elif value is None or delete:
+            return db.pop(key, None)
+        else:
+            return db.get(key)
+
 @command_handler.Uncontested("Lets users select their own ticket type.", type="MESSAGE")
 async def ticket_type(context: Context):
     if context.channel.topic == str(context.author.id):
@@ -240,13 +256,24 @@ async def ticket_type(context: Context):
         
         target_context = Context(await context.send(res));
         
-        for ticket_type in ticket_types:
-            await target_context.react(ticket_type["emoji"])
-            
         def key(ctx):
             return ctx.user.id == context.author.id
-            
+        
         ResponseRequest(sort_ticket, "ticket_type", type="REACTION",activation_context=context,response_context=target_context,timeout=time.time()+1200,key=key)
+        
+        for ticket_type in ticket_types:
+            await target_context.react(ticket_type["emoji"])
+        
+        channel = await context.guild.fetch_channel(1468425305881448634)
+        ping = FF.leaders_role
+        target_context = Context(await channel.send(f"**Unresolved ticket from <@{context.author.id}> here: <#{context.channel.id}>**\n\n<@&{ping}> react with ✅ to resolve; 🔄 to force reopen"))
+        await target_context.react("✅")
+        await target_context.react("🔄")
+
+
+        open_tickets = remember("open_tickets") or {} #pull open_tickets list from db, or create new list if doesn't exist yet
+        open_tickets[target_context.message.id] = context.channel.id #append new item
+        remember("open_tickets", open_tickets) #push new list to db
     
 async def sort_ticket(activator: Neighbor, context: Context, response: ResponsePackage):
         with open("lookups/ticket_types.json", "r") as f:
@@ -260,21 +287,77 @@ async def sort_ticket(activator: Neighbor, context: Context, response: ResponseP
         else:
             return
         
+        if chosen_type == "Other":
+            return
+        
         channel = await context.guild.fetch_channel(chosen_type["channel"])
-        target_context = Context(await channel.send(f"**Open ticket from <@{context.user.id}> here: <#{context.guild.id}>**\n\nReact with ✅ to resolve; 🔄 to force reopen"))
+        ping = chosen_type["ping"]
+        target_context = Context(await channel.send(f"**Unresolved ticket from <@{activator.ID}> here: <#{context.channel.id}>**\n\n<@&{ping}> react with ✅ to resolve; 🔄 to force reopen"))
         await target_context.react("✅")
         await target_context.react("🔄")
+        
+        open_tickets = remember("open_tickets") or {}
+        open_tickets[target_context.message.id] = context.channel.id;
+        remember("open_tickets", open_tickets)
+        
+@command_handler.Uncontested(type="REACTION", desc="Resolve or reopen support tickets")
+async def resolve_tickets(context: Context):
+    if not str(context.emoji) == "✅":
+        return
+    
+    open_tickets = remember("open_tickets") or {}
+    
+    if context.message.id in open_tickets:
+        ticket_to_resolve = open_tickets[context.message.id]
+        del open_tickets[context.message.id]
+    else:
+        return
+    
+    await context.message.delete();
+    
+    to_delete = []
+    for message_id, channel_id in open_tickets.items():
+        if channel_id == ticket_to_resolve:
+            to_delete.append(message_id)
+            
+    with open("lookups/ticket_types.json", "r") as f:
+        ticket_types = json.load(f)
+            
+    for message_id in to_delete:
+        for ticket_type in ticket_types:
+            cur_channel = await context.guild.fetch_channel(ticket_type["channel"])
+            try:
+                message = await cur_channel.fetch_message(message_id)
+                await message.delete()
+            except:
+                pass
+        del open_tickets[message_id]
+            
+    remember("open_tickets", open_tickets)
+    
+@command_handler.Uncontested(type="REACTION",desc="Force reopen tickets with reaction")
+async def force_reopen_ticket(context: Context):
+    if not str(context.emoji) == "🔄":
+        return
 
-# If value given, stores to DB. If value None, retrieves data.
-def remember(key, value=Ellipsis, delete=False):
-    with shelve.open("data/persistentdata") as db:
-        if value is not None and value is not Ellipsis:
-            db[key] = value
-            return value;
-        elif value is None or delete:
-            return db.pop(key, None)
-        else:
-            return db.get(key)
+    
+    open_tickets = remember("open_tickets") or {}
+    
+    if context.message.id in open_tickets:
+        ticket_to_reopen = open_tickets[context.message.id]
+    else:
+        return
+    
+    channel = await context.guild.fetch_channel(ticket_to_reopen);
+    user = await context.guild.fetch_member(int(channel.topic))
+    
+    await context.message.remove_reaction(context.emoji, user)
+    
+    from ticket_manager import open_ticket 
+
+    return await open_ticket(None, user, context.guild, FF);
+    
+    
 
 # @command_handler.Loop(hours=1)
 async def free_money(client):
