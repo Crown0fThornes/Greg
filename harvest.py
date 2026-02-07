@@ -120,11 +120,13 @@ async def silo(activator: Neighbor, context: Context):
                 record = dict(row);
                 
                 output = "Your silo: \n"
-                for crop_count in list(record.items())[1:]:
+                crops_counts = list(record.items())[1:]
+                for crop_count in crops_counts:
                     if crop_count[1] <= 0:
                         continue;
                     else:
                         output += f"> {crop_count[0]}: {crop_count[1]}\n"
+                output += "Market value of your silo: " + str(int(get_expected_silo_value(crops_counts))) + "xp"
             else:     
                 output = "Your silo: \n"
                 output += f"> Empty!\n"
@@ -142,6 +144,9 @@ async def silo(activator: Neighbor, context: Context):
 async def strongman(activator: Neighbor, context: Context, responsePackage: ResponsePackage):
     await context.send("The Strongman is guarding this silo from The Silo Thief! <:strongman2:1248819697747497042>")
     
+    
+def get_expected_silo_value(silo_list):
+    return int(3.1*sum(v for _, v in silo_list))
         
 def update_silo(neighbor_ID, crop_to_update, change: int):
     try:
@@ -196,8 +201,29 @@ def create_silo_table():
         raise ConnectionError("Could not connect to databse")
     
     
+def create_data_trcking_table():
+    with sqlite3.connect("data/silo.db") as conn:
+        conn.execute("PRAGMA foreign_keys = ON;")
+        cursor = conn.cursor()
+
+        sql_statement = str(
+            "CREATE TABLE IF NOT EXISTS data (\n"
+            "\tneighbor_ID INTEGER PRIMARY KEY,\n"
+            "\tharvest_count INTEGER NOT NULL DEFAULT 0,\n"
+            "\txp_garnered INTEGER NOT NULL DEFAULT 0,\n"
+            "\tbought_triple INTEGER NOT NULL DEFAULT 0 CHECK (bought_triple IN (0,1)),\n"
+            "\tbought_ss1 INTEGER NOT NULL DEFAULT 0 CHECK (bought_ss1 IN (0,1)),\n"
+            "\tthief_taken INTEGER NOT NULL DEFAULT 0,\n"
+            "\tFOREIGN KEY (neighbor_ID) REFERENCES silo(neighbor_ID)\n"
+            "\t\tON UPDATE NO ACTION\n"
+            "\t\tON DELETE NO ACTION\n"
+            ");"
+        )
+
+        cursor.execute(sql_statement)
+    
 # @command_handler.Command(access_type=AccessType.DEVELOPER)
-@command_handler.Scheduled("20:00", day_of_week=5)
+@command_handler.Scheduled("20:00", day_of_week=6)
 async def open_farmers_market(client):
     
     # guild = context.guild;
@@ -297,10 +323,14 @@ async def sell_at_farmers_market(context: Context):
     quantity = purchase["quantity"]
     price = purchase["price"]
     
+    bc = await context.guild.fetch_channel(1467679489625690218)
+    
     if check_silo(context.user.id, crop) >= quantity: # user has enough to sell?
         update_silo(context.user.id, crop, -quantity)
         await commands.inc_xp(Neighbor(context.user.id,647883751853916162),price,context)
-    
+        await bc.send(f"{context.user.display_name} sold {quantity} {crop} for {price} at the Farmers Market!")
+    else:
+        await bc.send(f"<@{context.user.id}>, you don't have enough {crop} to make this sale!")
     
     await context.message.remove_reaction(context.emoji, context.user);
     
