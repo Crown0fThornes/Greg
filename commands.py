@@ -243,7 +243,7 @@ async def publish_heart_react_msg(client):
     remember("message_done", True)
     remember("heart_message_id", target_context.message.id);
         
-@command_handler.Uncontested(tpye="REACTION", desc="Add heart LTO emoji to nickname")
+@command_handler.Uncontested(type="REACTION", desc="Add heart LTO emoji to nickname")
 async def add_hearts(context: Context):
     if not context.message.id == int(remember("heart_message_id")):
         return
