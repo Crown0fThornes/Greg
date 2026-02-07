@@ -234,45 +234,50 @@ def remember(key, value=Ellipsis, delete=False):
 
 @command_handler.Uncontested("Lets users select their own ticket type.", type="MESSAGE")
 async def ticket_type(context: Context):
-    if context.channel.topic == str(context.author.id):
-        new_tickets = remember("new_tickets")
-        print(new_tickets)
-        if context.channel.id in new_tickets:
-            new_tickets.remove(context.channel.id)
-            remember("new_tickets", new_tickets)
-            
-        else:
-            return
+    if not context.channel.topic == str(context.author.id):
+        return
+    
+    if not len(context.content) > 10:
+        return
+    
+    new_tickets = remember("new_tickets")
+    print(new_tickets)
+    if context.channel.id in new_tickets:
+        new_tickets.remove(context.channel.id)
+        remember("new_tickets", new_tickets)
         
-        with open("lookups/ticket_types.json", "r") as f:
-            ticket_types = json.load(f)
-            
-        res = "Hi there! Thanks for leaving a message. If you could help me out, what does it pertain to?\n"
+    else:
+        return
+    
+    with open("lookups/ticket_types.json", "r") as f:
+        ticket_types = json.load(f)
         
-        for ticket_type in ticket_types:
-            res += f"{ticket_type["emoji"]} **{ticket_type["prompt"]}**.\n"
-        
-        res += "In any case, a Council Member will be with you when available."
-        
-        target_context = Context(await context.send(res));
-        
-        def key(ctx):
-            return ctx.user.id == context.author.id
-        
-        ResponseRequest(sort_ticket, "ticket_type", type="REACTION",activation_context=context,response_context=target_context,timeout=time.time()+1200,key=key)
-        
-        for ticket_type in ticket_types:
-            await target_context.react(ticket_type["emoji"])
-        
-        channel = await context.guild.fetch_channel(1468425305881448634)
-        ping = FF.leaders_role
-        target_context = Context(await channel.send(f"**Unresolved ticket from <@{context.author.id}> here: <#{context.channel.id}>**\n\nReact with ✅ to resolve; 🔄 to force reopen"))
-        await target_context.react("✅")
-        await target_context.react("🔄")
+    res = "Hi there! Thanks for leaving a message. If you could help me out, what does it pertain to?\n"
+    
+    for ticket_type in ticket_types:
+        res += f"{ticket_type["emoji"]} **{ticket_type["prompt"]}**.\n"
+    
+    res += "In any case, a Council Member will be with you when available."
+    
+    target_context = Context(await context.send(res));
+    
+    def key(ctx):
+        return ctx.user.id == context.author.id
+    
+    ResponseRequest(sort_ticket, "ticket_type", type="REACTION",activation_context=context,response_context=target_context,timeout=time.time()+1200,key=key)
+    
+    for ticket_type in ticket_types:
+        await target_context.react(ticket_type["emoji"])
+    
+    channel = await context.guild.fetch_channel(1468425305881448634)
+    ping = FF.leaders_role
+    target_context = Context(await channel.send(f"**Unresolved ticket from <@{context.author.id}> here: <#{context.channel.id}>**\n\nReact with ✅ to resolve; 🔄 to force reopen"))
+    await target_context.react("✅")
+    await target_context.react("🔄")
 
-        open_tickets = remember("open_tickets") or {} #pull open_tickets list from db, or create new list if doesn't exist yet
-        open_tickets[target_context.message.id] = context.channel.id #append new item
-        remember("open_tickets", open_tickets) #push new list to db
+    open_tickets = remember("open_tickets") or {} #pull open_tickets list from db, or create new list if doesn't exist yet
+    open_tickets[target_context.message.id] = context.channel.id #append new item
+    remember("open_tickets", open_tickets) #push new list to db
     
 async def sort_ticket(activator: Neighbor, context: Context, response: ResponsePackage):
         with open("lookups/ticket_types.json", "r") as f:
