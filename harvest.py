@@ -353,6 +353,14 @@ async def silo_thief(client):
             neighbors_to_steal_from = random.sample(neighbor_ids, ten_percent)
             
             for neighbor_id in neighbors_to_steal_from:
+                
+                neighbor = Neighbor(neighbor_id,647883751853916162);
+                if neighbor.get_item_of_name("Silo Security Lvl 2"):
+                    if commands.chance(2):
+                        continue;
+                    
+                percentage_to_take = random.uniform(0,22,0.44)
+                
                 cursor.execute("SELECT * FROM silo WHERE neighbor_ID = ?", (neighbor_id,))
                 row = cursor.fetchone()
                 record = dict(row);
@@ -361,7 +369,6 @@ async def silo_thief(client):
                 for crop_name, quantity in record.items():
                     if not quantity > 0:
                         continue;
-                    neighbor = Neighbor(neighbor_id,647883751853916162);
                     has_security = False;
                     if neighbor.get_item_of_name("Silo Security Lvl 1"):
                         has_security = True;
@@ -369,11 +376,13 @@ async def silo_thief(client):
                     if has_security:
                         if quantity < 5:
                             quantity_to_take = quantity
-                        quantity_to_take = floor(quantity/1.5)
+                        else:
+                            quantity_to_take = floor(quantity * (percentage_to_take/2))
                     else:
                         if quantity < 10:
                             quantity_to_take = quantity
-                        quantity_to_take = floor(quantity/3)
+                        else:
+                            quantity_to_take = floor(quantity * percentage_to_take)
                         
                     
                     update_silo(neighbor_id, crop_name,-quantity_to_take)
@@ -381,8 +390,8 @@ async def silo_thief(client):
                     # cursor.execute(f"UPDATE silo SET \"{crop_name}\" = \"{crop_name}\" + ? WHERE neighbor_ID = ?", (-quantity_to_take,neighbor_id,))
                 
                 if has_security:
-                    await bot_channel.send(f"The thief has come to town and taken ~17% of <@{neighbor_id}>'s crops!")
+                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_to_take/2*100:0.1f}% of <@{neighbor_id}>'s crops!")
                 else:
-                    await bot_channel.send(f"The thief has come to town and taken ~33% of <@{neighbor_id}>'s crops!")
+                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_to_take*100:0.1f}% of <@{neighbor_id}>'s crops!")
     except:
         raise ConnectionError("Could not connect to databse")

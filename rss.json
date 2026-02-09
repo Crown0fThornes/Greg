@@ -102,10 +102,29 @@
           "name": "Silo Security Lvl 1",
           "type": "harvest_item",
           "emoji": "🚨",
-          "description": "Hire the town Strongman to defend your silo from the silo thief (`$info thief`). It's not guarunteed safety, the thief seems to get away with half as much crops vs no security.",
+          "description": "Hire the town Strongman to defend your silo from the silo thief (`$info thief`).",
+          "warning": "It's not guarunteed safety; the thief seems to get away with half as much crops when attempting a heist.",
           "cost": 3,
           "duration": 1814400,
           "duration_label": "3 weeks"
+        },
+        {
+          "name": "Silo Security Lvl 2",
+          "type": "harvest_item",
+          "emoji": "🔐",
+          "description": "Add password protection to your silo to defend it from the silo thief (`$info thief`). Passwords are served salted, peppered, and hashed for maximum security.",
+          "warning": "It's not guarunteed safety; the thief seems to crack the password 25% of the time",
+          "cost": 7,
+          "duration": 1814400,
+          "duration_label": "3 weeks"
+        },
+        {
+          "name": "AutoHarvester",
+          "type": "minigame",
+          "emoji": "👵",
+          "description": "Hire Rose to autoharvest crops for you up to 6x overnight.",
+          "warning": "Rose takes a 33% cut of all harvests she does for you. Convenient...",
+          "cost": 8
         },
         {
           "name": "Greg Wordle Minigame",
