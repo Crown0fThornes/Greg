@@ -368,11 +368,13 @@ async def silo_thief(client):
                     if has_security:
                         if quantity < 5:
                             quantity_to_take = quantity
-                        quantity_to_take = floor(quantity/1.5)
+                        else:
+                            quantity_to_take = floor(quantity/1.5)
                     else:
                         if quantity < 10:
                             quantity_to_take = quantity
-                        quantity_to_take = floor(quantity/3)
+                        else:
+                            quantity_to_take = floor(quantity/3)
                         
                     
                     update_silo(neighbor_id, crop_name,-quantity_to_take)
