@@ -106,9 +106,24 @@ async def harvest(activator: Neighbor, context: Context, response: ResponsePacka
             await context.send("Patience is key! Crops don't grow overnight you know! Well...", reply=True)
         
 @command_handler.Command(access_type=AccessType.PRIVATE, desc="View my silo!")
-async def silo(activator: Neighbor, context: Context):
+async def silo(activator: Neighbor, context: Context, response: ResponsePackage):
     try:
         create_silo_table();
+        
+        if activator.get_item_of_name("Silo Security Lvl 2"):
+            if not response:
+                response_context = Context(await context.send("Please enter the password for this silo to access it."))
+                
+                def key(ctx):
+                    return ctx.author.id == activator.ID
+                ResponseRequest(silo, "password_return", "MESSAGE", context, response_context, key)
+
+                return
+            else:
+                if response.content is password:
+                    pass
+                else:
+                    await context.send("Incorrect password!")
         
         with sqlite3.connect("data/silo.db") as conn:            
             conn.row_factory = sqlite3.Row;
@@ -356,7 +371,7 @@ async def silo_thief(client):
                 
                 neighbor = Neighbor(neighbor_id,647883751853916162);
                 if neighbor.get_item_of_name("Silo Security Lvl 2"):
-                    if commands.chance(2):
+                    if commands.chance(4,3):
                         continue;
                     
                 percentage_to_take = random.uniform(0,22,0.44)
