@@ -3823,12 +3823,12 @@ async def check_emojis(client):
     guild = client.get_guild(FF.guild);
     async for member in guild.fetch_members():
         neighbor = Neighbor(member.id, guild.id)
-        
-        while item := neighbor.get_item_of_name("Farmmas1 tag"):
-            neighbor.vacate_item(item)
-            
-        while item := neighbor.get_item_of_name("Farmmas2 tag"):
-            neighbor.vacate_item(item)    
+        role = guild.get_role(1024052938752151552)
+        if has_role(member, role):
+            if neighbor.get_item_of_name("Maple tag nurture event"):
+                continue;
+            item = Item("Maple tag nurture event", "event_emoji", time.time() + 21086592, emoji="🍁", display="None")
+            neighbor.bestow_item(item);
                        
             
 async def get_users_who_reacted(message, target_emoji):
