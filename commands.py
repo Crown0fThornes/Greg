@@ -6867,6 +6867,8 @@ async def help_in_context(context: Context):
 async def treasure_hunt(context: Context):
     if (context.channel.id != 1472265286475317302):
         return
+    if (context.author_id == 355169964027805698):
+        return;
     
     if not len(context.content) == 2:
         target = await context.send("Claim a spot on the treasure map by sending the grid spot in [Capital Letter][Number] format!\nEx: A1 or F8", reply=True)
