@@ -6888,14 +6888,23 @@ async def treasure_hunt(context: Context):
         return
         
     claimed = remember("chosen_squares") or []
-    if context.content in claimed:
+    spots_taken = [spot[0] for spot in claimed]
+    if context.content in spots_taken:
         target = await context.send("That spot is already claimed! Pick something else.", reply=True)
         time.sleep(8);
         await context.message.delete();
         await target.delete();
         return
     
-    claimed.append(context.content)
+    authors_taken = [spot[1] for spot in claimed]
+    if context.author_id in authors_taken:
+        target = await context.send("You've already claimed a spot!", reply=True)
+        time.sleep(8);
+        await context.message.delete();
+        await target.delete();
+        return
+    
+    claimed.append((context.content, context.author_id))
     target = await context.send("Spot claimed!", reply=True)
     remember("chosen_squares", claimed)
 
