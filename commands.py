@@ -6863,6 +6863,40 @@ async def help_in_context(context: Context):
                 return True;
             ResponseRequest(get_help, "help", "REACTION", context, context, key, target_command=name);
 
+@command_handler.Uncontested(type="MESSAGE")
+async def treasure_hunt(context: Context):
+    if (context.channel.id != 1472265286475317302):
+        return
+    
+    if not len(context.content) == 2:
+        target = await context.send("Claim a spot on the treasure map by sending the grid spot in [Capital Letter][Number] format!\nEx: A1 or F8", reply=True)
+        time.sleep(5);
+        await context.message.delete();
+        await target.delete();
+        return
+        
+        
+    letters = ["A", "B", "C", "D", "E", "F"]
+    numbers = ["1", "2", "3", "4", "5", "6", "7", "8"]
+    if not context.content[0] in letters or not context.content[1] in numbers:
+        target = await context.send("Claim a spot on the treasure map by sending the grid spot in [Capital Letter][Number] format, between A1 and F8!\nEx: B2 or E7", reply=True)
+        time.sleep(8);
+        await context.message.delete();
+        await target.delete();
+        return
+        
+    claimed = remember("chosen_squares") or []
+    if context.content in claimed:
+        target = await context.send("That spot is already claimed! Pick something else.", reply=True)
+        time.sleep(8);
+        await context.message.delete();
+        await target.delete();
+        return
+    
+    claimed.append(context.content)
+    target = await context.send("Spot claimed!", reply=True)
+    remember("chosen_squares", claimed)
+
 @command_handler.Command(AccessType.PUBLIC, desc = "Provides a list of available commands, or alternatively describes the function of a particular command. For example, `$help help`", generic = True)
 async def help(activator: Neighbor, context: Context):
     if len(context.args) > 0:

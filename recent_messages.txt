@@ -14,4 +14,4 @@ Every week on Sunday (midday Saturday to midday Monday for good measure), a "far
 A silo thief likes to steal crops to discourage hoarding. Learn more at `$info thief`.
 
 **RSS**
-Purchase upgrades for your harvesting experience using `$rss` and opening the minigames section. Ola $silo $harvest $silo $silo
+Purchase upgrades for your harvesting experience using `$rss` and opening the minigames section. Ola $silo $harvest $silo $silo $find dodo test https://giphy.com/gifs/discovery-survivalism-naked-and-afraid-xl-naaxl-ZOEoDuFPcMwENGwULP A1 Lol hes pinging everyone he can
