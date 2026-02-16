@@ -106,7 +106,7 @@ async def harvest(activator: Neighbor, context: Context, response: ResponsePacka
             await context.send("Patience is key! Crops don't grow overnight you know! Well...", reply=True)
         
 @command_handler.Command(access_type=AccessType.PRIVATE, desc="View my silo!")
-async def silo(activator: Neighbor, context: Context, response: ResponsePackage):
+async def silo(activator: Neighbor, context: Context, response: ResponsePackage = None):
     try:
         create_silo_table();
         
@@ -177,6 +177,20 @@ def update_silo(neighbor_ID, crop_to_update, change: int):
     except:
         raise ConnectionError("Could not connect to databse")
     
+def delete_silo(neighbor_ID):
+    try:
+        create_silo_table();
+        
+        with sqlite3.connect("data/silo.db") as conn:
+            cursor = conn.cursor();
+            
+            cursor.execute("DELETE FROM silo WHERE neighbor_ID = ?", (neighbor_ID,));
+
+            conn.commit()
+            return cursor.rowcount  # 0 if nothing deleted, 1 if deleted         
+    except:
+        raise ConnectionError("Could not connect to databse")
+    
 def check_silo(neighbor_ID, crop_to_check):
     try:
         create_silo_table();
@@ -238,12 +252,12 @@ def create_data_trcking_table():
         cursor.execute(sql_statement)
     
 # @command_handler.Command(access_type=AccessType.DEVELOPER)
-# @command_handler.Scheduled("20:00", day_of_week=5)
-@command_handler.Command(access_type=AccessType.DEVELOPER)
-async def open_farmers_market(activator, context):
+# @command_handler.Command(access_type=AccessType.DEVELOPER)
+@command_handler.Scheduled("20:00", day_of_week=5)
+async def open_farmers_market(client):
     
-    guild = context.guild;
-    # guild = client.get_guild(647883751853916162)
+    # guild = context.guild; 
+    guild = client.get_guild(647883751853916162)
     town_square = await guild.fetch_channel(648223363600351263);
     # guild = context.guild;
     
@@ -291,7 +305,7 @@ async def open_farmers_market(activator, context):
     await gc.send(f"The Farmers Market has come to town once again! Check out the offers @ <#{market_channel.id}>")
         
         
-@command_handler.Scheduled("20:00", day_of_week=1)
+@command_handler.Scheduled("20:00", day_of_week=0)
 async def close_farmers_market(client):
     guild = client.get_guild(647883751853916162)
     gc = await guild.fetch_channel(648223397205114910);
@@ -351,9 +365,10 @@ async def sell_at_farmers_market(context: Context):
     await context.message.remove_reaction(context.emoji, context.user);
     
 @command_handler.Scheduled("16:00")
-async def silo_thief(client):
-    # guild = context.guild;
-    guild = client.get_guild(647883751853916162)
+@command_handler.Command(access_type=AccessType.DEVELOPER)
+async def silo_thief(activator, context):
+    guild = context.guild;
+    # guild = client.get_guild(647883751853916162)
     bot_channel = await guild.fetch_channel(784150346397253682);
     try:
         with sqlite3.connect("data/silo.db") as conn:
@@ -374,13 +389,14 @@ async def silo_thief(client):
                     if commands.chance(4,3):
                         continue;
                     
-                percentage_to_take = random.uniform(0,22,0.44)
+                percentage_to_take = random.uniform(0.22,0.44)
                 
                 cursor.execute("SELECT * FROM silo WHERE neighbor_ID = ?", (neighbor_id,))
                 row = cursor.fetchone()
                 record = dict(row);
                 del record["neighbor_ID"]
                 
+                any_crops_leftover = False;
                 for crop_name, quantity in record.items():
                     if not quantity > 0:
                         continue;
@@ -393,19 +409,25 @@ async def silo_thief(client):
                             quantity_to_take = quantity
                         else:
                             quantity_to_take = floor(quantity * (percentage_to_take/2))
+                            any_crops_leftover = True;
                     else:
                         if quantity < 10:
                             quantity_to_take = quantity
                         else:
                             quantity_to_take = floor(quantity * percentage_to_take)
+                            any_crops_leftover = True;
                         
                     
                     update_silo(neighbor_id, crop_name,-quantity_to_take)
                     # taken.append(f"{quantity_to_take} {crop_name}")
                     # cursor.execute(f"UPDATE silo SET \"{crop_name}\" = \"{crop_name}\" + ? WHERE neighbor_ID = ?", (-quantity_to_take,neighbor_id,))
                 
+                if not any_crops_leftover:
+                    delete_silo(neighbor_id);
+                    await bot_channel.send(f"The thief has come to town and OBLITERATED <@{neighbor_id}>'s silo!\n\n🔥🔥🔥She looked and looked for crops, but found only scaps. So she burnt the whole thing down in a twisted act of arson!🔥🔥🔥\n Use `$plant` to restart your `$harvest`ing journey.")
+                        
                 if has_security:
-                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_to_take/2*100:0.1f}% of <@{neighbor_id}>'s crops!")
+                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_to_take/2*100:0.1f}% of <@{neighbor_id}>'s crops!\n😮‍💨 Good thing the Strongman was there to prevent her from stealing {percentage_to_take*100:0.1f}%!")
                 else:
                     await bot_channel.send(f"The thief has come to town and taken ~{percentage_to_take*100:0.1f}% of <@{neighbor_id}>'s crops!")
     except:
