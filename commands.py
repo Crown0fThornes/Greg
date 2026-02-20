@@ -1394,7 +1394,7 @@ async def treasury(activator: Neighbor, context: Context):
         return;
     
     if (len(context.args)) < 4:
-        raise CommandArgsError("Please run the command with 4 arguments:\n\n1) # of bolts 2) # of planks 3) # of duct tapes 4) reason \nExample: `$treasury -30 -30 -29 Jenny for Fair` or with 1 argument: 1) 'total'")
+        raise CommandArgsError("Please run the command with 4 arguments:\n\n1) # of bolts 2) # of planks 3) # of duct tapes 4) reason \nExample: `$treasury -30 -30 -29 Jenny for Fair`\nor with 1 argument: 1) 'total'")
     
     member = await context.guild.fetch_member(activator.ID)
     
