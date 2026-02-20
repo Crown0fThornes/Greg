@@ -5669,7 +5669,7 @@ async def info(activator: Neighbor, context: Context, keyword=None):
             "Can you believe it! A silo thief on this side of the Mississippi!\n\n"
             "Eye witnesses have spotted this suspect breaking into silos in OUR TOWN!!! Unfortunately, due to their mask, it is impossible to identify the suspect. "
             "Trust no one!! I recommend purchasing upgraded security for your Silo (which I happen to be selling at `$rss`).\n\n"
-            "*According to data gathered in the nearest town o'er, the thief seems to break into 10% of silos each day, taking one third of the crops in each."
+            "*According to data gathered in the nearest town o'er, the thief seems to break into 10% of silos each day, taking about one third of the crops in each."
         )
     else:
         

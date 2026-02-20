@@ -115,15 +115,17 @@ async def silo(activator: Neighbor, context: Context, response: ResponsePackage 
                 response_context = Context(await context.send("Please enter the password for this silo to access it."))
                 
                 def key(ctx):
-                    return ctx.author.id == activator.ID
+                    return ctx.message.id != context.message.id and ctx.author.id == activator.ID
                 ResponseRequest(silo, "password_return", "MESSAGE", context, response_context, key)
-
                 return
+            
             else:
-                if response.content is password:
+                password = "hello"
+                if response.content == password:
                     pass
                 else:
                     await context.send("Incorrect password!")
+                    return
         
         with sqlite3.connect("data/silo.db") as conn:            
             conn.row_factory = sqlite3.Row;
@@ -365,10 +367,9 @@ async def sell_at_farmers_market(context: Context):
     await context.message.remove_reaction(context.emoji, context.user);
     
 @command_handler.Scheduled("16:00")
-@command_handler.Command(access_type=AccessType.DEVELOPER)
-async def silo_thief(activator, context):
-    guild = context.guild;
-    # guild = client.get_guild(647883751853916162)
+async def silo_thief(client):
+    # guild = context.guild;
+    guild = client.get_guild(647883751853916162)
     bot_channel = await guild.fetch_channel(784150346397253682);
     try:
         with sqlite3.connect("data/silo.db") as conn:
@@ -387,6 +388,7 @@ async def silo_thief(activator, context):
                 neighbor = Neighbor(neighbor_id,647883751853916162);
                 if neighbor.get_item_of_name("Silo Security Lvl 2"):
                     if commands.chance(4,3):
+                        await bot_channel.send("The thief has come to town and attempted to steal from <@{neighbor_id}>'s silo!\n\n🔐🔐🔐 But she couldn't crack the password! Your crops are safe! 🔐🔐🔐")
                         continue;
                     
                 percentage_to_take = random.uniform(0.22,0.44)
@@ -430,5 +432,7 @@ async def silo_thief(activator, context):
                     await bot_channel.send(f"The thief has come to town and taken ~{percentage_to_take/2*100:0.1f}% of <@{neighbor_id}>'s crops!\n😮‍💨 Good thing the Strongman was there to prevent her from stealing {percentage_to_take*100:0.1f}%!")
                 else:
                     await bot_channel.send(f"The thief has come to town and taken ~{percentage_to_take*100:0.1f}% of <@{neighbor_id}>'s crops!")
+            
+            await bot_channel.send("The thief has made her escape once again before law enforcement could catch her. Be on the lookout! Learn more at `$info thief`")
     except:
         raise ConnectionError("Could not connect to databse")
