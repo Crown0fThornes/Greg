@@ -249,7 +249,81 @@ async def publish_heart_react_msg(client):
         
     remember("message_done", True)
 
+@command_handler.Uncontested(type="MESSAGE", desc="Updates cross country style scoring")
+async def update_xc_scoring(context: Context):
+    if context.channel.id != 1203772906497380472:
+        return;
+    
+    channel = await context.guild.fetch_channel(1203772906497380472)
+    
+    import re
+    import string
+    from typing import Optional
+
+    def first_int_word(s: str) -> Optional[int]:
+        for token in s.split():
+            # strip common edge punctuation: "(12)," -> "12"
+            cleaned = token.strip(string.punctuation)
+            if cleaned.isdigit():
+                return int(cleaned)
+        return None
+    
         
+    start_message = await channel.fetch_message(1468980801424330897);
+    
+    results = []
+    async for message in channel.history(after=start_message, oldest_first=True, limit=None):
+        if num_trucks := first_int_word(message.content):
+            family = get_family_from_user(message.author)["name"]
+            result = {
+                "score": num_trucks,
+                "family": family,
+                "user_id": message.author.id
+            }
+            results.append(result)
+            
+    results.sort(key=lambda x: x["score"],reverse=True)
+    
+    family_scores = {
+        "Bunny": [],
+        "Cheetah": [],
+        "Donkey": [],
+        "Fox": [],
+        "Giraffe": [],
+        "Hippo": [],
+        "Penguin": [],
+    }
+    for i, result in enumerate(results):
+        cur_family = result["family"]
+        if len(family_scores[cur_family]) >= 7:
+            continue;
+        family_scores[cur_family].append(i + 1)
+        
+    for family in family_scores:
+        for x in range(7-len(family_scores[family])):
+            family_scores[family].append(len(results) + 1 + x)
+            
+    scores = {}
+    for family, places in family_scores.items():
+        # assumes len(places) == 7
+        scores[family] = sum(places) 
+        
+    leaderboard = sorted(scores.items(), key=lambda kv: kv[1], reverse=False)
+    res = "# Truck Competition Leaderboard\n"
+    res += "This leaderboard will automatically update with every new truck submission to <#1203772906497380472> Remember, less points is better. Here are the current rankings!\n"
+    for rank, (family, score) in enumerate(leaderboard, start=1):
+        res += (
+            f"**{rank}. {family}: {score}**\n"
+            f"-# placements: {family_scores[family]}\n"
+        )
+        
+    announcement_channel = await context.guild.fetch_channel(1024056209860468766)
+    async for message in announcement_channel.history(oldest_first = False):
+        await message.delete();
+        break;
+    
+    await announcement_channel.send(res)
+    
 @command_handler.Uncontested(type="REACTION", desc="Add heart LTO emoji to nickname")
 async def add_hearts(context: Context):
     if not context.message.id == int(remember("heart_message_id")):
