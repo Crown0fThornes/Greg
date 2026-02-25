@@ -316,9 +316,10 @@ async def update_xc_scoring(context: Context):
         
         
         if len(family_scores[cur_family]) >= 7:
+            all_placements += f"-# Not scoring for {cur_family} team\n"
             continue;
         else:
-            all_placements += f"-# Scoring {i} points for {cur_family} team"
+            all_placements += f"-# Scoring {i} points for {cur_family} team\n"
         family_scores[cur_family].append(i)
         
     for family in family_scores:
@@ -335,7 +336,7 @@ async def update_xc_scoring(context: Context):
     res += "This leaderboard will automatically update with every new truck submission to <#1203772906497380472> Remember, less points is better. Here are the current rankings!\n"
     for rank, (family, score) in enumerate(leaderboard, start=1):
         res += (
-            f"**{rank}. {family}: {score}**\n"
+            f"**{rank}. {family}: {score}**"
             f"-# placements: {family_scores[family]}\n\n"
         )
         
