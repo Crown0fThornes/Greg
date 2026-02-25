@@ -278,7 +278,7 @@ async def update_xc_scoring(context: Context):
             result = {
                 "score": num_trucks,
                 "family": family,
-                "user_id": message.author.id
+                "user": message.author
             }
             results.append(result)
             
@@ -293,11 +293,31 @@ async def update_xc_scoring(context: Context):
         "Hippo": [],
         "Penguin": [],
     }
-    for i, result in enumerate(results):
+    family_emojis = {
+        "Bunny": "🐰",
+        "Cheetah": "🐆",
+        "Donkey": "🫏",
+        "Fox": "🦊",
+        "Giraffe": "🦒",
+        "Hippo": "🦛",
+        "Penguin": "🐧",
+    }
+    emoji_placements = {
+        1: "🥇",
+        2: "🥈",
+        3: "🥉"
+    }
+    all_placements = "# Placements\n"
+    for i, result in enumerate(results, start=1):
         cur_family = result["family"]
+        placement = emoji_placements[i] if i in emoji_placements else f"{str(i)}."
+        family_emoji = family_emojis[cur_family]
+        all_placements += f"{placement} {result["user"].display_name} {family_emoji} ({result["score"]} trucks)\n"
+        
+        
         if len(family_scores[cur_family]) >= 7:
             continue;
-        family_scores[cur_family].append(i + 1)
+        family_scores[cur_family].append(i)
         
     for family in family_scores:
         for x in range(7-len(family_scores[family])):
@@ -314,15 +334,19 @@ async def update_xc_scoring(context: Context):
     for rank, (family, score) in enumerate(leaderboard, start=1):
         res += (
             f"**{rank}. {family}: {score}**\n"
-            f"-# placements: {family_scores[family]}\n"
+            f"-# placements: {family_scores[family]}\n\n"
         )
         
     announcement_channel = await context.guild.fetch_channel(1024056209860468766)
+    c = 0;
     async for message in announcement_channel.history(oldest_first = False):
-        await message.delete();
+        if c < 2:
+            await message.delete();
+            c + 1;
         break;
     
     await announcement_channel.send(res)
+    await announcement_channel.send(all_placements)
     
 @command_handler.Uncontested(type="REACTION", desc="Add heart LTO emoji to nickname")
 async def add_hearts(context: Context):
