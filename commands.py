@@ -312,7 +312,7 @@ async def update_xc_scoring(context: Context):
         cur_family = result["family"]
         placement = emoji_placements[i] if i in emoji_placements else f"{str(i)}."
         family_emoji = family_emojis[cur_family]
-        nick = clean_nick(result["user"])
+        nick = await clean_nick(result["user"], context.guild)
         all_placements += f"{placement} **{nick}** ({result["score"]} trucks)\n"
         
         
@@ -9509,7 +9509,7 @@ def convert_mentions_to_text(context: Context, str):
     except:
         pass;
 
-async def clean_nick(user):
+async def clean_nick(user, guild):
     neighbor = Neighbor(user.id, guild.id);
     user_role_ids = [role.id for role in user.roles];
 
