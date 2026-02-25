@@ -312,7 +312,8 @@ async def update_xc_scoring(context: Context):
         cur_family = result["family"]
         placement = emoji_placements[i] if i in emoji_placements else f"{str(i)}."
         family_emoji = family_emojis[cur_family]
-        all_placements += f"{placement} {result["user"].name} ({result["score"]} trucks)\n"
+        nick = clean_nick(result["user"])
+        all_placements += f"{placement} **{nick}** ({result["score"]} trucks)\n"
         
         
         if len(family_scores[cur_family]) >= 7:
@@ -9508,8 +9509,66 @@ def convert_mentions_to_text(context: Context, str):
     except:
         pass;
 
-async def set_nick(user, guild, was_changed = False):
+async def clean_nick(user):
+    neighbor = Neighbor(user.id, guild.id);
+    user_role_ids = [role.id for role in user.roles];
 
+    name = user.display_name;
+
+    new_nick = name;
+
+    with open('families.json') as fFamilies:
+        families = json.load(fFamilies)
+    with open("rss.json") as fRSS:
+        rss = json.load(fRSS);
+
+    tags = [x["tag"] for x in families];
+
+    for tag in tags:
+        new_nick = new_nick.replace(tag, "");
+
+    old_tags = [x["old_tag"] for x in families]
+
+    new_nick = re.sub(r'\[.*?\]', '', new_nick)
+
+    for old_tag in old_tags:
+        new_nick = new_nick.replace(old_tag, "");
+
+    new_nick = new_nick.replace("❤", "");
+    new_nick = new_nick.replace("{CM} ", "");
+    new_nick = new_nick.replace(" {CM}", "");
+    new_nick = new_nick.replace("[??] ", "");
+    new_nick = new_nick.replace("[??]", "");
+    new_nick = new_nick.replace("[coe] ", "");
+
+    emoj = re.compile("["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+        u"\U00002500-\U00002BEF"  # chinese char
+        u"\U00002702-\U000027B0"
+        u"\U00002702-\U000027B0"
+        u"\U000024C2-\U0001F251"
+        u"\U0001f926-\U0001f937"
+        u"\U00010000-\U0010ffff"
+        u"\u2640-\u2642"
+        u"\u2600-\u2B55"
+        u"\u200d"
+        u"\u23cf"
+        u"\u23e9"
+        u"\u231a"
+        u"\ufe0f"  # dingbats
+        u"\u3030"
+                        "]+", re.UNICODE)
+
+    new_nick = re.sub(emoj, '', new_nick)
+
+    new_nick = new_nick.strip();
+    
+    return new_nick
+
+async def set_nick(user, guild, was_changed = False):
     member = guild.get_member(user.id)
     if member is None:
         return
