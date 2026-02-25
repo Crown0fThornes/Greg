@@ -312,11 +312,13 @@ async def update_xc_scoring(context: Context):
         cur_family = result["family"]
         placement = emoji_placements[i] if i in emoji_placements else f"{str(i)}."
         family_emoji = family_emojis[cur_family]
-        all_placements += f"{placement} {result["user"].display_name} {family_emoji} ({result["score"]} trucks)\n"
+        all_placements += f"{placement} {result["user"].display_name} ({result["score"]} trucks)\n"
         
         
         if len(family_scores[cur_family]) >= 7:
             continue;
+        else:
+            all_placements += f"-# Scoring {i} points for {cur_family} team"
         family_scores[cur_family].append(i)
         
     for family in family_scores:
