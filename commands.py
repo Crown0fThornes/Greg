@@ -312,14 +312,13 @@ async def update_xc_scoring(context: Context):
         cur_family = result["family"]
         placement = emoji_placements[i] if i in emoji_placements else f"{str(i)}."
         family_emoji = family_emojis[cur_family]
-        all_placements += f"{placement} {result["user"].display_name} ({result["score"]} trucks)\n"
+        all_placements += f"{placement} {result["user"].user_name} ({result["score"]} trucks)\n"
         
         
         if len(family_scores[cur_family]) >= 7:
-            all_placements += f"-# Not scoring for {cur_family} team\n"
             continue;
         else:
-            all_placements += f"-# Scoring {i} points for {cur_family} team\n"
+            all_placements += f"-# \tScoring {i} points for {cur_family} team\n"
         family_scores[cur_family].append(i)
         
     for family in family_scores:
@@ -336,7 +335,7 @@ async def update_xc_scoring(context: Context):
     res += "This leaderboard will automatically update with every new truck submission to <#1203772906497380472> Remember, less points is better. Here are the current rankings!\n"
     for rank, (family, score) in enumerate(leaderboard, start=1):
         res += (
-            f"**{rank}. {family}: {score}**"
+            f"**{rank}. {family}: {score}**\n"
             f"-# placements: {family_scores[family]}\n\n"
         )
         
@@ -345,8 +344,9 @@ async def update_xc_scoring(context: Context):
     async for message in announcement_channel.history(oldest_first = False):
         if c < 2:
             await message.delete();
-            c + 1;
-        break;
+            c += 1;
+        else:
+            break;
     
     await announcement_channel.send(res)
     await announcement_channel.send(all_placements)
