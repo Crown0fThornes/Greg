@@ -360,7 +360,7 @@ async def update_xc_scoring(context: Context):
     if old_leaderboard_order:
         for i, family in enumerate(old_leaderboard_order):
             if family != leaderboard_order[i]:
-                await context.send(f"{leaderboard_order[rank]} has risen above {family} on the leaderboard!")
+                await context.send(f"{leaderboard_order[i]} has risen above {family} on the leaderboard!")
                 break
     remember("truck_leaderboard", leaderboard_order)
         
