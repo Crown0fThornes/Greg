@@ -253,6 +253,8 @@ async def publish_heart_react_msg(client):
 async def update_xc_scoring(context: Context):
     if context.channel.id != 1203772906497380472:
         return;
+    if context.author.id == 691338084444274728:
+        return;
     
     channel = await context.guild.fetch_channel(1203772906497380472)
     
@@ -282,6 +284,11 @@ async def update_xc_scoring(context: Context):
             }
             results.append(result)
             
+            if message.id != context.message.id and message.author.id == context.author.id:
+                target = await context.send("You've submitted previously! Be sure to delete your original submission unless it was for a different farm. This may affect leaderboard accuracy until next screenshot is posted & scores are updated.", reply=True)
+                time.sleep(8)
+                await target.delete();
+            
     results.sort(key=lambda x: x["score"],reverse=True)
     
     family_scores = {
@@ -307,20 +314,27 @@ async def update_xc_scoring(context: Context):
         2: "🥈",
         3: "🥉"
     }
-    all_placements = "# Placements\n"
+    all_placements = []
+    all_placements.append("# Placements\n")
+    nxt = ""
     for i, result in enumerate(results, start=1):
         cur_family = result["family"]
         placement = emoji_placements[i] if i in emoji_placements else f"{str(i)}."
         family_emoji = family_emojis[cur_family]
         nick = await clean_nick(result["user"], context.guild)
-        all_placements += f"{placement} **{nick}** ({result["score"]} trucks)\n"
+        nxt += f"{placement} **{nick}** ({result["score"]} trucks)\n"
         
         
         if len(family_scores[cur_family]) >= 7:
             continue;
         else:
-            all_placements += f"-# \tScoring {i} points for {cur_family} team\n"
+            nxt += f"-# \tScoring {i} points for {cur_family} team\n"
         family_scores[cur_family].append(i)
+        
+        if i % 15 == 0:
+            all_placements.append(nxt)
+            nxt = ""
+    all_placements.append(nxt)
         
     for family in family_scores:
         for x in range(7-len(family_scores[family])):
@@ -332,25 +346,35 @@ async def update_xc_scoring(context: Context):
         scores[family] = sum(places) 
         
     leaderboard = sorted(scores.items(), key=lambda kv: kv[1], reverse=False)
+    leaderboard_order = [];
     res = "# Truck Competition Leaderboard\n"
     res += "This leaderboard will automatically update with every new truck submission to <#1203772906497380472> Remember, less points is better. Here are the current rankings!\n"
     for rank, (family, score) in enumerate(leaderboard, start=1):
+        leaderboard_order.append(family);
         res += (
             f"**{rank}. {family}: {score}**\n"
             f"-# placements: {family_scores[family]}\n\n"
         )
         
+    old_leaderboard_order = remember("truck_leaderboard")
+    if old_leaderboard_order:
+        for i, family in enumerate(old_leaderboard_order):
+            if family != leaderboard_order[i]:
+                await context.send(f"{leaderboard_order[rank]} has risen above {family} on the leaderboard!")
+                break
+    remember("truck_leaderboard", leaderboard_order)
+        
     announcement_channel = await context.guild.fetch_channel(1024056209860468766)
     c = 0;
     async for message in announcement_channel.history(oldest_first = False):
-        if c < 2:
-            await message.delete();
-            c += 1;
-        else:
-            break;
-    
+        content = message.content
+        await message.delete();
+        if "Leaderboard" in content:
+            break
+        
     await announcement_channel.send(res)
-    await announcement_channel.send(all_placements)
+    for ct in all_placements:
+        await announcement_channel.send(ct)
     
 @command_handler.Uncontested(type="REACTION", desc="Add heart LTO emoji to nickname")
 async def add_hearts(context: Context):
