@@ -285,7 +285,7 @@ async def update_xc_scoring(context: Context):
             results.append(result)
             
             if message.id != context.message.id and message.author.id == context.author.id:
-                target = await context.send("You've submitted previously! Be sure to delete your original submission unless it was for a different farm. This may affect leaderboard accuracy until next screenshot is posted & scores are updated.", reply=True)
+                target = await context.send("You've submitted previously! Be sure to delete your original submission unless it was for a different farm. This may affect leaderboard accuracy until the next time scores are updated..", reply=True)
                 time.sleep(8)
                 await target.delete();
             
@@ -360,7 +360,7 @@ async def update_xc_scoring(context: Context):
     if old_leaderboard_order:
         for i, family in enumerate(old_leaderboard_order):
             if family != leaderboard_order[i]:
-                await context.send(f"{leaderboard_order[i]} has risen above {family} on the leaderboard!", reply=True)
+                await context.send(f"{leaderboard_order[i]} has risen above {family} on the leaderboard! Check it out: <#1024056209860468766>", reply=True)
                 break
     remember("truck_leaderboard", leaderboard_order)
         
