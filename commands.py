@@ -275,6 +275,12 @@ async def update_xc_scoring(context: Context):
     
     results = []
     async for message in channel.history(after=start_message, oldest_first=True, limit=None):
+        
+        if not get_neighborhood_from_user(message.author):
+            continue;
+        if get_neighborhood_from_user(message.author) == 'FFR':
+            continue;
+        
         if num_trucks := first_int_word(message.content):
             family = get_family_from_user(message.author)["name"]
             result = {
@@ -326,6 +332,7 @@ async def update_xc_scoring(context: Context):
         
         
         if len(family_scores[cur_family]) >= 7:
+            nxt += f"-# \tPlacing but not scoring for {cur_family} team\n"
             continue;
         else:
             nxt += f"-# \tScoring {i} points for {cur_family} team\n"
