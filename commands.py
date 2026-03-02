@@ -385,7 +385,140 @@ async def publish_heart_react_msg(client):
         
     remember("message_done", True)
 
+@command_handler.Uncontested(type="MESSAGE", desc="Updates cross country style scoring")
+async def update_xc_scoring(context: Context):
+    if context.channel.id != 1203772906497380472:
+        return;
+    if context.author.id == 691338084444274728:
+        return;
+    
+    channel = await context.guild.fetch_channel(1203772906497380472)
+    
+    import re
+    import string
+    from typing import Optional
+
+    def first_int_word(s: str) -> Optional[int]:
+        for token in s.split():
+            # strip common edge punctuation: "(12)," -> "12"
+            cleaned = token.strip(string.punctuation)
+            if cleaned.isdigit():
+                return int(cleaned)
+        return None
+    
         
+    start_message = await channel.fetch_message(1468980801424330897);
+    
+    results = []
+    async for message in channel.history(after=start_message, oldest_first=True, limit=None):
+        
+        if not get_neighborhood_from_user(message.author):
+            continue;
+        if get_neighborhood_from_user(message.author) == 'FFR':
+            continue;
+        
+        if num_trucks := first_int_word(message.content):
+            family = get_family_from_user(message.author)["name"]
+            result = {
+                "score": num_trucks,
+                "family": family,
+                "user": message.author
+            }
+            results.append(result)
+            
+            if message.id != context.message.id and message.author.id == context.author.id:
+                target = await context.send("You've submitted previously! Be sure to delete your original submission unless it was for a different farm. This may affect leaderboard accuracy until the next time scores are updated..", reply=True)
+                time.sleep(8)
+                await target.delete();
+            
+    results.sort(key=lambda x: x["score"],reverse=True)
+    
+    family_scores = {
+        "Bunny": [],
+        "Cheetah": [],
+        "Donkey": [],
+        "Fox": [],
+        "Giraffe": [],
+        "Hippo": [],
+        "Penguin": [],
+    }
+    family_emojis = {
+        "Bunny": "🐰",
+        "Cheetah": "🐆",
+        "Donkey": "🫏",
+        "Fox": "🦊",
+        "Giraffe": "🦒",
+        "Hippo": "🦛",
+        "Penguin": "🐧",
+    }
+    emoji_placements = {
+        1: "🥇",
+        2: "🥈",
+        3: "🥉"
+    }
+    all_placements = []
+    all_placements.append("# Placements\n")
+    nxt = ""
+    for i, result in enumerate(results, start=1):
+        cur_family = result["family"]
+        placement = emoji_placements[i] if i in emoji_placements else f"{str(i)}."
+        family_emoji = family_emojis[cur_family]
+        nick = await clean_nick(result["user"], context.guild)
+        nxt += f"{placement} **{nick}** ({result["score"]} trucks)\n"
+        
+        
+        if len(family_scores[cur_family]) >= 7:
+            nxt += f"-# \tPlacing but not scoring for {cur_family} team\n"
+            continue;
+        else:
+            nxt += f"-# \tScoring {i} points for {cur_family} team\n"
+        family_scores[cur_family].append(i)
+        
+        if i % 15 == 0:
+            all_placements.append(nxt)
+            nxt = ""
+    all_placements.append(nxt)
+        
+    for family in family_scores:
+        for x in range(7-len(family_scores[family])):
+            family_scores[family].append(len(results) + 1 + x)
+            
+    scores = {}
+    for family, places in family_scores.items():
+        # assumes len(places) == 7
+        scores[family] = sum(places) 
+        
+    leaderboard = sorted(scores.items(), key=lambda kv: kv[1], reverse=False)
+    leaderboard_order = [];
+    res = "# Truck Competition Leaderboard\n"
+    res += "This leaderboard will automatically update with every new truck submission to <#1203772906497380472> Remember, less points is better. Here are the current rankings!\n"
+    for rank, (family, score) in enumerate(leaderboard, start=1):
+        leaderboard_order.append(family);
+        res += (
+            f"**{rank}. {family}: {score}**\n"
+            f"-# placements: {family_scores[family]}\n\n"
+        )
+        
+    old_leaderboard_order = remember("truck_leaderboard")
+    if old_leaderboard_order:
+        for i, family in enumerate(old_leaderboard_order):
+            if family != leaderboard_order[i]:
+                await context.send(f"{leaderboard_order[i]} has risen above {family} on the leaderboard! Check it out: <#1024056209860468766>", reply=True)
+                break
+    remember("truck_leaderboard", leaderboard_order)
+        
+    announcement_channel = await context.guild.fetch_channel(1024056209860468766)
+    c = 0;
+    async for message in announcement_channel.history(oldest_first = False):
+        content = message.content
+        await message.delete();
+        if "Leaderboard" in content:
+            break
+        
+    await announcement_channel.send(res)
+    for ct in all_placements:
+        await announcement_channel.send(ct)
+    
 @command_handler.Uncontested(type="REACTION", desc="Add heart LTO emoji to nickname")
 async def add_hearts(context: Context):
     if not context.message.id == int(remember("heart_message_id")):
@@ -3959,12 +4092,12 @@ async def check_emojis(client):
     guild = client.get_guild(FF.guild);
     async for member in guild.fetch_members():
         neighbor = Neighbor(member.id, guild.id)
-        
-        while item := neighbor.get_item_of_name("Farmmas1 tag"):
-            neighbor.vacate_item(item)
-            
-        while item := neighbor.get_item_of_name("Farmmas2 tag"):
-            neighbor.vacate_item(item)    
+        role = guild.get_role(1024052938752151552)
+        if has_role(member, role):
+            if neighbor.get_item_of_name("Maple tag nurture event"):
+                continue;
+            item = Item("Maple tag nurture event", "event_emoji", time.time() + 21086592, emoji="🍁", display="None")
+            neighbor.bestow_item(item);
                        
             
 async def get_users_who_reacted(message, target_emoji):
@@ -6999,6 +7132,51 @@ async def help_in_context(context: Context):
                 return True;
             ResponseRequest(get_help, "help", "REACTION", context, context, key, target_command=name);
 
+@command_handler.Uncontested(type="MESSAGE")
+async def treasure_hunt(context: Context):
+    if (context.channel.id != 1472265286475317302):
+        return
+    if (context.author_id == 355169964027805698):
+        return;
+    
+    if not len(context.content) == 2:
+        target = await context.send("Claim a spot on the treasure map by sending the grid spot in [Capital Letter][Number] format!\nEx: A1 or F8", reply=True)
+        time.sleep(5);
+        await context.message.delete();
+        await target.delete();
+        return
+        
+        
+    letters = ["A", "B", "C", "D", "E", "F"]
+    numbers = ["1", "2", "3", "4", "5", "6", "7", "8"]
+    if not context.content[0] in letters or not context.content[1] in numbers:
+        target = await context.send("Claim a spot on the treasure map by sending the grid spot in [Capital Letter][Number] format, between A1 and F8!\nEx: B2 or E7", reply=True)
+        time.sleep(8);
+        await context.message.delete();
+        await target.delete();
+        return
+        
+    claimed = remember("chosen_squares") or []
+    spots_taken = [spot[0] for spot in claimed]
+    if context.content in spots_taken:
+        target = await context.send("That spot is already claimed! Pick something else.", reply=True)
+        time.sleep(8);
+        await context.message.delete();
+        await target.delete();
+        return
+    
+    authors_taken = [spot[1] for spot in claimed]
+    if context.author_id in authors_taken:
+        target = await context.send("You've already claimed a spot!", reply=True)
+        time.sleep(8);
+        await context.message.delete();
+        await target.delete();
+        return
+    
+    claimed.append((context.content, context.author_id))
+    target = await context.send("Spot claimed!", reply=True)
+    remember("chosen_squares", claimed)
+
 @command_handler.Command(AccessType.PUBLIC, desc = "Provides a list of available commands, or alternatively describes the function of a particular command. For example, `$help help`", generic = True)
 async def help(activator: Neighbor, context: Context):
     if len(context.args) > 0:
@@ -9498,8 +9676,66 @@ def convert_mentions_to_text(context: Context, str):
     except:
         pass;
 
-async def set_nick(user, guild, was_changed = False):
+async def clean_nick(user, guild):
+    neighbor = Neighbor(user.id, guild.id);
+    user_role_ids = [role.id for role in user.roles];
 
+    name = user.display_name;
+
+    new_nick = name;
+
+    with open('families.json') as fFamilies:
+        families = json.load(fFamilies)
+    with open("rss.json") as fRSS:
+        rss = json.load(fRSS);
+
+    tags = [x["tag"] for x in families];
+
+    for tag in tags:
+        new_nick = new_nick.replace(tag, "");
+
+    old_tags = [x["old_tag"] for x in families]
+
+    new_nick = re.sub(r'\[.*?\]', '', new_nick)
+
+    for old_tag in old_tags:
+        new_nick = new_nick.replace(old_tag, "");
+
+    new_nick = new_nick.replace("❤", "");
+    new_nick = new_nick.replace("{CM} ", "");
+    new_nick = new_nick.replace(" {CM}", "");
+    new_nick = new_nick.replace("[??] ", "");
+    new_nick = new_nick.replace("[??]", "");
+    new_nick = new_nick.replace("[coe] ", "");
+
+    emoj = re.compile("["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+        u"\U00002500-\U00002BEF"  # chinese char
+        u"\U00002702-\U000027B0"
+        u"\U00002702-\U000027B0"
+        u"\U000024C2-\U0001F251"
+        u"\U0001f926-\U0001f937"
+        u"\U00010000-\U0010ffff"
+        u"\u2640-\u2642"
+        u"\u2600-\u2B55"
+        u"\u200d"
+        u"\u23cf"
+        u"\u23e9"
+        u"\u231a"
+        u"\ufe0f"  # dingbats
+        u"\u3030"
+                        "]+", re.UNICODE)
+
+    new_nick = re.sub(emoj, '', new_nick)
+
+    new_nick = new_nick.strip();
+    
+    return new_nick
+
+async def set_nick(user, guild, was_changed = False):
     member = guild.get_member(user.id)
     if member is None:
         return
