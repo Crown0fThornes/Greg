@@ -284,7 +284,8 @@ async def close_farmers_market(client):
         market_info = json.load();
         
     channel_id = market_info["market_channel_id"]
-    await guild.delete_channel(channel_id);
+    channel = await guild.fetch_channel(channel_id);
+    await channel.delete();
     await gc.send("The Farmers Market has left down! Check back next Sunday for more offers.")
     
     
