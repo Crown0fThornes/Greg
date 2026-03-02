@@ -258,7 +258,7 @@ def create_data_trcking_table():
 @command_handler.Scheduled("20:00", day_of_week=5)
 async def open_farmers_market(client):
     
-    # guild = context.guild; 
+    # guild = context.guild;
     guild = client.get_guild(647883751853916162)
     town_square = await guild.fetch_channel(648223363600351263);
     # guild = context.guild;
