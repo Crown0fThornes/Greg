@@ -287,6 +287,7 @@ async def sort_ticket(activator: Neighbor, context: Context, response: ResponseP
         for ticket_type in ticket_types:
             if str(response.content) == ticket_type["emoji"]:
                 chosen_type = ticket_type
+                await context.send("Got it, I'll let the Council know!")
                 break
         else:
             return
@@ -303,6 +304,8 @@ async def sort_ticket(activator: Neighbor, context: Context, response: ResponseP
         open_tickets = remember("open_tickets") or {}
         open_tickets[target_context.message.id] = context.channel.id;
         remember("open_tickets", open_tickets)
+        
+        
         
 @command_handler.Uncontested(type="REACTION", desc="Resolve or reopen support tickets")
 async def resolve_tickets(context: Context):
