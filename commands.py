@@ -10402,7 +10402,7 @@ async def pick_family(after):
     
     already_picked[family_in_dict].append(after.id)
     
-    # write_families_py_exec(already_picked);
+    write_families_py_exec(already_picked);
 
     role_id = next((family["role_id"] for family in family_info if family["name"] == family_decision), None)
     honorary_role_id = next((family["honorary_role_id"] for family in family_info if family["name"] == family_decision), None)
