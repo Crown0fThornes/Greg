@@ -10214,6 +10214,46 @@ def get_neighborhood_from_user(user):
         return "FFR";
     return None;
 
+
+async def load_families(guild):
+    families = {
+        "bunnies": [],
+        "cheetahs": [],
+        "donkeys": [],
+        "foxes": [],
+        "giraffes": [],
+        "hippos": [],
+        "penguins": [],
+    }
+    
+    bunny_role = guild.get_role(1454591136860471346)
+    cheetah_role = guild.get_role(1454590857591132314)
+    donkey_role = guild.get_role(1454591042278920304)
+    fox_role = guild.get_role(1342333037509214259)
+    giraffe_role = guild.get_role(1454591075757985853)
+    hippo_role = guild.get_role(1454593861643931684)
+    penguin_role = guild.get_role(1454590623532191774)
+    
+    async for member in guild.fetch_members():
+        if has_role(member, bunny_role):
+            families["bunnies"].append(member.id)
+        if has_role(member, cheetah_role):
+            families["cheetahs"].append(member.id)
+        if has_role(member, donkey_role):
+            families["donkeys"].append(member.id)
+        if has_role(member, fox_role):
+            families["foxes"].append(member.id)
+        if has_role(member, giraffe_role):
+            families["giraffes"].append(member.id)
+        if has_role(member, hippo_role):
+            families["hippos"].append(member.id)
+        if has_role(member, penguin_role):
+            families["penguins"].append(member.id)
+            
+    return families
+    
+
+
 def load_families_py_exec(path: str = "families.py") -> dict:
     namespace = {}
     with open(path, "r", encoding="utf-8") as f:
@@ -10336,7 +10376,7 @@ async def pick_family(after):
     }
     
     new_family_name = None
-    already_picked = load_families_py_exec()
+    already_picked = await load_families(guild)
     for family_name, members in already_picked.items():
         if after.id in members:
             new_family_name = matchup[family_name]
@@ -10402,7 +10442,7 @@ async def pick_family(after):
     
     already_picked[family_in_dict].append(after.id)
     
-    write_families_py_exec(already_picked);
+    # write_families_py_exec(already_picked);
 
     role_id = next((family["role_id"] for family in family_info if family["name"] == family_decision), None)
     honorary_role_id = next((family["honorary_role_id"] for family in family_info if family["name"] == family_decision), None)
