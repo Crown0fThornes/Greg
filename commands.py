@@ -252,7 +252,7 @@ async def ticket_type(context: Context):
     with open("lookups/ticket_types.json", "r") as f:
         ticket_types = json.load(f)
         
-    res = "Hi there! Thanks for leaving a message. If you could help me out, what does it pertain to?\n"
+    res = "Hi there! Thanks for leaving a message. Do any of the following apply?\n"
     
     for ticket_type in ticket_types:
         res += f"{ticket_type["emoji"]} **{ticket_type["prompt"]}**.\n"
