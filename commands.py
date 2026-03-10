@@ -256,6 +256,8 @@ async def ticket_type(context: Context):
     
     for ticket_type in ticket_types:
         res += f"{ticket_type["emoji"]} **{ticket_type["prompt"]}**.\n"
+        if "examples" in ticket_type: 
+            res += f"-# {ticket_type["examples"]}\n"
     
     res += "In any case, a Council Member will be with you when available."
     
@@ -296,7 +298,7 @@ async def sort_ticket(activator: Neighbor, context: Context, response: ResponseP
         
         channel = await context.guild.fetch_channel(chosen_type["channel"])
         ping = chosen_type["ping"]
-        target_context = Context(await channel.send(f"**Unresolved ticket from <@{activator.ID}> here: <#{context.channel.id}>**\n\n<@&{ping}> react with ✅ to resolve; 🔄 to force reopen"))
+        target_context = Context(await channel.send(f"**{channel.name} -- unresolved ticket from <@{activator.ID}> here: <#{context.channel.id}>**\n\n<@&{ping}> react with ✅ to resolve; 🔄 to force reopen"))
         await target_context.react("✅")
         await target_context.react("🔄")
         
