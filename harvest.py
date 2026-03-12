@@ -8,6 +8,7 @@ import time
 import random
 import sqlite3
 import json
+import password_manager
 
 def random_crop_amt(mu: int, highend_of_range: int):
     '''
@@ -111,6 +112,13 @@ async def silo(activator: Neighbor, context: Context, response: ResponsePackage 
         create_silo_table();
         
         if activator.get_item_of_name("Silo Security Lvl 2"):
+            
+            pm = password_manager.PasswordManager()
+            
+            if not pm.contains(str(activator.ID)):
+                await set_password(activator, context)
+                return;
+            
             if not response:
                 response_context = Context(await context.send("Please enter the password for this silo to access it."))
                 
@@ -120,11 +128,10 @@ async def silo(activator: Neighbor, context: Context, response: ResponsePackage 
                 return
             
             else:
-                password = "hello"
-                if response.content == password:
+                if pm.validate(str(activator.ID), response.content):
                     pass
                 else:
-                    await context.send("Incorrect password!")
+                    await context.send("Stop right there! Without the right password, you are *not* getting into this silo!")
                     return
         
         with sqlite3.connect("data/silo.db") as conn:            
@@ -161,6 +168,20 @@ async def silo(activator: Neighbor, context: Context, response: ResponsePackage 
 async def strongman(activator: Neighbor, context: Context, responsePackage: ResponsePackage):
     await context.send("The Strongman is guarding this silo from The Silo Thief! <:strongman2:1248819697747497042>")
     
+    
+async def set_password(activator: Neighbor, context: Context, response: ResponsePackage = None):
+    if not response:
+        await context.send("Please set a password for your silo by typing it in chat!")
+        
+        def key(ctx):
+            return ctx.message.id != context.message.id and ctx.author.id == activator.ID
+        ResponseRequest(set_password, "set_password","MESSAGE",context,context,key=key)
+    
+    else:
+        pm = password_manager.PasswordManager()
+        pm.add(str(activator.ID),response.content)
+        await context.send(f"Your silo password has been set! Try `$silo` again!")
+
     
 def get_expected_silo_value(silo_list):
     return int(3.1*sum(v for _, v in silo_list))
@@ -312,7 +333,7 @@ async def close_farmers_market(client):
     gc = await guild.fetch_channel(648223397205114910);
     
     with open("data/farmers_market.json", "r") as f:
-        market_info = json.load();
+        market_info = json.load(f);
         
     channel_id = market_info["market_channel_id"]
     channel = await guild.fetch_channel(channel_id)
@@ -388,10 +409,13 @@ async def silo_thief(client):
                 neighbor = Neighbor(neighbor_id,647883751853916162);
                 if neighbor.get_item_of_name("Silo Security Lvl 2"):
                     if commands.chance(4,3):
-                        await bot_channel.send("The thief has come to town and attempted to steal from <@{neighbor_id}>'s silo!\n\n🔐🔐🔐 But she couldn't crack the password! Your crops are safe! 🔐🔐🔐")
+                        await bot_channel.send(f"The thief has come to town and attempted to steal from <@{neighbor_id}>'s silo!\n\n🔐🔐🔐 But she couldn't crack the password! Your crops are safe! 🔐🔐🔐")
                         continue;
                     
                 percentage_to_take = random.uniform(0.22,0.44)
+                
+                taken_total = 0
+                original_total = 0;
                 
                 cursor.execute("SELECT * FROM silo WHERE neighbor_ID = ?", (neighbor_id,))
                 row = cursor.fetchone()
@@ -400,6 +424,9 @@ async def silo_thief(client):
                 
                 any_crops_leftover = False;
                 for crop_name, quantity in record.items():
+                    
+                    original_total += quantity;
+                    
                     if not quantity > 0:
                         continue;
                     has_security = False;
@@ -419,6 +446,7 @@ async def silo_thief(client):
                             quantity_to_take = floor(quantity * percentage_to_take)
                             any_crops_leftover = True;
                         
+                    taken_total += quantity_to_take
                     
                     update_silo(neighbor_id, crop_name,-quantity_to_take)
                     # taken.append(f"{quantity_to_take} {crop_name}")
@@ -426,13 +454,35 @@ async def silo_thief(client):
                 
                 if not any_crops_leftover:
                     delete_silo(neighbor_id);
-                    await bot_channel.send(f"The thief has come to town and OBLITERATED <@{neighbor_id}>'s silo!\n\n🔥🔥🔥She looked and looked for crops, but found only scaps. So she burnt the whole thing down in a twisted act of arson!🔥🔥🔥\n Use `$plant` to restart your `$harvest`ing journey.")
+                    await bot_channel.send(f"The thief has OBLITERATED <@{neighbor_id}>'s silo!\n\n🔥🔥🔥She looked and looked for crops, but found only scaps. So she burnt the whole thing down in a twisted act of arson!🔥🔥🔥\n Use `$plant` to restart your `$harvest`ing journey.")
+                        
+                percentage_taken = taken_total / original_total;
                         
                 if has_security:
-                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_to_take/2*100:0.1f}% of <@{neighbor_id}>'s crops!\n😮‍💨 Good thing the Strongman was there to prevent her from stealing {percentage_to_take*100:0.1f}%!")
+                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_taken*100:0.1f}% of <@{neighbor_id}>'s crops!\n😮‍💨 Good thing the Strongman was there to prevent her from stealing {percentage_to_take*2*100:0.1f}%!")
                 else:
-                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_to_take*100:0.1f}% of <@{neighbor_id}>'s crops!")
+                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_taken*100:0.1f}% of <@{neighbor_id}>'s crops!")
             
             await bot_channel.send("The thief has made her escape once again before law enforcement could catch her. Be on the lookout! Learn more at `$info thief`")
     except:
         raise ConnectionError("Could not connect to databse")
+    
+command_handler.Loop(minutes=5)
+async def harvest_reminders(client):
+    guild = client.get_guild(647883751853916162)
+    bc = await guild.fetch_channel(784150346397253682)
+    
+    async for member in guild.fetch_members():
+        neighbor = Neighbor(member.id, guild.id)
+        if neighbor.get_item_of_name("Tilly's Crop Watch"):
+                planted = neighbor.get_items_of_type("crops planted");
+    
+                if not planted:
+                    continue
+                
+                for planted_item in planted:
+                    expiration = float(planted_item.get_value("ready"))
+                    print(expiration);
+                    print(time.time());
+                    if time.time() > expiration:
+                        await bc.send(f"<@{neighbor.ID}> it's time to harvest your crops!")

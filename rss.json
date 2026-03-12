@@ -99,6 +99,14 @@
           "duration_label": "1 week"
         },
         {
+          "name": "Tilly's Crop Watch",
+          "type": "harvest_item",
+          "emoji": "🛎️",
+          "description": "Hire the neighbors' kid to watch your crops while you're out on the town; receive a personalized ping from her when your crops are ready to `$harvest`! (within 5 minutes)",
+          "duration": 1209600,
+          "duration_label": "2 weeks"
+        },
+        {
           "name": "Silo Security Lvl 1",
           "type": "harvest_item",
           "emoji": "🚨",
@@ -117,14 +125,6 @@
           "cost": 7,
           "duration": 1814400,
           "duration_label": "3 weeks"
-        },
-        {
-          "name": "AutoHarvester",
-          "type": "minigame",
-          "emoji": "👵",
-          "description": "Hire Rose to autoharvest crops for you up to 6x overnight.",
-          "warning": "Rose takes a 33% cut of all harvests she does for you. Convenient...",
-          "cost": 8
         },
         {
           "name": "Greg Wordle Minigame",
