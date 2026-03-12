@@ -280,7 +280,7 @@ async def ticket_type(context: Context):
     open_tickets = remember("open_tickets") or {} #pull open_tickets list from db, or create new list if doesn't exist yet
     open_tickets[target_context.message.id] = context.channel.id #append new item
     remember("open_tickets", open_tickets) #push new list to db
-    
+     
 async def sort_ticket(activator: Neighbor, context: Context, response: ResponsePackage):
         with open("lookups/ticket_types.json", "r") as f:
             ticket_types = json.load(f)
@@ -8785,10 +8785,8 @@ async def silo(activator: Neighbor, context: Context):
 
 @command_handler.Command(AccessType.PRIVATE, desc = "Sell your entire silo!", generic = True)
 async def sell(activator: Neighbor, context: Context, response: ResponsePackage = None):
-    silo_item = activator.get_item_of_name("Silo");
-    if not silo_item:
-        await context.send("You don't have a silo silly!");
-        return;
+    
+    raise PardonOurDustError()
 
     if response is None:
         rates = [0.63467546, 0.872456, 0.900124323, 0.9578765, 0.52332, 0.5111, 1.1344, 0.6333, 0.7555, 0.768794, 0.60987, 0.79023938, 0.510203, 0.9203904957, 0.77473, 0.891920, 0.5, 0.6230, 0.920, 1.10029, 0.7002235, 0.601234, 0.50123, 1.034, 0.91340, 0.65431, 0.6230, 0.71029, 0.9192, 0.712, 0.99999999999]
@@ -9356,6 +9354,9 @@ async def constitution(activator: Neighbor, context: Context):
     import numpy as np
 
     from helper_embedding import embed
+    
+    if not len(context.args) > 0:
+        raise CommandArgsError("`$constitution` requires one argument: what to search for in the Constitution")
 
     query = context.args[0];
     with open("constitution_enc.json", "r") as f:

@@ -103,8 +103,9 @@
           "type": "harvest_item",
           "emoji": "🛎️",
           "description": "Hire the neighbors' kid to watch your crops while you're out on the town; receive a personalized ping from her when your crops are ready to `$harvest`! (within 5 minutes)",
-          "duration": 1209600,
-          "duration_label": "2 weeks"
+          "cost": 3,
+          "duration": 604800,
+          "duration_label": "1 week"
         },
         {
           "name": "Silo Security Lvl 1",
