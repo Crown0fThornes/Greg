@@ -6,13 +6,15 @@
         "channel": 1468425053107388640
     },
     {
-        "prompt": "General Neighbor Issues: opting out; switching Neighborhoods; taking a Hay Day break; etc",
+        "prompt": "Neighbor Logistics",
+        "examples": "Ex: Opting out; switching Neighborhoods; taking a Hay Day break; etc",
         "emoji": "↔️",
         "ping": 648188387836166168,
         "channel": 1468425095642091763
     },
     {
         "prompt": "Collecting BEMs from the treasury",
+        "examples": "Ex: Derby lottery; deco comp; newspaper puzzle; etc",
         "emoji": "<:plank:856295704740888616>",
         "ping": 1468421484606259282,
         "channel": 1468425143960207500
