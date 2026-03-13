@@ -477,7 +477,7 @@ async def harvest_reminders(client):
     
     async for member in guild.fetch_members():
         neighbor = Neighbor(member.id, guild.id)
-        neighbor.vacate_item()
+        neighbor.expire_items()
         if neighbor.get_item_of_name("Tilly's Crop Watch"):
                 planted = neighbor.get_items_of_type("crops planted");
     
