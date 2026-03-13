@@ -462,9 +462,9 @@ async def silo_thief(client):
                 percentage_taken = taken_total / original_total;
                         
                 if has_security:
-                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_taken*100:0.1f}% of <@{neighbor_id}>'s crops!\n😮‍💨 Good thing the Strongman was there to prevent her from stealing {percentage_to_take*2*100:0.1f}%!")
+                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_taken*100:0.0f}% of <@{neighbor_id}>'s crops!\n😮‍💨 Good thing the Strongman was there to prevent her from stealing {percentage_to_take*2*100:0.0f}%!")
                 else:
-                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_taken*100:0.1f}% of <@{neighbor_id}>'s crops!")
+                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_taken*100:0.0f}% of <@{neighbor_id}>'s crops!")
             
             await bot_channel.send("The thief has made her escape once again before law enforcement could catch her. Be on the lookout! Learn more at `$info thief`")
     except:
