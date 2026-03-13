@@ -484,14 +484,11 @@ async def harvest_reminders(client):
                 if not planted:
                     continue
                 
-                if item := neighbor.get_item_of_name("Harvest Reminder"):
-                    neighbor.vacate_item(item)
-                else:
-                    continue
-                
                 for planted_item in planted:
                     expiration = float(planted_item.get_value("ready"))
                     print(expiration);
                     print(time.time());
                     if time.time() > expiration:
-                        await bc.send(f"<@{neighbor.ID}> it's time to harvest your crops!")
+                        if item := neighbor.get_item_of_name("Harvest Reminder"):
+                            neighbor.vacate_item(item)
+                            await bc.send(f"<@{neighbor.ID}> it's time to harvest your crops!")  
