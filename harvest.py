@@ -59,6 +59,9 @@ async def plant(activator: Neighbor, context: Context):
             item = Item(f"Crops Planted! {len(planted)}", "crops planted", -1,ready=str(time.time() + 3600))
             activator.bestow_item(item);
             await context.send("Your crops are planted! Come back in one hour to $harvest!", reply=True)
+        if activator.get_item_of_name("Tilly's Crop Watch"):
+            item = Item("Harvest Reminder", type="reminder",expiration=-1)
+            activator.bestow_item(item)
     else:
         await context.send("Hmm... short term memory loss? You've already got crops planted.",reply=True)
         for planted_item in planted:
@@ -474,11 +477,17 @@ async def harvest_reminders(client):
     
     async for member in guild.fetch_members():
         neighbor = Neighbor(member.id, guild.id)
+        neighbor.vacate_item()
         if neighbor.get_item_of_name("Tilly's Crop Watch"):
                 planted = neighbor.get_items_of_type("crops planted");
     
                 if not planted:
                     continue
+                
+                if item := neighbor.get_item_of_name("Harvest Reminder"):
+                    neighbor.vacate_item(item)
+                else:
+                    return
                 
                 for planted_item in planted:
                     expiration = float(planted_item.get_value("ready"))
