@@ -487,7 +487,7 @@ async def harvest_reminders(client):
                 if item := neighbor.get_item_of_name("Harvest Reminder"):
                     neighbor.vacate_item(item)
                 else:
-                    return
+                    continue
                 
                 for planted_item in planted:
                     expiration = float(planted_item.get_value("ready"))
