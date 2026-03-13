@@ -4144,11 +4144,11 @@ async def event_emojis(client):
         if month == 12:
             break;
             
-        if month == 2: 
+        if month == 3: 
             neighbor = Neighbor(message.author.id, message.guild.id)
             if neighbor.get_item_of_name("Heart Pulse tag Feb deco comp"):
                 continue;
-            item = Item("Heart Pulse tag Feb deco comp", "event_emoji", time.time() + 21086592, emoji="💗", display="None")
+            item = Item("Heart Pulse tag Feb deco comp", "event_emoji", time.time() + 21086592, emoji="🍀", display="None")
             neighbor.bestow_item(item)  
             
         await set_nick(message.author, message.guild)
