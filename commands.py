@@ -5599,13 +5599,9 @@ async def passive_xp(client):
 
     Neighbor.write_all_neighbors(neighbors);
 
-# @command_handler.Loop(minutes = 20, desc = "Takes away rss roles if necessary")
+@command_handler.Loop(minutes = 20, desc = "Takes away rss roles if necessary")
 async def role_mgmt(client):
     guild = client.get_guild(FF.guild);
-    for member in guild.members:
-        await set_roles(member, guild);
-
-    guild = client.get_guild(PHOENIX.guild);
     for member in guild.members:
         await set_roles(member, guild);
 

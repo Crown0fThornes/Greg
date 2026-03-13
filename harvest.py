@@ -467,7 +467,7 @@ async def silo_thief(client):
     except:
         raise ConnectionError("Could not connect to databse")
     
-command_handler.Loop(minutes=5)
+@command_handler.Loop(minutes=5)
 async def harvest_reminders(client):
     guild = client.get_guild(647883751853916162)
     bc = await guild.fetch_channel(784150346397253682)
