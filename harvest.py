@@ -10,6 +10,37 @@ import sqlite3
 import json
 import password_manager
 import math
+import discord
+import difflib
+
+def parse_mention(content):
+    start = content.find("<@")
+    end = content.find(">", start)
+    if start == -1 or end == -1:
+        raise ValueError("Not an ID")
+    id_str = content[start+2:end]
+    if id_str.startswith("!"):
+        id_str = id_str[1:]
+    if not id_str.isdigit():
+        raise ValueError("Not an ID")
+    return int(id_str)
+
+def best_string_match(target, candidates):
+    def similarity(x):
+        return difflib.SequenceMatcher(None, x, target, autojunk=False).ratio()
+
+    target_lower = target.lower()
+    word_matches = [c for c in candidates if target_lower in c.lower().split()]
+    substring_matches = [c for c in candidates if target_lower in c.lower()]
+
+    if word_matches:
+        best_match = max(word_matches, key=similarity)
+    elif substring_matches:
+        best_match = max(substring_matches, key=similarity)
+    else:
+        best_match = max(candidates, key=similarity)
+        
+    return best_match, similarity(best_match);
 
 def random_crop_amt(mu: int, highend_of_range: int):
     '''
@@ -112,15 +143,35 @@ async def harvest(activator: Neighbor, context: Context, response: ResponsePacka
         
 @command_handler.Command(access_type=AccessType.PRIVATE, desc="View my silo!")
 async def silo(activator: Neighbor, context: Context, response: ResponsePackage = None):
+    
+    if len(context.args) > 0:
+        try:
+            target = await context.guild.fetch_member(int(parse_mention((context.args[0]))));
+        except:
+            candidates = [x.nick for x in context.guild.members if not x.nick is None];
+            candidates.extend([x.name for x in context.guild.members if (x.nick is None) or (not x.nick == x.name)]);
+
+            name, confidence = best_string_match(context.args[0], [str(x) for x in candidates]);
+            # print(name);
+            target = discord.utils.get(context.guild.members, display_name = name);
+            target = target if not target is None else discord.utils.get(context.guild.members, name = name);
+    else:
+        target = None;
+        
+    target_member = context.author if target is None else target;
+    target_neighbor = Neighbor(target_member.id, context.guild.id);
+
+    target_neighbor.expire_items();
+    
     try:
         create_silo_table();
         
-        if activator.get_item_of_name("Silo Security Lvl 2"):
+        if target_neighbor.get_item_of_name("Silo Security Lvl 2"):
             
             pm = password_manager.PasswordManager()
             
-            if not pm.contains(str(activator.ID)):
-                await set_password(activator, context)
+            if not pm.contains(str(target_neighbor.ID)):
+                await set_password(target_neighbor, context)
                 return;
             
             if not response:
@@ -142,12 +193,17 @@ async def silo(activator: Neighbor, context: Context, response: ResponsePackage 
             conn.row_factory = sqlite3.Row;
             cursor = conn.cursor();
             
-            cursor.execute("SELECT * FROM silo WHERE neighbor_ID = ?", (activator.ID,))
+            cursor.execute("SELECT * FROM silo WHERE neighbor_ID = ?", (target_neighbor.ID,))
             row = cursor.fetchone()
+            
+            name = "Your"
+            if target_neighbor.ID != activator.ID: 
+                name = target_member.display_name + "'s"
+            
             if row:
                 record = dict(row);
                 
-                output = "Your silo: \n"
+                output = f"{name} silo: \n"
                 crops_counts = list(record.items())[1:]
                 for crop_count in crops_counts:
                     if crop_count[1] <= 0:
@@ -156,12 +212,12 @@ async def silo(activator: Neighbor, context: Context, response: ResponsePackage 
                         output += f"> {crop_count[0]}: {crop_count[1]}\n"
                 output += "Market value of your silo: " + str(int(get_expected_silo_value(crops_counts))) + "xp"
             else:     
-                output = "Your silo: \n"
+                output = f"{name} silo: \n"
                 output += f"> Empty!\n"
-                output += f"Try `$plant`ing some crops to fill your silo! & `$info harvest` to learn more!"
+                output += f"Try `$plant`ing some crops to populate the silo! & `$info harvest` to learn more!"
             target = Context(await context.send(output, reply=True));
             
-            if activator.get_item_of_name("Silo Security Lvl 1"):
+            if target_neighbor.get_item_of_name("Silo Security Lvl 1"):
                 await target.react("<:strongman2:1248819697747497042>")
                 ResponseRequest(strongman,"strongman","REACTION",context,target)
             
