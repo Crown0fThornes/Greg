@@ -9,6 +9,7 @@ import random
 import sqlite3
 import json
 import password_manager
+import math
 
 def random_crop_amt(mu: int, highend_of_range: int):
     '''
@@ -389,8 +390,10 @@ async def sell_at_farmers_market(context: Context):
         await bc.send(f"<@{context.user.id}>, you don't have enough {crop} to make this sale!")
     
     await context.message.remove_reaction(context.emoji, context.user);
-    
-@command_handler.Scheduled("16:00")
+
+# @command_handler.Command(access_type=AccessType.DEVELOPER)
+# async def silo_thief(activator, context):
+@command_handler.Loop(hours=6)
 async def silo_thief(client):
     # guild = context.guild;
     guild = client.get_guild(647883751853916162)
@@ -403,9 +406,19 @@ async def silo_thief(client):
             cursor.execute("SELECT neighbor_ID FROM silo")
             neighbor_ids = [row[0] for row in cursor.fetchall()]
             
-            ten_percent = floor(len(neighbor_ids)/10) + 1;
+            def users_to_select_this_hour(n):
+                '''
+                Math provided by ChatGPT
+                '''
+                expected = 0.10 * n / 4
+                base = math.floor(expected)
+                extra_prob = expected - base
+                return base + (1 if random.random() < extra_prob else 0)
             
-            neighbors_to_steal_from = random.sample(neighbor_ids, ten_percent)
+            neighbors_to_steal_from = random.sample(neighbor_ids, users_to_select_this_hour(len(neighbor_ids)))
+            
+            if not neighbors_to_steal_from:
+                return
             
             for neighbor_id in neighbors_to_steal_from:
                 
@@ -415,7 +428,7 @@ async def silo_thief(client):
                         await bot_channel.send(f"The thief has come to town and attempted to steal from <@{neighbor_id}>'s silo!\n\n🔐🔐🔐 But she couldn't crack the password! Your crops are safe! 🔐🔐🔐")
                         continue;
                     
-                percentage_to_take = random.uniform(0.22,0.44)
+                percentage_to_take = random.uniform(0.28,0.38)
                 
                 taken_total = 0
                 original_total = 0;
@@ -462,7 +475,7 @@ async def silo_thief(client):
                 percentage_taken = taken_total / original_total;
                         
                 if has_security:
-                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_taken*100:0.0f}% of <@{neighbor_id}>'s crops!\n😮‍💨 Good thing the Strongman was there to prevent her from stealing {percentage_to_take*2*100:0.0f}%!")
+                    await bot_channel.send(f"The thief has come to town and taken ~{percentage_taken*100:0.0f}% of <@{neighbor_id}>'s crops!\n😮‍💨 Good thing the Strongman was there to prevent her from stealing {percentage_taken*2*100:0.0f}%!")
                 else:
                     await bot_channel.send(f"The thief has come to town and taken ~{percentage_taken*100:0.0f}% of <@{neighbor_id}>'s crops!")
             
