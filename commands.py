@@ -7117,22 +7117,6 @@ async def survey_second_lowest(client):
     await channel.send(message);
     await channel.send("**Tip!** If you are struggling with the event-ranking section, remember each event should get a different number. Try rotating your phone sideways to see more options.")
 
-     
-@command_handler.Uncontested(type="MESSAGE")
-async def help_in_context(context: Context):
-    if (context.content.startswith("$")):
-        return;
-    for name in command_handler.Command.available_commands.keys():
-        if f"${name}" in context.content:
-            await context.react("❓")
-            def key(ctx):
-                if not ctx.message.id == context.message.id:
-                    return False;
-                if not ctx.emoji.name == "❓":
-                    return False;
-                return True;
-            ResponseRequest(get_help, "help", "REACTION", context, context, key, target_command=name);
-
 @command_handler.Uncontested(type="MESSAGE")
 async def treasure_hunt(context: Context):
     if (context.channel.id != 1472265286475317302):
