@@ -4073,7 +4073,7 @@ async def derby_reminder(client, guild, est_time):
     carnival = await guild.fetch_channel(1342333687429070918)
     targets = []
     if est_time.hour == 8 and est_time.minute == 0 and est_time.weekday() == 5:
-        targets.append(await pro.send("Hey gang! It's Saturday! We should be wrapping things up with derby. Let your neighbors know if you need help!\nYou may want to check in game that your tasks are done. <@&1024052938752151552>\nWe got this!"))
+        targets.append(await pro.send("Hey gang! It's Saturday and this is your Check-In reminder! If you're not done with derby yet, please post a status update and plan in this chat by this time tomorrow! <@&1024052938752151552>\nWe got this!"))
     if est_time.hour == 12 and est_time.minute == 0 and est_time.weekday() == 6:
         targets.append(await main.send("Hey gang! It's Sunday! We should be wrapping things up with derby. Let your neighbors know if you need help!\nYou may want to check in game that your tasks are done.\nAll non diamond tasks! <@&656112994392080384>\nWe got this!"))
         targets.append(await juniors[0].send("Hey gang! It's Sunday! We should be wrapping things up with derby. Let your neighbors know if you need help!\nYou may want to check in game that your tasks are done.\nIf you need help calculating your requirement, let the leaders know. <@&689928709683150909>\nWe got this!"))
@@ -4084,9 +4084,15 @@ async def derby_reminder(client, guild, est_time):
         targets.append(await carnival.send("Hey Carnies! It's Saturday! Just a little reminder (again) to submit your screenshot for the week. <@&1342329111359656008>\nWe got this!"))
 
     for target in targets:
-        new_context = Context(target)
-        await new_context.send("$meme");
-        await meme(Neighbor(691338084444274728), Context(target))
+        if chance(3):
+            new_context = Context(target)
+            await new_context.send("$meme");
+            await meme(Neighbor(691338084444274728), Context(target))
+        else:
+            new_context = Context(target)
+            gif_type = random.choice(["", "let's do it", "you got this", "team work", "derby", "race", "let's go", "good luck", "strong", "I believe in you"])
+            await new_context.send(f"$gif {gif_type}");
+            await gif(Neighbor(691338084444274728), Context(target))
     
 @command_handler.Command(access_type=AccessType.PRIVILEGED)
 async def add_emoji(activator: Neighbor, context: Context):
@@ -5599,7 +5605,7 @@ async def passive_xp(client):
 
     Neighbor.write_all_neighbors(neighbors);
 
-@command_handler.Loop(minutes = 20, desc = "Takes away rss roles if necessary")
+@command_handler.Loop(hours = 1, desc = "Takes away rss roles if necessary")
 async def role_mgmt(client):
     guild = client.get_guild(FF.guild);
     for member in guild.members:
@@ -7793,7 +7799,7 @@ async def rss(activator: Neighbor, context: Context, response: ResponsePackage =
     #     with open('indev_rss.json') as fRSS:
     #         rss_info = json.load(fRSS)
     # else:
-    with open('rss.json') as fRSS:
+    with open('lookups/rss.json') as fRSS:
         rss_info = json.load(fRSS)
 
     # if activator.get_level() < 3:
@@ -9672,7 +9678,7 @@ async def clean_nick(user, guild):
 
     with open('families.json') as fFamilies:
         families = json.load(fFamilies)
-    with open("rss.json") as fRSS:
+    with open("lookups/rss.json") as fRSS:
         rss = json.load(fRSS);
 
     tags = [x["tag"] for x in families];
@@ -9735,7 +9741,7 @@ async def set_nick(user, guild, was_changed = False):
 
     with open('families.json') as fFamilies:
         families = json.load(fFamilies)
-    with open("rss.json") as fRSS:
+    with open("lookups/rss.json") as fRSS:
         rss = json.load(fRSS);
 
     tags = [x["tag"] for x in families];

@@ -15,6 +15,15 @@
           "duration_label": "2 weeks"
         },
         {
+          "name": "Rainbow Role!",
+          "type": "role_upgrade",
+          "emoji": "🌈",
+          "description": "The long awaited comeback of the classic rainbow role! Rep a new color every 5 minutes!",
+          "cost": 5,
+          "duration": 1209600,
+          "duration_label": "2 weeks"
+        },
+        {
           "name": "*Higher XP I* -- Best Seller",
           "type": "expand",
           "emoji": "📈",
@@ -172,11 +181,20 @@
           "duration_label": "2 weeks"
         },
         {
+          "name": "Rainbow Role!",
+          "type": "role_upgrade",
+          "emoji": "🌈",
+          "description": "The long awaited comeback of the classic rainbow role! Rep a new color every 5 minutes!",
+          "cost": 5,
+          "duration": 1209600,
+          "duration_label": "2 weeks"
+        },
+        {
           "name": "Upgraded NH Role",
           "type": "role_upgrade",
           "emoji": "⚡",
           "description": "Gives your Neighborhood role a glowing upgrade! Show off your status in style.",
-          "cost": 5,
+          "cost": 8,
           "warning": "Superceded by Holographic role color!",
           "duration": 604800,
           "duration_label": "1 week"
