@@ -241,7 +241,6 @@ async def set_password(activator: Neighbor, context: Context, response: Response
         pm = password_manager.PasswordManager()
         pm.add(str(activator.ID),response.content)
         await context.send(f"Your silo password has been set! Try `$silo` again!")
-
     
 def get_expected_silo_value(silo_list):
     return int(3.1*sum(v for _, v in silo_list))

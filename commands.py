@@ -4226,7 +4226,6 @@ async def adjust_emojis(activator: Neighbor, context: Context, confirm: Response
     await context.send(result);
         
     await set_nick(await context.guild.fetch_member(activator.ID), context.guild)
-            
     
 @command_handler.Command(access_type=AccessType.PUBLIC, generic=True)
 async def gif(activator: Neighbor, context: Context):
@@ -5624,7 +5623,7 @@ async def nick_mgmt(client):
         except:
             pass
 
-# @command_handler.Loop(minutes = 5, desc = "The rainbow role color is changed to a random color.")
+@command_handler.Loop(minutes = 5, desc = "The rainbow role color is changed to a random color.")
 async def change_rainbow_role_color(client):
     guild = client.get_guild(FF.guild);
     rainbow_role = guild.get_role(1055882917429137479);
@@ -9969,11 +9968,7 @@ async def set_nick(user, guild, was_changed = False):
 
 
 async def set_roles(user, guild):
-    if guild.id == FF.guild:
-        role_ids = [FF.strawberry_role, FF.blueberry_role, FF.chicken_icon, FF.coin_icon, FF.diamond_icon, FF.barn_icon, FF.greg_icon, FF.rainbow_role, FF.invisibility_role];
-    else:
-        role_ids = [PHOENIX.strawberry_role, PHOENIX.blueberry_role, "", "", "", "", "", PHOENIX.rainbow_role, PHOENIX.invisibility_role];
-    names = ["Strawberry Tag", "Blueberry Tag", "Hay Day Chicken", "Hay Day Coin", "Hay Day Diamond", "The Barns of Friendly Farmers Collection", "Hay Day Greg", "*Rainbow Role* -- Best Seller", "Invisibility Cloak"];
+    
 
     user_role_ids = [role.id for role in user.roles];
 
