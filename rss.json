@@ -90,6 +90,33 @@
       "unlock": 0,
       "items": [
         {
+          "name": "Greg Wordle Minigame",
+          "type": "minigame",
+          "emoji": "🔤",
+          "description": "Play my very own Wordle minigame using $wordle!",
+          "cost": 3,
+          "duration": 1209600,
+          "duration_label": "2 weeks"
+        },
+        {
+          "name": "Wordle 2 (Hard Mode)",
+          "type": "minigame",
+          "emoji": "😡",
+          "description": "Wordle, but harder! Harder words, no purple letters, and play against Rose instead of Tom--all for Double XP.",
+          "warning": "If you own Hard Mode *and* regular mode, the $wordle command will default to Hard Mode",
+          "cost": 6,
+          "duration": 1209600,
+          "duration_label": "2 weeks"
+        }
+      ]
+    },
+    {
+      "name": "Harvest Upgrades",
+      "emoji": "🧑‍🌾",
+      "description": "Your silo needs some help to grow bigger!",
+      "unlock": 0,
+      "items": [
+        {
           "name": "Expanded Fields",
           "type": "harvest_item",
           "emoji": "🌾",
@@ -126,25 +153,6 @@
           "cost": 7,
           "duration": 1814400,
           "duration_label": "3 weeks"
-        },
-        {
-          "name": "Greg Wordle Minigame",
-          "type": "minigame",
-          "emoji": "🔤",
-          "description": "Play my very own Wordle minigame using $wordle!",
-          "cost": 3,
-          "duration": 1209600,
-          "duration_label": "2 weeks"
-        },
-        {
-          "name": "Wordle 2 (Hard Mode)",
-          "type": "minigame",
-          "emoji": "😡",
-          "description": "Wordle, but harder! Harder words, no purple letters, and play against Rose instead of Tom--all for Double XP.",
-          "warning": "If you own Hard Mode *and* regular mode, the $wordle command will default to Hard Mode",
-          "cost": 6,
-          "duration": 1209600,
-          "duration_label": "2 weeks"
         }
       ]
     },
