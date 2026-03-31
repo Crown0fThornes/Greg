@@ -5604,7 +5604,7 @@ async def passive_xp(client):
 
     Neighbor.write_all_neighbors(neighbors);
 
-@command_handler.Loop(hours = 1, desc = "Takes away rss roles if necessary")
+@command_handler.Loop(hours = 4, desc = "Takes away rss roles if necessary")
 async def role_mgmt(client):
     guild = client.get_guild(FF.guild);
     for member in guild.members:
@@ -8046,6 +8046,11 @@ async def rss(activator: Neighbor, context: Context, response: ResponsePackage =
                 elif item['name'] == "Holographic Role":
                     glowing = context.guild.get_role(1452414125006262375)
                     await user.add_roles(glowing);
+                    
+                elif item['name'] == "Rainbow Role!":
+                    rainbow = context.guild.get_role(1055882917429137479)
+                    await user.add_roles(rainbow);
+                    
             case _:
                 give = Item(item['name'], item['type'], duration);
 
@@ -9968,20 +9973,27 @@ async def set_nick(user, guild, was_changed = False):
 
 
 async def set_roles(user, guild):
+    with open('lookups/rss.json') as fRSS:
+        rss_info = json.load(fRSS)
+        
+    neighbor = Neighbor(user.id, guild.id)
+    neighbor.expire_items()
+        
+    for catergory in rss_info:
+        for item in catergory["items"]:
+            if "role_id" in item:
+                if not neighbor.get_item_of_name(item["name"]):
+                    role = guild.get_role(item["role_id"])
+                    if role:
+                        await user.remove_roles(role)
+            if "role_ids" in item:
+                if not neighbor.get_item_of_name(item["name"]):
+                    for role_id in item["role_ids"]:
+                        role = guild.get_role(role_id)
+                        if role:
+                            await user.remove_roles(role)
+                    
     
-
-    user_role_ids = [role.id for role in user.roles];
-
-    neighbor = Neighbor(user.id, guild.id);
-    neighbor.expire_items();
-    for i, id in enumerate(role_ids):
-        item = neighbor.get_item_of_name(names[i]);
-        if item is None and id in user_role_ids:
-            role = guild.get_role(id);
-            await user.remove_roles(role);
-        elif not item is None and not id in user_role_ids:
-            role = guild.get_role(id);
-            await user.add_roles(role);
 
 def strip(neighbor, levels: int = None, xp: int = None):
     if not xp is None:

@@ -184,10 +184,10 @@
           "name": "Rainbow Role!",
           "type": "role_upgrade",
           "emoji": "🌈",
-          "role_id": "1390751487327604776",
+          "role_id": 1055882917429137479,
           "description": "The long awaited comeback of the classic rainbow role! Rep a new color every 5 minutes!",
-          "cost": 5,
-          "warning": "Superceded by more expensive roles",
+          "cost": 1,
+          "warning": "Superceded by more expensive roles!",
           "duration": 604800,
           "duration_label": "1 week"
         },
@@ -198,7 +198,7 @@
           "role_ids": [1390751487327604776,1390751659424223343,1390751653036294194,1390753599453270168,1342329111359656008],
           "description": "Gives your Neighborhood role a glowing upgrade! Show off your status in style.",
           "cost": 8,
-          "warning": "Superceded by Holographic role color!",
+          "warning": "Superceded by more expensive roles!",
           "duration": 1209600,
           "duration_label": "2 weeks"
         },
@@ -209,7 +209,7 @@
           "role_id": 1452414125006262375,
           "description": "Gain the exclusive, animated Holographic role. It's shiny, it's rare, it's flex-worthy.",
           "cost": 12,
-          "warning": "Same role as attained from Set 2 Task 4 in the '25 FF Fair",
+          "warning": "Superceds less expensive roles!",
           "duration": 1209600,
           "duration_label": "2 weeks"
         }
