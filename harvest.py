@@ -526,6 +526,7 @@ async def silo_thief(client):
                 if not any_crops_leftover:
                     delete_silo(neighbor_id);
                     await bot_channel.send(f"The thief has OBLITERATED <@{neighbor_id}>'s silo!\n\n🔥🔥🔥She looked and looked for crops, but found only scaps. So she burnt the whole thing down in a twisted act of arson!🔥🔥🔥\n Use `$plant` to restart your `$harvest`ing journey.")
+                    continue
                         
                 percentage_taken = taken_total / original_total;
                         
