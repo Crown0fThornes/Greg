@@ -195,7 +195,7 @@
           "name": "Upgraded NH Role",
           "type": "role_upgrade",
           "emoji": "⚡",
-          "role_ids": [1390751487327604776,1390751659424223343,1390751653036294194,1390753599453270168,1342329111359656008],
+          "role_ids": [1390751487327604776,1390751659424223343,1390751653036294194,1390753599453270168,1390752595207000216],
           "description": "Gives your Neighborhood role a glowing upgrade! Show off your status in style.",
           "cost": 8,
           "warning": "Superceded by more expensive roles!",

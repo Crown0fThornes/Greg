@@ -5604,25 +5604,6 @@ async def passive_xp(client):
 
     Neighbor.write_all_neighbors(neighbors);
 
-@command_handler.Loop(hours = 4, desc = "Takes away rss roles if necessary")
-async def role_mgmt(client):
-    guild = client.get_guild(FF.guild);
-    for member in guild.members:
-        await set_roles(member, guild);
-
-# @command_handler.Loop(minutes = 10, desc = "The barn role icon is changed to a random barn.")
-async def change_barn_role_icon(client):
-    guild = client.get_guild(FF.guild);
-
-@command_handler.Loop(hours = 8, desc = "Nick management")
-async def nick_mgmt(client):
-    guild = client.get_guild(FF.guild);
-    async for member in guild.fetch_members():
-        try:
-            await set_nick(member, guild)
-        except:
-            pass
-
 @command_handler.Loop(minutes = 5, desc = "The rainbow role color is changed to a random color.")
 async def change_rainbow_role_color(client):
     guild = client.get_guild(FF.guild);
@@ -5651,6 +5632,25 @@ async def change_rainbow_role_color(client):
     # await rainbow_role.edit(color=discord.Colour.from_str(hex_v));
     # await guild.get_role(PHOENIX.blueberry_role).edit(color=discord.Colour.from_str("#01cdfe"));
     # await guild.get_role(PHOENIX.strawberry_role).edit(color=discord.Colour.from_str("#ff71ce"));
+
+@command_handler.Loop(hours = 4, desc = "Takes away rss roles if necessary")
+async def role_mgmt(client):
+    guild = client.get_guild(FF.guild);
+    for member in guild.members:
+        await set_roles(member, guild);
+
+# @command_handler.Loop(minutes = 10, desc = "The barn role icon is changed to a random barn.")
+async def change_barn_role_icon(client):
+    guild = client.get_guild(FF.guild);
+
+@command_handler.Loop(hours = 8, desc = "Nick management")
+async def nick_mgmt(client):
+    guild = client.get_guild(FF.guild);
+    async for member in guild.fetch_members():
+        try:
+            await set_nick(member, guild)
+        except:
+            pass
 
 @command_handler.Command(AccessType.DEVELOPER)
 async def jointimeswithrange(activator: Neighbor, context: Context):
