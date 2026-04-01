@@ -927,6 +927,26 @@ async def fixing(client):
         # print(f"<@{cur_ID}> has been restored to level {new_lvl} sry.")
         await bot_channel.send(f"<@{cur_ID}> has been restored to level {new_lvl} sry.")
         
+@command_handler.Command(access_type=AccessType.DEVELOPER)
+async def april_fools(activator: Neighbor, context: Context):
+    
+    with open("lookups/emojis.txt", "r", encoding="utf-8") as f:
+        emojis = f.read()
+        
+    emoji_list = emojis.split()
+    
+    async for member in context.guild.fetch_members():
+        neighbor = Neighbor(member.id, context.guild.id)
+        neighbor.expire_items()
+        
+        if neighbor.get_item_of_name("April Fools"):
+                continue;
+        item = Item("April Fools", "event_emoji", time.time() + 2592000, emoji=random.choice(emoji_list), display="True")
+        neighbor.bestow_item(item);
+        
+        while valentines_item := neighbor.get_item_of_name("Valentine's Heart"):
+            neighbor.vacate_item(valentines_item);
+        
 
 # @command_handler.Loop(hours=1)
 async def fiftyfifty(client):
