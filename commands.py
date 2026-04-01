@@ -9942,7 +9942,7 @@ async def set_nick(user, guild, was_changed = False):
                 ls_already.append(emoji)
                 to_add.append(item);
                 
-        to_add.sort(key=lambda x: x.expiration, reverse=True);
+        to_add.sort(key=lambda x: x.expiration, reverse=False);
                 
         for item in to_add:
             if counter < 3:
