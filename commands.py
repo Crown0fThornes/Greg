@@ -289,7 +289,8 @@ async def sort_ticket(activator: Neighbor, context: Context, response: ResponseP
         for ticket_type in ticket_types:
             if str(response.content) == ticket_type["emoji"]:
                 chosen_type = ticket_type
-                await context.send("Got it, I'll let the Council know!")
+                await response.response_context.message.edit(content=f"Got it, you're interested in {chosen_type["prompt"]}! I'll let the Council know.")
+                await response.response_context.message.clear_reactions()
                 break
         else:
             return
