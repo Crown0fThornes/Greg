@@ -3977,6 +3977,7 @@ async def set_time(client):
 
     # await xp_reset(client, est_time)
     await personalized_recruitment_reminder(client, guild, est_time);
+    await main_reminders(client, guild, est_time);
     await pro_reminders(client, guild, est_time);
     await carnival_reminders(client, guild, est_time);
     await newspaper_reminders(client, guild, est_time)
@@ -4023,6 +4024,33 @@ async def birthdays(client):
     
     if today_bdays:
         for bday in today_bdays:
+            
+            member = await guild.fetch_member(bday)
+            
+            nh = get_neighborhood_from_user(member)
+            nh_role = None;
+            
+            if nh == "ffp":
+                nh_role = 1024052938752151552;
+            elif nh == "ff":
+                nh_role = 656112994392080384;
+            elif nh == "ffj":
+                nh_role = 689928709683150909;
+            elif nh == "ffj2":
+                nh_role = 1334660124639236267;
+            elif nh == "ffg":
+                nh_role = 1173325157767589988;
+            elif nh == "ffc":
+                nh_role = 1342329111359656008
+            elif nh == "ffr":
+                nh_role = 1034248720058945577
+                
+            if nh_role:
+                await general_channel.send(f"<@&{nh_role}> it's our neighbor's birthday!")
+                
+            else:
+                await general_channel.send("It's our friend's birthday!")
+                
             await general_channel.send(f"Happy Birthday <@{bday}>!!")
             target = await general_channel.send("$celebrate")
             await celebrate(Neighbor(691338084444274728, 1008089618090049678), Context(target));
@@ -4449,6 +4477,16 @@ async def pro_reminders(client, guild, est_time):
         pro_chat = await guild.fetch_channel(pro_chat_id)
         await pro_chat.send("Derby logs are now past due.")
         
+async def main_reminders(client, guild, est_time):
+    if est_time.hour == 16 and est_time.minute == 0 and est_time.weekday() == 4:
+        main_chat_id = 1490688573836623994
+        main_chat = await guild.fetch_channel(main_chat_id)
+        await main_chat.send("Remember to post your personal task log! Logs would be due in 4 hours for A&B derby lottery prize qualification in our Pro Neighborhood! <@&656112994392080384> @everyone")
+        
+    if est_time.hour == 0 and est_time.minute == 0 and est_time.weekday() == 0:
+        main_chat_id = 1490688573836623994
+        main_chat = await guild.fetch_channel(main_chat_id)
+        await main_chat.send("Final reminder to post your personal task logs! (Also derby ends in 4 hours make sure your tasks are done) <@&656112994392080384> @everyone")
 
 async def carnival_reminders(client, guild, est_time):
     if est_time.hour == 8 and est_time.minute == 0 and est_time.weekday() == 1:
