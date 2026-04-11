@@ -643,5 +643,6 @@ Command.set_prefix("$");
 
 import commands 
 import harvest
+import derby_reminders
 
 print(Command.available_commands);
