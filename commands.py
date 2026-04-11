@@ -4012,6 +4012,7 @@ async def birthdays(client):
     async for message in birthdays_channel.history(limit=None, oldest_first=False):
         bday = normalize_birthday(message.content)
         if not bday:
+            await message.add_reaction("🤷‍♂️")
             await message.add_reaction("❌")
             continue
         elif (is_today_birthday(bday)):
