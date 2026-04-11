@@ -1364,7 +1364,7 @@ async def score_introductions(client):
     
     users = {};
     
-    with open("families.json") as fFamilies:
+    with open("lookups/families.json") as fFamilies:
         family_info = json.load(fFamilies)
         
     family_roles = {};
@@ -3968,7 +3968,7 @@ async def announcements(context: Context):
     link = f"https://discord.com/channels/{context.guild.id}/{context.channel.id}/{context.message.id}"
     first_line = first_line_or_period(context.message.content.replace("<@&1181330910747054211>", ""))
     await announcements_channel.send(f"# {first_line}\n<@{context.author.id}> made an announcement here: {link}\n\n{context.message.content.replace("<@&1181330910747054211>", "")}")
-
+    
 
 @command_handler.Loop(minutes = 10)
 async def set_time(client):
@@ -9700,7 +9700,7 @@ async def clean_nick(user, guild):
 
     new_nick = name;
 
-    with open('families.json') as fFamilies:
+    with open('lookups/families.json') as fFamilies:
         families = json.load(fFamilies)
     with open("lookups/rss.json") as fRSS:
         rss = json.load(fRSS);
@@ -9763,7 +9763,7 @@ async def set_nick(user, guild, was_changed = False):
 
     new_nick = name;
 
-    with open('families.json') as fFamilies:
+    with open('lookups/families.json') as fFamilies:
         families = json.load(fFamilies)
     with open("lookups/rss.json") as fRSS:
         rss = json.load(fRSS);
@@ -10363,7 +10363,7 @@ async def pick_family(after):
     
     for family_name, members in families_hardcoded.items():
         if after.id in members:
-            with open("families.json") as fFamilies:
+            with open("lookups/families.json") as fFamilies:
                 family_info = json.load(fFamilies)
                 
             role_id = next((family["role_id"] for family in family_info if family["name"] == family_name), None)
@@ -10375,10 +10375,10 @@ async def pick_family(after):
                 await after.add_roles(role)
                 await targetAF.send(f"In 2026, <@{after.id}> will be part of the {family_name} family!")
             else:
-                await targetAF.send(f"Family '{family_name}' not found in families.json for <@{after.id}>.")
+                await targetAF.send(f"Family '{family_name}' not found in lookups/families.json for <@{after.id}>.")
             return "Hardcoded";   
         
-    with open("families.json") as fFamilies:
+    with open("lookups/families.json") as fFamilies:
         family_info = json.load(fFamilies);
         
     matchup = {
@@ -10516,7 +10516,7 @@ def get_family_from_user(user):
     
     import json
 
-    with open("families.json", "r", encoding="utf-8") as f:
+    with open("lookups/families.json", "r", encoding="utf-8") as f:
         data = json.load(f)
         
     for family in data:
