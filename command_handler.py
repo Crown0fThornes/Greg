@@ -641,7 +641,7 @@ class Scheduled:
     
 Command.set_prefix("$");
 
-import commands 
-import harvest
+import commands.commands as commands 
+import commands.harvest as harvest
 
 print(Command.available_commands);

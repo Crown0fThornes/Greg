@@ -6,11 +6,11 @@ import threading
 import discord
 import custom_types;
 from discord.ext import tasks
-import commands
+import commands.commands as commands
 import command_handler
 from command_handler import Context, Command, Uncontested, Loop, Scheduled
 from custom_types import Neighbor
-import commands as commands
+import commands.commands as commands
 from importlib import reload as sync
 from id_bundle import FF
 from phoenix_bundle import PHOENIX
