@@ -29,7 +29,7 @@ async def animal_tasks_reminder_tuesday(client):
         
         cur_chat = await guild.fetch_channel(cur_chat_id)
         
-        msg = f"# The Animal tasks week has begun \nHey <@{cur_role_id}>, the derby has begun and we need to crush some Animal tasks this week! Remember, you have until Saturday at 8am Server time (exactly 4 days from now) to take as many egg, milk, bacon, wool, goat milk, or feed tasks as possible and submit screenshots to <#1203772906497380472> with a number indicating how many you completed in the message."
+        msg = f"# The Animal tasks week has begun \nHey <@&{cur_role_id}>, the derby has begun and we need to crush some Animal tasks this week! Remember, you have until Saturday at 8am Server time (exactly 4 days from now) to take as many egg, milk, bacon, wool, goat milk, or feed tasks as possible and submit screenshots to <#1203772906497380472> with a number indicating how many you completed in the message."
         target_context = Context(await cur_chat.send(msg))
         await target_context.react(family["emoji"])
 @command_handler.Scheduled(time="12:00", day_of_month=16)   #8am
@@ -42,7 +42,7 @@ async def animal_tasks_reminder_thursday(client):
         
         cur_chat = await guild.fetch_channel(cur_chat_id)
         
-        msg = f"# Two day warning \nHey <@{cur_role_id}>, the derby is underway! Remember, you have until Saturday at 8am Server time (exactly 2 days from now) to take as many egg, milk, bacon, wool, goat milk, or feed tasks as possible."
+        msg = f"# Two day warning \nHey <@&{cur_role_id}>, the derby is underway! Remember, you have until Saturday at 8am Server time (exactly 2 days from now) to take as many egg, milk, bacon, wool, goat milk, or feed tasks as possible."
         target_context = Context(await cur_chat.send(msg))
         await target_context.react(family["emoji"])     
 @command_handler.Scheduled(time="12:00", day_of_month=17)   #8am
@@ -55,7 +55,7 @@ async def animal_tasks_reminder_friday(client):
         
         cur_chat = await guild.fetch_channel(cur_chat_id)
         
-        msg = f"# One day warning \nHey <@{cur_role_id}>, the derby is underway! Remember, you have until Saturday at 8am Server time (exactly 1 day from now) to take as many egg, milk, bacon, wool, goat milk, or feed tasks as possible."
+        msg = f"# One day warning \nHey <@&{cur_role_id}>, the derby is underway! Remember, you have until Saturday at 8am Server time (exactly 1 day from now) to take as many egg, milk, bacon, wool, goat milk, or feed tasks as possible."
         target_context = Context(await cur_chat.send(msg))
         await target_context.react(family["emoji"])
         
@@ -72,7 +72,7 @@ async def animal_tasks_reminder_friday_final_warning(client):
         
         cur_chat = await guild.fetch_channel(cur_chat_id)
         
-        msg = f"# It's time to submit! \nHey <@{cur_role_id}>, this week's Animal task challnege is coming to an end in 12 hours! You need to submit screenshots of your personal task log to <#1203772906497380472> with a number indicating how many you completed in the message within 12 hours in order for your points to count."
+        msg = f"# It's time to submit! \nHey <@&{cur_role_id}>, this week's Animal task challnege is coming to an end in 12 hours! You need to submit screenshots of your personal task log to <#1203772906497380472> with a number indicating how many you completed in the message within 12 hours in order for your points to count."
         target_context = Context(await cur_chat.send(msg))
         await target_context.react(family["emoji"])
 @command_handler.Scheduled(time="12:00", day_of_month=18)   #8am
@@ -109,7 +109,7 @@ async def town_tasks_reminder_tuesday(client):
         
         cur_chat = await guild.fetch_channel(cur_chat_id)
         
-        msg = f"# The Town tasks week has begun \nHey <@{cur_role_id}>, the derby has begun and we need to crush some Town tasks this week! Remember, you have until Saturday at 8am Server time (exactly 4 days from now) to take as many full train, townie, or building tasks as possible and submit screenshots to <#1203772906497380472> with a number indicating how many you completed in the message."
+        msg = f"# The Town tasks week has begun \nHey <@&{cur_role_id}>, the derby has begun and we need to crush some Town tasks this week! Remember, you have until Saturday at 8am Server time (exactly 4 days from now) to take as many full train, townie, or building tasks as possible and submit screenshots to <#1203772906497380472> with a number indicating how many you completed in the message."
         target_context = Context(await cur_chat.send(msg))
         await target_context.react(family["emoji"])
 @command_handler.Scheduled(time="12:00", day_of_month=23)   #8am
@@ -122,7 +122,7 @@ async def town_tasks_reminder_thursday(client):
         
         cur_chat = await guild.fetch_channel(cur_chat_id)
         
-        msg = f"# Two day warning \nHey <@{cur_role_id}>, the derby is underway! Remember, you have until Saturday at 8am Server time (exactly 2 days from now) to take as many full train, townie, or building tasks as possible."
+        msg = f"# Two day warning \nHey <@&{cur_role_id}>, the derby is underway! Remember, you have until Saturday at 8am Server time (exactly 2 days from now) to take as many full train, townie, or building tasks as possible."
         target_context = Context(await cur_chat.send(msg))
         await target_context.react(family["emoji"])     
 @command_handler.Scheduled(time="12:00", day_of_month=24)   #8am
@@ -135,7 +135,7 @@ async def town_tasks_reminder_friday(client):
         
         cur_chat = await guild.fetch_channel(cur_chat_id)
         
-        msg = f"# One day warning \nHey <@{cur_role_id}>, the derby is underway! Remember, you have until Saturday at 8am Server time (exactly 1 day from now) to take as many full train, townie, or building tasks as possible."
+        msg = f"# One day warning \nHey <@&{cur_role_id}>, the derby is underway! Remember, you have until Saturday at 8am Server time (exactly 1 day from now) to take as many full train, townie, or building tasks as possible."
         target_context = Context(await cur_chat.send(msg))
         await target_context.react(family["emoji"])
         
@@ -152,7 +152,7 @@ async def town_tasks_reminder_friday_final_warning(client):
         
         cur_chat = await guild.fetch_channel(cur_chat_id)
         
-        msg = f"# It's time to submit! \nHey <@{cur_role_id}>, this week's Town task challnege is coming to an end in 12 hours! You need to submit screenshots of your personal task log to <#1203772906497380472> with a number indicating how many you completed in the message within 12 hours in order for your points to count."
+        msg = f"# It's time to submit! \nHey <@&{cur_role_id}>, this week's Town task challnege is coming to an end in 12 hours! You need to submit screenshots of your personal task log to <#1203772906497380472> with a number indicating how many you completed in the message within 12 hours in order for your points to count."
         target_context = Context(await cur_chat.send(msg))
         await target_context.react(family["emoji"])
 @command_handler.Scheduled(time="12:00", day_of_month=25)   #8am
@@ -190,7 +190,7 @@ async def production_tasks_reminder_tuesday(client):
         
         cur_chat = await guild.fetch_channel(cur_chat_id)
         
-        msg = f"# The Production tasks week has begun \nHey <@{cur_role_id}>, the derby has begun and we need to crush some Production tasks this week! Remember, you have until Saturday at 8am Server time (exactly 4 days from now) to take as many production tasks as possible and submit screenshots to <#1203772906497380472> with a number indicating how many you completed in the message."
+        msg = f"# The Production tasks week has begun \nHey <@&{cur_role_id}>, the derby has begun and we need to crush some Production tasks this week! Remember, you have until Saturday at 8am Server time (exactly 4 days from now) to take as many production tasks as possible and submit screenshots to <#1203772906497380472> with a number indicating how many you completed in the message."
         target_context = Context(await cur_chat.send(msg))
         await target_context.react(family["emoji"])
 @command_handler.Scheduled(time="12:00", day_of_month=30)   #8am
@@ -203,7 +203,7 @@ async def production_tasks_reminder_thursday(client):
         
         cur_chat = await guild.fetch_channel(cur_chat_id)
         
-        msg = f"# Two day warning \nHey <@{cur_role_id}>, the derby is underway! Remember, you have until Saturday at 8am Server time (exactly 2 days from now) to take as many production tasks as possible."
+        msg = f"# Two day warning \nHey <@&{cur_role_id}>, the derby is underway! Remember, you have until Saturday at 8am Server time (exactly 2 days from now) to take as many production tasks as possible."
         target_context = Context(await cur_chat.send(msg))
         await target_context.react(family["emoji"])     
 @command_handler.Scheduled(time="12:00", day_of_month=1)   #8am
@@ -216,7 +216,7 @@ async def production_tasks_reminder_friday(client):
         
         cur_chat = await guild.fetch_channel(cur_chat_id)
         
-        msg = f"# One day warning \nHey <@{cur_role_id}>, the derby is underway! Remember, you have until Saturday at 8am Server time (exactly 1 day from now) to take as many production tasks as possible."
+        msg = f"# One day warning \nHey <@&{cur_role_id}>, the derby is underway! Remember, you have until Saturday at 8am Server time (exactly 1 day from now) to take as many production tasks as possible."
         target_context = Context(await cur_chat.send(msg))
         await target_context.react(family["emoji"])
         
@@ -233,7 +233,7 @@ async def producton_tasks_reminder_friday_final_warning(client):
         
         cur_chat = await guild.fetch_channel(cur_chat_id)
         
-        msg = f"# It's time to submit! \nHey <@{cur_role_id}>, this week's Production task challnege is coming to an end in 12 hours! You need to submit screenshots of your personal task log to <#1203772906497380472> with a number indicating how many you completed in the message within 12 hours in order for your points to count."
+        msg = f"# It's time to submit! \nHey <@&{cur_role_id}>, this week's Production task challnege is coming to an end in 12 hours! You need to submit screenshots of your personal task log to <#1203772906497380472> with a number indicating how many you completed in the message within 12 hours in order for your points to count."
         target_context = Context(await cur_chat.send(msg))
         await target_context.react(family["emoji"])
 @command_handler.Scheduled(time="12:00", day_of_month=2)   #8am

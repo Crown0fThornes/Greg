@@ -5653,7 +5653,7 @@ async def change_rainbow_role_color(client):
     # await guild.get_role(PHOENIX.blueberry_role).edit(color=discord.Colour.from_str("#01cdfe"));
     # await guild.get_role(PHOENIX.strawberry_role).edit(color=discord.Colour.from_str("#ff71ce"));
 
-@command_handler.Loop(hours = 4, desc = "Takes away rss roles if necessary")
+@command_handler.Loop(days = 1, desc = "Takes away rss roles if necessary")
 async def role_mgmt(client):
     guild = client.get_guild(FF.guild);
     for member in guild.members:
