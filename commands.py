@@ -390,7 +390,7 @@ async def publish_heart_react_msg(client):
         
     remember("message_done", True)
 
-@command_handler.Uncontested(type="MESSAGE", desc="Updates cross country style scoring")
+# @command_handler.Uncontested(type="MESSAGE", desc="Updates cross country style scoring")
 async def update_xc_scoring(context: Context):
     if context.channel.id != 1203772906497380472:
         return;
