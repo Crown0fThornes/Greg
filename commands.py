@@ -948,7 +948,7 @@ async def april_fools(activator: Neighbor, context: Context):
             neighbor.vacate_item(valentines_item);
         
 
-# @command_handler.Loop(hours=1)
+@command_handler.Loop(hours=1)
 async def fiftyfifty(client):
     import gspread
     import asyncio
@@ -961,8 +961,8 @@ async def fiftyfifty(client):
     x = gspread.authorize(creds)
 
     # Open the Google Sheet and get worksheets
-    sheet = x.open_by_key("1XxS6KMpyVbK5N87jJO_suiNHTjOgDctrcztzd2_ZgTI")
-    worksheet = sheet.worksheet("May 2025");
+    sheet = x.open_by_key("1LMePGWRj5x95Z6xvQvOfsJcjzj3pGqziQHiUNyohb4g")
+    worksheet = sheet.worksheet("May 2026");
     
         # --- Get all values from a specific column ---
     column_letter = 'D'  # Change this to the desired column
@@ -976,16 +976,16 @@ async def fiftyfifty(client):
         except ValueError:
             continue  # Skip cells that don't contain numbers
         
-    prev_total = remember("5050Total");
+    prev_total = remember("5050Total26");
     
     print(f"New total: {total}\nOld total: {prev_total}");
     
     if not prev_total:
-        remember("5050Total", 300)
+        remember("5050Total26", 300)
         prev_total = 0;
     if not total - prev_total > 250:
         return
-    remember("5050Total", total);
+    remember("5050Total26", total);
 
     guild = client.get_guild(FF.guild);
     channel = await guild.fetch_channel(1234185689172807690);
