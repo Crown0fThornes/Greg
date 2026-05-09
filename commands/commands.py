@@ -391,7 +391,7 @@ async def publish_heart_react_msg(client):
         
     remember("message_done", True)
 
-@command_handler.Uncontested(type="MESSAGE", desc="Updates cross country style scoring")
+# @command_handler.Uncontested(type="MESSAGE", desc="Updates cross country style scoring")
 async def update_xc_scoring(context: Context):
     if context.channel.id != 1203772906497380472:
         return;
@@ -928,8 +928,28 @@ async def fixing(client):
         # print(f"<@{cur_ID}> has been restored to level {new_lvl} sry.")
         await bot_channel.send(f"<@{cur_ID}> has been restored to level {new_lvl} sry.")
         
+@command_handler.Command(access_type=AccessType.DEVELOPER)
+async def april_fools(activator: Neighbor, context: Context):
+    
+    with open("lookups/emojis.txt", "r", encoding="utf-8") as f:
+        emojis = f.read()
+        
+    emoji_list = emojis.split()
+    
+    async for member in context.guild.fetch_members():
+        neighbor = Neighbor(member.id, context.guild.id)
+        neighbor.expire_items()
+        
+        if neighbor.get_item_of_name("April Fools"):
+                continue;
+        item = Item("April Fools", "event_emoji", time.time() + 2592000, emoji=random.choice(emoji_list), display="True")
+        neighbor.bestow_item(item);
+        
+        while valentines_item := neighbor.get_item_of_name("Valentine's Heart"):
+            neighbor.vacate_item(valentines_item);
+        
 
-# @command_handler.Loop(hours=1)
+@command_handler.Loop(hours=1)
 async def fiftyfifty(client):
     import gspread
     import asyncio
@@ -942,8 +962,8 @@ async def fiftyfifty(client):
     x = gspread.authorize(creds)
 
     # Open the Google Sheet and get worksheets
-    sheet = x.open_by_key("1XxS6KMpyVbK5N87jJO_suiNHTjOgDctrcztzd2_ZgTI")
-    worksheet = sheet.worksheet("May 2025");
+    sheet = x.open_by_key("1LMePGWRj5x95Z6xvQvOfsJcjzj3pGqziQHiUNyohb4g")
+    worksheet = sheet.worksheet("May 2026");
     
         # --- Get all values from a specific column ---
     column_letter = 'D'  # Change this to the desired column
@@ -957,16 +977,16 @@ async def fiftyfifty(client):
         except ValueError:
             continue  # Skip cells that don't contain numbers
         
-    prev_total = remember("5050Total");
+    prev_total = remember("5050Total26");
     
     print(f"New total: {total}\nOld total: {prev_total}");
     
     if not prev_total:
-        remember("5050Total", 300)
+        remember("5050Total26", 300)
         prev_total = 0;
     if not total - prev_total > 250:
         return
-    remember("5050Total", total);
+    remember("5050Total26", total);
 
     guild = client.get_guild(FF.guild);
     channel = await guild.fetch_channel(1234185689172807690);
@@ -1345,7 +1365,7 @@ async def score_introductions(client):
     
     users = {};
     
-    with open("families.json") as fFamilies:
+    with open("lookups/families.json") as fFamilies:
         family_info = json.load(fFamilies)
         
     family_roles = {};
@@ -3949,7 +3969,7 @@ async def announcements(context: Context):
     link = f"https://discord.com/channels/{context.guild.id}/{context.channel.id}/{context.message.id}"
     first_line = first_line_or_period(context.message.content.replace("<@&1181330910747054211>", ""))
     await announcements_channel.send(f"# {first_line}\n<@{context.author.id}> made an announcement here: {link}\n\n{context.message.content.replace("<@&1181330910747054211>", "")}")
-
+    
 
 @command_handler.Loop(minutes = 10)
 async def set_time(client):
@@ -5645,25 +5665,6 @@ async def passive_xp(client):
 
     Neighbor.write_all_neighbors(neighbors);
 
-@command_handler.Loop(hours = 4, desc = "Takes away rss roles if necessary")
-async def role_mgmt(client):
-    guild = client.get_guild(FF.guild);
-    for member in guild.members:
-        await set_roles(member, guild);
-
-# @command_handler.Loop(minutes = 10, desc = "The barn role icon is changed to a random barn.")
-async def change_barn_role_icon(client):
-    guild = client.get_guild(FF.guild);
-
-@command_handler.Loop(hours = 8, desc = "Nick management")
-async def nick_mgmt(client):
-    guild = client.get_guild(FF.guild);
-    async for member in guild.fetch_members():
-        try:
-            await set_nick(member, guild)
-        except:
-            pass
-
 @command_handler.Loop(minutes = 5, desc = "The rainbow role color is changed to a random color.")
 async def change_rainbow_role_color(client):
     guild = client.get_guild(FF.guild);
@@ -5692,6 +5693,25 @@ async def change_rainbow_role_color(client):
     # await rainbow_role.edit(color=discord.Colour.from_str(hex_v));
     # await guild.get_role(PHOENIX.blueberry_role).edit(color=discord.Colour.from_str("#01cdfe"));
     # await guild.get_role(PHOENIX.strawberry_role).edit(color=discord.Colour.from_str("#ff71ce"));
+
+@command_handler.Loop(days = 1, desc = "Takes away rss roles if necessary")
+async def role_mgmt(client):
+    guild = client.get_guild(FF.guild);
+    for member in guild.members:
+        await set_roles(member, guild);
+
+# @command_handler.Loop(minutes = 10, desc = "The barn role icon is changed to a random barn.")
+async def change_barn_role_icon(client):
+    guild = client.get_guild(FF.guild);
+
+@command_handler.Loop(hours = 8, desc = "Nick management")
+async def nick_mgmt(client):
+    guild = client.get_guild(FF.guild);
+    async for member in guild.fetch_members():
+        try:
+            await set_nick(member, guild)
+        except:
+            pass
 
 @command_handler.Command(AccessType.DEVELOPER)
 async def jointimeswithrange(activator: Neighbor, context: Context):
@@ -9721,7 +9741,7 @@ async def clean_nick(user, guild):
 
     new_nick = name;
 
-    with open('families.json') as fFamilies:
+    with open('lookups/families.json') as fFamilies:
         families = json.load(fFamilies)
     with open("lookups/rss.json") as fRSS:
         rss = json.load(fRSS);
@@ -9784,7 +9804,7 @@ async def set_nick(user, guild, was_changed = False):
 
     new_nick = name;
 
-    with open('families.json') as fFamilies:
+    with open('lookups/families.json') as fFamilies:
         families = json.load(fFamilies)
     with open("lookups/rss.json") as fRSS:
         rss = json.load(fRSS);
@@ -9963,7 +9983,7 @@ async def set_nick(user, guild, was_changed = False):
                 ls_already.append(emoji)
                 to_add.append(item);
                 
-        to_add.sort(key=lambda x: x.expiration, reverse=True);
+        to_add.sort(key=lambda x: x.expiration, reverse=False);
                 
         for item in to_add:
             if counter < 3:
@@ -10384,7 +10404,7 @@ async def pick_family(after):
     
     for family_name, members in families_hardcoded.items():
         if after.id in members:
-            with open("families.json") as fFamilies:
+            with open("lookups/families.json") as fFamilies:
                 family_info = json.load(fFamilies)
                 
             role_id = next((family["role_id"] for family in family_info if family["name"] == family_name), None)
@@ -10396,10 +10416,10 @@ async def pick_family(after):
                 await after.add_roles(role)
                 await targetAF.send(f"In 2026, <@{after.id}> will be part of the {family_name} family!")
             else:
-                await targetAF.send(f"Family '{family_name}' not found in families.json for <@{after.id}>.")
+                await targetAF.send(f"Family '{family_name}' not found in lookups/families.json for <@{after.id}>.")
             return "Hardcoded";   
         
-    with open("families.json") as fFamilies:
+    with open("lookups/families.json") as fFamilies:
         family_info = json.load(fFamilies);
         
     matchup = {
@@ -10537,7 +10557,7 @@ def get_family_from_user(user):
     
     import json
 
-    with open("families.json", "r", encoding="utf-8") as f:
+    with open("lookups/families.json", "r", encoding="utf-8") as f:
         data = json.load(f)
         
     for family in data:
