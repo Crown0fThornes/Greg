@@ -9866,6 +9866,9 @@ async def set_nick(user, guild, was_changed = False):
                 else:
                     new_nick = family["emoji"] + new_nick;
 
+        if 1492436522228781106 in user_role_ids:
+            new_nick = "🂡" + new_nick
+
         tag_items = neighbor.get_items_of_type("tag");
 
 
