@@ -4137,13 +4137,13 @@ async def derby_reminder(client, guild, est_time):
     for target in targets:
         if chance(3):
             new_context = Context(target)
-            await new_context.send("$meme");
-            await meme(Neighbor(691338084444274728), Context(target))
+            cmd_msg = await new_context.send("$meme");
+            await meme(Neighbor(691338084444274728), Context(cmd_msg))
         else:
             new_context = Context(target)
             gif_type = random.choice(["", "let's do it", "you got this", "team work", "derby", "race", "let's go", "good luck", "strong", "I believe in you"])
-            await new_context.send(f"$gif {gif_type}");
-            await gif(Neighbor(691338084444274728), Context(target))
+            cmd_msg = await new_context.send(f"$gif {gif_type}");
+            await gif(Neighbor(691338084444274728), Context(cmd_msg))
     
 @command_handler.Command(access_type=AccessType.PRIVILEGED)
 async def add_emoji(activator: Neighbor, context: Context):
