@@ -364,9 +364,10 @@ async def on_member_join(member, NH = None):
     if NH is None:
         guild = client.get_guild(FF.guild);
         general = await guild.fetch_channel(FF.general_channel); 
-        target = await general.send(f"**Welcome to Town, <@{str(member.id)}>!\nWe're happy to see you.**\n\nIf you're looking for a Neighborhood, please:\n1) Check out <#648257841064574986> to learn about our NHs, then\n2) Open a ticket <#1033207181857800242> to chat with leaders.\n-# *Please do not try to join in the game before speaking to a Council Member to help you, or else it may be declined. In the meantime, make sure your server nickname matches your farm name!*");
+        target = await general.send(f"**Welcome to Town, <@{str(member.id)}>!\nWe're happy to see you.**\n\nIf you're looking for a Neighborhood, please let us know! You can learn more about us here: <#648257841064574986>*");
         with open("welcome_town.png", 'rb') as file:
             await general.send(file=discord.File(file))
+        await general.send("<@&648188387836166168> we have a new join!")
    
    
 @client.event
