@@ -364,10 +364,10 @@ async def on_member_join(member, NH = None):
     if NH is None:
         guild = client.get_guild(FF.guild);
         general = await guild.fetch_channel(FF.general_channel); 
-        target = await general.send(f"**Welcome to Town, <@{str(member.id)}>!\nWe're happy to see you.**\n\nIf you're looking for a Neighborhood, please let us know! You can learn more about us here: <#648257841064574986>*");
+        target = await general.send(f"**Welcome to Town, <@{str(member.id)}>!\nWe're happy to see you.**\n\nIf you're looking for a Neighborhood, please let us know! You can learn more about us here: <#648257841064574986>");
         with open("welcome_town.png", 'rb') as file:
             await general.send(file=discord.File(file))
-        await general.send("<@&648188387836166168> we have a new join!")
+        await general.send("<@&648188387836166168> we have a visitor! 🥳")
    
    
 @client.event
