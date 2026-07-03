@@ -3,7 +3,7 @@ from command_handler import Context, AccessType, CommandArgsError, PardonOurDust
 import command_handler
 from custom_types import Neighbor, Item
 from responses import ResponsePackage, ResponseRequest
-import commands
+import commands.commands as commands
 import time
 import random
 import sqlite3
@@ -399,13 +399,26 @@ async def close_farmers_market(client):
     await channel.delete();
     await gc.send("The Farmers Market has left down! Check back next Sunday for more offers.")
     
-    
+from pathlib import Path
+
+import json
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 @command_handler.Uncontested(type="REACTION", desc="Grants farmers market trades")
+
 async def sell_at_farmers_market(context: Context):
-    with open("lookups/harvest_json/crop_info_completed.json", "r") as f:
+
+    crop_info_path = BASE_DIR / "lookups" / "harvest_json" / "crop_info_completed.json"
+
+    market_info_path = BASE_DIR / "data" / "farmers_market.json"
+
+    with crop_info_path.open("r", encoding="utf-8") as f:
+
         crop_info = json.load(f)
-        
-    with open("data/farmers_market.json", "r") as f:
+
+    with market_info_path.open("r", encoding="utf-8") as f:
+
         market_info = json.load(f)
         
     intended_channel = market_info["market_channel_id"]

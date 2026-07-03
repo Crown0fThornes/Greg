@@ -4791,55 +4791,60 @@ async def compliance(client, guild, est_time):
             "Please, ensure they are done, address issues, and post results here."
         )
 
-        # Define possible NH and Family roles
-        NH_roles = ["FFP", "FFM", "FFJ", "FFJ2", "FFG", "FFC"]
-        Family_roles = ["Butterfly", "Cow", "Guinea Pig", "Puppy", "Squirrel", "Zebra"]
-
-        # Templates (do NOT mutate these)
+        NH_roles = ["FFP", "FFM", "FFJ", "FFG", "FFC"]
+        Family_roles = ["Fox", "Donkey", "Penguin", "Cheetah", "Bunny", "Hippo", "Giraffe"]
+        
         task_templates = [
             *[
-                "{NH} HK Log FORMAT Grading -- Please grade the most recent {NH} HK Log on a scale of 5 points.\n\n"
+                "**{NH}* HK Log FORMAT Grading** -- Please grade the most recent {NH} HK Log on a scale of 5 points.\n\n"
                 "• Dock 1 point for any and each of the following requirements not met: 1) Headlined with derby type & Date of derby's start "
                 "2) Points for all players marked 3) Status marked 4) Action marked, separately from status 5) Opt outs listed.\n\n"
                 "• Dock .5 points for any and each aspect of the log that hurt a viewer's ability to interpret it. I.e., If something is confusing "
                 "or action markings are not detailed enough."
-            ] * 10,
+            ] * 7,
             *[
-                "{NH} HK ACCURACY Check -- Check the most recent {NH} HK log for **accuracy** against the real derby log and in-game neighbors. "
+                "**{NH} HK ACCURACY Check** -- Check the most recent {NH} HK log for **accuracy** against the real derby log and in-game neighbors. "
                 "1) Are the scores listed correctly? 1) Were the correct people actually kicked or demoted in game? Promoted? "
                 "2) Evaluate whether or not passes were given. If there were, valid? If there weren't, valid? "
                 "3) Are sufficient notes included?"
-            ] * 10,
+            ] * 7,
             *[
-                "{NH} Role check! Check that everyone with the {NH} role is in {NH} in-game, and make sure that everyone in the corresponding "
+                "**{NH} Role check**! Check that everyone with the {NH} role is in {NH} in-game, and make sure that everyone in the corresponding "
                 "in-game group has the {NH} role. Are a lot of issues coming up? Remind council about role policies."
-            ] * 10,
+            ] * 7,
             *[
-                "{Family} Role check! Check that everyone with the {Family} role is meant to have it. No one outside of a NH or in Resort should "
+                "**{Family} Role check**! Check that everyone with the {Family} role is meant to have it. No one outside of a NH or in Resort should "
                 "have it! No one should have two family roles!"
-            ] * 10,
-            "{Family} Role check! Check that everyone with the {Family} role is meant to have it. No one outside of a NH or in Resort should have it! No one should have two family roles!",
-            "Council Role check! Check that everyone has the correct Rank role, the correct committee Roles, and the correct NH-Council roles.",
-            "Hospitality tasks check! Make sure that the past week's worth of hospitality tasks have been marked as complete for all NHs and logged in respective threads.",
-            "Reach out to any Council Member to compliment something they've done recently.",
-            "Find *something* that can be improved or fixed up in any committee, any process, any system, any Neighborhood, and add it to the Council backburner or bring it up to the Council",
-            "Joinlist check. Compare the last ~3 weeks of the joinlist with the HK logs. Make sure everyone is listed as they are meant to be.",
-            "Leavelist check. Compare the last ~3 weeks of the leavelist with the HK logs. Make sure everyone is listed as they are meant to be AND a list is provided for leaving.",
-            "Check to make sure lotteries were posted for the most recent 4 derbies. Make sure they were done correctly.",
-            "Check the past ~3 weeks of #due-penalties. Anyone overdue? Any penalties not listed?",
-            "Look at the past week of recruitment ads. Find a way to compliment the recruitment committee, and a way to suggest an improvement. Good variability? Good visuals? Easy to read/look at? **Are invite links working?**",
-            "Look at the past ~3 weeks of TikTok posts. Make sure there are posts. Find a way to compliment the posters, and a way to suggest an improvement.",
-            *["Resolve any un'check'ed tickets from the past couple weeks in <#1033544493728809000>."] * 10,
-            "Check that there are NH-chat announcements for each Neighborhood posted for this week.",
-            "Pick out the best NH-chat announcement posted this week, and make an example out of it in Council chat. 'Best' may include: intro to upcoming derby, review of previous derby, introduction of new neighbors, and perhaps some endearing, community engaged quality",
-            "Check that two Council meetings -- once voice and one chat -- are occuring each month. Begin scheduling if needed.",
-            "Pick out the best ad posted this week and make an expample of it for the recruitment commmittee.",
-            "Check in with 3 committee chairs to ask what they need to improve the function or experience of their committee. Raise the matter to Council.",
-            "Red tide!",
-            "Pick one thing off the Council backburner to complete",
-            "Ask 3 committee chairs if there is a good balance of workload between members. If not, see to it that the issue is resolved.",
-            "Double check that HK committees are keeping up on people who are opted out long term. Maybe point out anyone who's at 4 weeks or more.",
-            "Ping each Rank role separately in different messages (1 - 2 - 3) and remind them to / ask if they have gone through their rank's instructions. Link the #council-rank-instructions channel!",
+            ] * 7,
+            "**Council Role check!** Check that everyone has the correct Rank role, the correct committee Roles, and the correct NH-Council roles.",
+            "**Hospitality tasks check!** Make sure that the past week's worth of hospitality tasks have been marked as complete for all NHs and logged in respective threads.",
+            "**Reach out to any Council Member** to compliment something they've done recently.",
+            "**Find *something* that can be improved or fixed up in any committee**, any process, any system, any Neighborhood, and add it to the Council backburner or bring it up to the Council",
+            "**Joinlist check**. Compare the last ~3 weeks of the joinlist with the HK logs. Make sure everyone is listed as they are meant to be.",
+            "**Leavelist check**. Compare the last ~3 weeks of the leavelist with the HK logs. Make sure everyone is listed as they are meant to be AND a list is provided for leaving.",
+            "**Check to make sure lotteries** were posted for the most recent 4 derbies. Make sure they were done correctly.",
+            "**Check the past ~3 weeks of #due-penalties**. Anyone overdue? Any penalties not listed?",
+            "**Look at the past week of recruitment ads**. Find a way to compliment the recruitment committee, and a way to suggest an improvement. Good variability? Good visuals? Easy to read/look at? **Are invite links working?**",
+            "**Look at the past ~3 weeks of TikTok posts**. Make sure there are posts. Find a way to compliment the posters, and a way to suggest an improvement.",
+            *["**Resolve any un'check'ed tickets** from the past ~3 weeks in <#1033544493728809000>."] * 5,
+            "**Check that there are NH-chat announcements** for each Neighborhood posted for this week.",
+            "**Pick out the best NH-chat announcement posted this week**, and make an example out of it in Council chat. 'Best' may include: intro to upcoming derby, review of previous derby, introduction of new neighbors, and perhaps some endearing, community engaged quality",
+            "**Check that two Council meetings** -- once voice and one chat -- are occuring each month. Begin scheduling if needed.",
+            "**Pick out the best ad posted this week** and make an expample of it for the recruitment commmittee.",
+            "**Check in with 3 committee chairs** to ask what they need to improve the function or experience of their committee. Raise the matter to Council.",
+            "**Red tide!** (Tell Lincoln)",
+            "**Pick one thing off the Council backburner** to complete",
+            "**Ask 3 committee chairs if there is a good balance of workload** between members. If not, see to it that the issue is resolved.",
+            "**Double check that HK committees are keeping up on people who are opted out long term**. Maybe point out anyone who's at 4 weeks or more.",
+            "**Ping each Rank role separately in different messages** (1 - 2 - 3) and remind them to / ask if they have gone through their rank's instructions. Link the #council-rank-instructions channel!",
+            "**Audit #meet-the-councill** checking that 1) All members are represented 2) all term end dates are correct (determine last term-start date, add # of months for their rank to get term end)",
+            "Hospitality help: **Post a pet pic** to #pet-pics if you have one and reply to someone else's post",
+            "Hospitality help: **Post an irl pic** to #irl-pics and reply to someone else's post",
+            "Hospitality help: **Post a note of appreciation** in #notes-of-appreciation for any one neighbor; DM any one council member to ask them to do the same for a different neighbor",
+            "Hospitality help: **Hype up every family!** Post something in each family chat & ping them all to fire up some excitement or drama",
+            "**Think up something to ask the advisory boards about**, or just ping them to check in and see what they think about the state of their neighborhood. Engage them in some way!",
+            "**Think outside the box!** What's one thing that can improve Council life? DM your idea to Theresa.",
+            "**The Discord server is a mess,** think of one idea to clean things up. If it's simple enough go ahead and do it; else ask in council chat if others would be okay with it."
         ]
 
         role_check_templates = [
