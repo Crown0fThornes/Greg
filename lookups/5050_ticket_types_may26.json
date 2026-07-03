@@ -1,5 +1,12 @@
 [
     {
+        "prompt": "Purchasing 50/50 Raffle Tickets!!",
+        "examples": "20 BEMs per ticket or 89 for 5!!",
+        "emoji": "🎟️",
+        "ping": 648188387836166168,
+        "channel": 1501977881579098333
+    },
+    {
         "prompt": "Joining Friendly Farmers",
         "emoji": "<:ff_logo:1111011971953872976>",
         "ping": 648188387836166168,
@@ -27,7 +34,7 @@
     },
     {
         "prompt": "Trading my BEMs for Council goods",
-        "examples": "Purchasing Hay Day items from Council is currently not available. Check again later!",
+        "examples": "Currently not available.",
         "emoji": "💰",
         "ping": 1253899618719367279,
         "channel": 1468425237786787891
