@@ -4112,7 +4112,7 @@ async def trade_reminder(client, guild, est_time):
         trading_channel = await guild.fetch_channel(1099888905265881210);
         general = await guild.fetch_channel(648223397205114910);
         
-        await trading_channel.send("**Low on barn stock?**\nThe Council mass produces certain items, like dairy, sugar, fish, and honey, and will trade them for BEMs at **better than market** prices.\nOpen a ticket to see what we have in stock: <#1033207181857800242>")
+        await trading_channel.send("**Low on barn stock?**\nThe Council does not currently keep stock of in-game items for trading, but it may be able to take orders in advance for certain items (basics like dairy, sugar, fish, or food items like cakes or sushi) and will trade them for BEMs often at **better than market** prices.\nOpen a ticket to see if we can do what you need: <#1033207181857800242>")
         await general.send("**Low on barn stock?**\nThe Council can help. \n\n Check out <#1409602006712062022>")
     
     
@@ -4288,9 +4288,19 @@ async def gif(activator: Neighbor, context: Context):
     else:
         search_term = " ".join(context.args).lower();
     
-    TENOR_API_KEY = "AIzaSyDyMfrO4f61lFkCkP58g-NmN7dPRizNgNI"
-    url = f"https://tenor.googleapis.com/v2/search?q={search_term}&key={TENOR_API_KEY}&limit=10"
-    
+    import os
+    from pathlib import Path
+    from dotenv import load_dotenv
+
+    load_dotenv(Path(__file__).resolve().parent / ".env")
+
+    # try:
+    giphy_api_key = os.environ["GIPHY"] 
+
+    if not giphy_api_key:
+        await context.send("Darn! The GIPHY API key has not been configured 😕", reply=True)
+        return
+
     channel = await context.guild.fetch_channel(1391837239679385741)
     
     # CHECK CACHE
@@ -4310,23 +4320,46 @@ async def gif(activator: Neighbor, context: Context):
             if search_term in keywords:
                 res = content;
                 print("Found in cache")
-                
-    patch = not res
+            
+    patch = not res;    
     if not res:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status != 200:
-                    res = ("Darn! Failed to fetch GIFs 😕\nMaybe try again idk")
-                    return
-                data = await response.json()
-                results = data.get("results")
-                if not results:
-                    res = ("Darn! No GIFs found!")
-                    return
-                random_gif = random.choice(results)
-                res = random_gif["media_formats"]["gif"]["url"]
-          
-    target = await context.send(res, reply=True) 
+        url = "https://api.giphy.com/v2/search"
+        params = {
+            "q": search_term,
+            "key": giphy_api_key,
+            "limit": 10,
+            "media_filter": "gif",
+            "contentfilter": "medium",
+        }
+        timeout = aiohttp.ClientTimeout(total=10)
+
+        try:
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(url, params=params) as response:
+                    if response.status != 200:
+                        response_text = await response.text()
+                        print(
+                            f"GIPHY request failed with status "
+                            f"{response.status}: {response_text}"
+                        )
+                        res = "Darn! Failed to fetch GIFs 😕\nMaybe try again idk"
+                    else:
+                        data = await response.json()
+                        results = data.get("results", [])
+                        if not results:
+                            res = "Darn! No GIFs found!"
+                        else:
+                            random_gif = random.choice(results)
+                            media_formats = random_gif.get("media_formats", {})
+                            gif_data = media_formats.get("gif", {})
+                            res = gif_data.get("url")
+                            if not res:
+                                res = "Darn! That GIF did not have a usable URL 😕"
+
+        except:
+            res = "Whelp this is awkward. It didn't work. Try again later?"
+
+    target = await context.send(res, reply=True)
                 
     # PATCH CACHE
     if patch:
@@ -4796,7 +4829,7 @@ async def compliance(client, guild, est_time):
         
         task_templates = [
             *[
-                "**{NH}* HK Log FORMAT Grading** -- Please grade the most recent {NH} HK Log on a scale of 5 points.\n\n"
+                "**{NH} HK Log FORMAT Grading** -- Please grade the most recent {NH} HK Log on a scale of 5 points.\n\n"
                 "• Dock 1 point for any and each of the following requirements not met: 1) Headlined with derby type & Date of derby's start "
                 "2) Points for all players marked 3) Status marked 4) Action marked, separately from status 5) Opt outs listed.\n\n"
                 "• Dock .5 points for any and each aspect of the log that hurt a viewer's ability to interpret it. I.e., If something is confusing "
