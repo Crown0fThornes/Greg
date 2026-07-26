@@ -6218,14 +6218,14 @@ async def update_reaction_roles(activator: Neighbor, context: Context):
     async for message in role_set_channel.history(limit=None):
         message_id, emoji, role_id = message.content.split()
         
-        set_message = await role_get_channel.fetch_message(message_id)
+        set_message = await role_get_channel.fetch_message(int(message_id))
         
         for reaction in set_message.reactions:
             if str(reaction.emoji) == str(emoji):
                 user_ids = [user.id async for user in reaction.users(limit=None)]
                 break
             
-        role = guild.get_role(role_id)
+        role = guild.get_role(int(role_id))
         for user_id in user_ids:
             member = await guild.fetch_member(user_id)
             await member.add_roles(role, reason="reaction role")
