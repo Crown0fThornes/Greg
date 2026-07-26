@@ -6227,7 +6227,10 @@ async def update_reaction_roles(activator: Neighbor, context: Context):
             
         role = guild.get_role(int(role_id))
         for user_id in user_ids:
-            member = await guild.fetch_member(user_id)
+            try:
+                member = await guild.fetch_member(user_id)
+            except:
+                continue;
             await member.add_roles(role, reason="reaction role")
             
     await context.send("Done!", reply=True);
