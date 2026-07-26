@@ -6209,6 +6209,30 @@ async def bems(activator: Neighbor, context: Context):
 
     await context.send(f"✅ Added {to_add} BEM. New total is {total_bems}.", reply=True)
 
+@command_handler.Command(AccessType.PRIVILEGED)
+async def update_reaction_roles(activator: Neighbor, context: Context):
+    guild = context.guild
+    role_get_channel = await guild.fetch_channel(827632354365014036)
+    role_set_channel = await guild.fetch_channel(1531039785047687299)
+    
+    async for message in role_set_channel.history(limit=None):
+        message_id, emoji, role_id = message.content.split()
+        
+        set_message = await role_get_channel.fetch_message(message_id)
+        
+        for reaction in message.reactions:
+            if str(reaction.emoji) == str(emoji)
+                user_ids = [user.id async for user in reaction.users(limit=None)]
+                break
+            
+        role = guild.get_role(role_id)
+        for user_id in user_ids:
+            member = await guild.fetch_member(user_id)
+            await member.add_roles(role, reason="reaction role")
+            
+    await context.send("Done!", reply=True);
+            
+        
 
 @command_handler.Command(AccessType.PUBLIC)
 async def tickets_dict(activator: Neighbor, context: Context):
