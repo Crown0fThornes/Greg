@@ -6220,7 +6220,7 @@ async def update_reaction_roles(activator: Neighbor, context: Context):
         
         set_message = await role_get_channel.fetch_message(message_id)
         
-        for reaction in message.reactions:
+        for reaction in set_message.reactions:
             if str(reaction.emoji) == str(emoji):
                 user_ids = [user.id async for user in reaction.users(limit=None)]
                 break
