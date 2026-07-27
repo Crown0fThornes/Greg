@@ -4198,15 +4198,38 @@ async def event_emojis(client):
         if not has_image:
             continue;
         
-        if month == 12:
+        if month == 3:
             break;
             
-        if month == 3: 
+        if month == 4: 
             neighbor = Neighbor(message.author.id, message.guild.id)
-            if neighbor.get_item_of_name("Heart Pulse tag Feb deco comp"):
+            if neighbor.get_item_of_name("Easter Apr deco comp"):
                 continue;
-            item = Item("Heart Pulse tag Feb deco comp", "event_emoji", time.time() + 21086592, emoji="🍀", display="None")
+            item = Item("Easter Apr deco comp", "event_emoji", time.time() + 21086592, emoji="🐇", display="None")
             neighbor.bestow_item(item)  
+        
+        if month == 5: 
+            neighbor = Neighbor(message.author.id, message.guild.id)
+            if neighbor.get_item_of_name("Spring time May deco comp"):
+                continue;
+            item = Item("Spring time May deco comp", "event_emoji", time.time() + 21086592, emoji="🌷", display="None")
+            neighbor.bestow_item(item)  
+        
+        if month == 6: 
+            neighbor = Neighbor(message.author.id, message.guild.id)
+            if neighbor.get_item_of_name("Wedding June deco comp"):
+                continue;
+            item = Item("Wedding June deco comp", "event_emoji", time.time() + 21086592, emoji="💍", display="None")
+            neighbor.bestow_item(item)  
+        
+        if month == 7: 
+            neighbor = Neighbor(message.author.id, message.guild.id)
+            if neighbor.get_item_of_name("Yee haw July deco comp"):
+                continue;
+            item = Item("Yee haw July deco comp", "event_emoji", time.time() + 21086592, emoji="🤠", display="None")
+            neighbor.bestow_item(item)  
+        
+        
             
         await set_nick(message.author, message.guild)
         print(message.author.display_name);
