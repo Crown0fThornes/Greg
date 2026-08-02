@@ -1,0 +1,74 @@
+[
+    {
+      "set_number": 1,
+      "name": "Helpful Neighbor",
+      "description": "Fill a boat crate, truck order, or townie request for 3 different Neighbors (any neighborhood).",
+      "submission_channel": 1533168711895220456,
+      "pic_count": 3,
+      "word_count": 0,
+      "tickets": 2
+    },
+    {
+      "set_number": 1,
+      "name": "Derby Req",
+      "description": "Complete your Neighborhood's derby requirement (Carnival/Resort: submit an activity screenshot to your NH chat).",
+      "submission_channel": [1101572607372951694,1062523480739938324,1062523541691584522,1177325611266605157,1342333687429070918,1062523586868420720],
+      "pic_count": 1,
+      "word_count": 0,
+      "tickets": 1
+    },
+    {
+      "set_number": 1,
+      "name": "Pet Pics",
+      "description": "Submit a pet picture (could be your pet, someone else's pet, or a wild animal you wish were your pet!).",
+      "submission_channel": 1108132919324717116,
+      "pic_count": 1,
+      "word_count": 0,
+      "tickets": 1
+    },
+    {
+      "set_number": 1,
+      "name": "Historian",
+      "description": "Visit a local library, museum, monument, or other public place of archival or historical significance. Submit a picture and tell us about the visit.",
+      "submission_channel": 1071930737651097720,
+      "pic_count": 1,
+      "word_count": 15,
+      "tickets": 5
+    },
+    {
+      "set_number": 1,
+      "name": "Culture",
+      "description": "Tell us about the music you're listening to lately or a show/movie you've seen recently. Also rate it and include a link or picture.",
+      "submission_channel": [1179484606370689074,1471644154693029950],
+      "pic_count": 0,
+      "word_count": 15,
+      "tickets": 3
+    },
+    {
+      "set_number": 1,
+      "name": "Copy Cats",
+      "description": "Group up with two other players (team of 3) and each of you complete 4 identical derby tasks with matching point values in the same order during the same derby.",
+      "submission_channel": 1229456519712477184,
+      "pic_count": 3,
+      "word_count": 1,
+      "tickets": 4
+    },
+    {
+      "set_number": 1,
+      "name": "Active Player",
+      "description": "Level up in Hay Day.",
+      "submission_channel": 1257522038982049902,
+      "pic_count": 1,
+      "word_count": 0,
+      "tickets": 1
+    },
+    {
+      "set_number": 1,
+      "name": "A Lincoln Classic",
+      "description": "Complete any form of exercise.",
+      "submission_channel": 1533167327884087458,
+      "pic_count": 1,
+      "word_count": 0,
+      "tickets": 2
+    }
+  ]
