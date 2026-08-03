@@ -4228,8 +4228,6 @@ async def event_emojis(client):
                 continue;
             item = Item("Yee haw July deco comp", "event_emoji", time.time() + 21086592, emoji="🤠", display="None")
             neighbor.bestow_item(item)  
-        
-        
             
         await set_nick(message.author, message.guild)
         print(message.author.display_name);
@@ -6460,7 +6458,7 @@ async def tickets_dict(activator: Neighbor, context: Context):
 
     return tickets_by_id
 
-@command_handler.Command(AccessType.PUBLIC)
+# @command_handler.Command(AccessType.PUBLIC)
 async def tickets(activator: Neighbor, context: Context):
     
     # FIRST SET OF TASKS

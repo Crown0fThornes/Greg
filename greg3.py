@@ -37,6 +37,7 @@ intents.message_content = True;
 intents.members = True;
 playing = discord.Game(name="$harvest once per hour!")
 client = discord.Client(intents=intents,activity = playing);
+RUN_AUTO_COMMANDS = False;
 # ___________________________
 
 # loop = asyncio.get_event_loop();
@@ -431,11 +432,15 @@ async def on_message_delete(message):
 @tasks.loop(minutes=1)
 async def manage_scheduled_commands():
     print("scheduler")
+    if not RUN_AUTO_COMMANDS:
+        return;
     await Scheduled.execute(client)
 
 @tasks.loop(minutes=5)
 async def manage_timed_commands():
     print("here");
+    if not RUN_AUTO_COMMANDS:
+        return;
     await Loop.execute(client);
 
 import os
