@@ -81,8 +81,8 @@ async def tickets(activator: Neighbor, context: Context):
                 message_count += 1;
                 word_count += len(message.content.split())
                 has_image = (
-                    any(att.content_type and att.content_type.startswith("image/") for att in message.attachments) or
-                    any(embed.type == "image" or (embed.image and embed.image.url) for embed in message.embeds)
+                    sum(att.content_type and att.content_type.startswith("image/") for att in message.attachments) or
+                    +sum(embed.type == "image" or (embed.image and embed.image.url) for embed in message.embeds)
                 )
                 pic_count += has_image
                 
