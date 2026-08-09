@@ -402,11 +402,9 @@ async def close_farmers_market(client):
 from pathlib import Path
 
 import json
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 @command_handler.Uncontested(type="REACTION", desc="Grants farmers market trades")
-
 async def sell_at_farmers_market(context: Context):
 
     crop_info_path = BASE_DIR / "lookups" / "harvest_json" / "crop_info_completed.json"
