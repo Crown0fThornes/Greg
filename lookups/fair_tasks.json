@@ -78,5 +78,95 @@
       "word_count": 0,
       "message_count": 0,
       "tickets": 2
-    }
+    },
+    [
+      {
+        "set_number": 2,
+        "name": "Farm Design!",
+        "description": "Submit a farm design to the August 'Fair' themed FF decoration competition. No specific decorations are required—put some thought into how to make creative use of the theme.",
+        "submission_channel": 654303369464119316,
+        "pic_count": 1,
+        "word_count": 0,
+        "message_count": 0,
+        "tickets": 5
+      },
+      {
+        "set_number": 2,
+        "name": "Carrots to Carrots",
+        "description": "Write a funny Hay Day-related caption for your family mascot reaction image, then react to at least one other caption from a fellow family member.",
+        "submission_channel": [
+          1454622198416543896,
+          1454622310505119816,
+          1454622388917633250,
+          1454622475639066665,
+          1454622574565920768,
+          1454622704589344931,
+          1454622847522574337
+        ],
+        "pic_count": 0,
+        "word_count": 5,
+        "message_count": 1,
+        "tickets": 1
+      },
+      {
+        "set_number": 2,
+        "name": "Fair Vendor",
+        "description": "Collect at least 10 of every unlocked item in a Fair-related production machine of your choosing (Pie, Candy, Ice Cream, Deep Fryer, Waffle Maker, Popcorn, Hot Dog, Fudge, or another approved machine).",
+        "submission_channel": 1536578888216608768,
+        "pic_count": 1,
+        "word_count": 0,
+        "message_count": 0,
+        "tickets": 3
+      },
+      {
+        "set_number": 2,
+        "name": "Farm & Chat",
+        "description": "Attend any Council Member-hosted Farm & Chat session.",
+        "submission_channel": 1536580809681666058,
+        "pic_count": 1,
+        "word_count": 0,
+        "message_count": 0,
+        "tickets": 4
+      },
+      {
+        "set_number": 2,
+        "name": "Moody",
+        "description": "Share your current mood or what's going on in exactly 3 emojis, then guess someone else's.",
+        "submission_channel": 1536576079819440198,
+        "pic_count": 0,
+        "word_count": 0,
+        "message_count": 2,
+        "tickets": 1
+      },
+      {
+        "set_number": 2,
+        "name": "Pride Annex!",
+        "description": "Spot a rainbow or something rainbow-colored in real life and share it.",
+        "submission_channel": 1536576882072490034,
+        "pic_count": 1,
+        "word_count": 0,
+        "message_count": 0,
+        "tickets": 1
+      },
+      {
+        "set_number": 2,
+        "name": "Meet The Neighbors",
+        "description": "DM someone in the community you've never talked with much. Find something outside of Hay Day that you have in common, then share it while respecting their privacy.",
+        "submission_channel": 1536577756240814231,
+        "pic_count": 0,
+        "word_count": 8,
+        "message_count": 1,
+        "tickets": 3
+      },
+      {
+        "set_number": 2,
+        "name": "Nurture",
+        "description": "Achieve 500 points in the Weekly tab of the Neighborhood Nurture event.",
+        "submission_channel": 1536578677100519494,
+        "pic_count": 1,
+        "word_count": 0,
+        "message_count": 0,
+        "tickets": 2
+      }
+    ]
   ]
