@@ -2494,10 +2494,14 @@ async def junior_requirement(context: Context):
 
 @command_handler.Command(access_type=AccessType.PUBLIC)
 async def requirement(activator: Neighbor, context: Context):
-    if len(context.args) < 1 or not isinstance(context.args[0],int):
+    if len(context.args) < 1:
         raise CommandArgsError("`requirement` expects 1 argument: your farm level!\nFor example: $requirement 40")
     
-    level = context.args[0]
+    try:
+        level = int(context.args[0])
+    except:
+        raise CommandArgsError("`requirement` expects 1 argument: your farm level!\nFor example: $requirement 40")
+        
     normal_derby = min(level * 30, 2560)
     power_derby = min(level * 50, 5440)
     other_derby = min(level * 35, 3200)
