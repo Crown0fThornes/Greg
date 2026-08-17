@@ -2492,6 +2492,21 @@ async def junior_requirement(context: Context):
         except:
             print("not a number");
 
+@command_handler.Command(access_type=AccessType.PUBLIC)
+async def requirement(activator: Neighbor, context: Context):
+    if len(context.args) < 1 or not isinstance(context.args[0],int):
+        raise CommandArgsError("`requirement` expects 1 argument: your farm level!\nFor example: $requirement 40")
+    
+    level = context.args[0]
+    normal_derby = min(level * 30, 2560)
+    power_derby = min(level * 50, 5440)
+    other_derby = min(level * 35, 3200)
+    
+    await context.send(f"In Junior, a level {level} player needs {normal_derby} derby points each week in Normal derbies", reply=True)
+    await context.send(f"In a Power derby, it becomes {power_derby}p. In all other special derbies it becomes {other_derby}p (except chill derby, when 0p is required ofc)")
+        
+            
+
 # @command_handler.Loop(hours=1)
 async def music_challenge(client):
     
