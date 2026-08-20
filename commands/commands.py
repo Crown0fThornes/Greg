@@ -2506,11 +2506,16 @@ async def requirement(activator: Neighbor, context: Context):
     power_derby = min(level * 50, 5440)
     other_derby = min(level * 35, 3200)
     
-    await context.send(f"In Junior, a level {level} player needs {normal_derby} derby points each week in Normal derbies", reply=True)
-    await context.send(f"In a Power derby, it becomes {power_derby}p. In all other special derbies it becomes {other_derby}p (except chill derby, when 0p is required ofc)")
+    await context.send(
+    f"🌾 **FFJ Derby Requirement fo Level {level}**\n"
+    f"• **Normal Derby:** {normal_derby} points\n"
+    f"• Power Derby: {power_derby}p\n"
+    f"• \"400p Derbies\" (Blossom/Mystery/Etc): {other_derby}p\n"
+    f"• Chill Derby: 0p\n"
+    f"• Derbies with no effect on task points or availability fall under Normal requirements (bunny/bingo/etc)",
+    reply=True
+    )
         
-            
-
 # @command_handler.Loop(hours=1)
 async def music_challenge(client):
     
