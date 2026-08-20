@@ -368,7 +368,7 @@ async def on_member_join(member, NH = None):
         target = await general.send(f"**Welcome to Town, <@{str(member.id)}>!\nWe're happy to see you.**\n\nIf you're looking for a Neighborhood, please let us know! You can learn more about us here: <#648257841064574986>");
         with open("welcome_town.png", 'rb') as file:
             await general.send(file=discord.File(file))
-        await general.send("<@&648188387836166168> we have a visitor! 🥳")
+        await general.send("<@&648188387836166168> @here we have a visitor! 🥳")
    
    
 @client.event
