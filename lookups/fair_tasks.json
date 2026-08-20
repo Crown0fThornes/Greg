@@ -166,5 +166,85 @@
       "word_count": 0,
       "message_count": 0,
       "tickets": 2
+    },
+    {
+      "set_number": 3,
+      "name": "Boat Week!",
+      "description": "Fully complete any of the three in-game Boat events going on this week: Tiny Sail, Chain Event, or the Global Event.",
+      "submission_channel": 1539849073186840627,
+      "pic_count": 1,
+      "word_count": 0,
+      "message_count": 0,
+      "tickets": 3
+    },
+    {
+      "set_number": 3,
+      "name": "Feedback",
+      "description": "Submit the FF Q3 2026 survey.",
+      "submission_channel": 1539850157842235422,
+      "pic_count": 1,
+      "word_count": 0,
+      "message_count": 0,
+      "tickets": 2
+    },
+    {
+      "set_number": 3,
+      "name": "Stimulate The Local Economy!",
+      "description": "Put up a Barn Sale in your RSS containing your farm level's worth of items. Don't put up a newspaper ad, and post in your in-game chat that you're throwing a sale.",
+      "submission_channel": 1539850076548108288,
+      "pic_count": 2,
+      "word_count": 0,
+      "message_count": 0,
+      "tickets": 3
+    },
+    {
+      "set_number": 3,
+      "name": "Wordle Wizard",
+      "description": "Purchase Greg's Wordle mini-game and solve a Wordle in 3 words or less.",
+      "submission_channel": 784150346397253682,
+      "pic_count": 1,
+      "word_count": 0,
+      "message_count": 0,
+      "tickets": 2
+    },
+    {
+      "set_number": 3,
+      "name": "Gratitude",
+      "description": "Think of 1 person you're grateful for in the FF community, Neighbor or non-neighbor, and write them a note of appreciation.",
+      "submission_channel": 1402734412793122919,
+      "pic_count": 0,
+      "word_count": 1,
+      "message_count": 1,
+      "tickets": 2
+    },
+    {
+      "set_number": 3,
+      "name": "What-If's Challenge",
+      "description": "Cook something new for you.",
+      "submission_channel": 855938321497718814,
+      "pic_count": 1,
+      "word_count": 0,
+      "message_count": 0,
+      "tickets": 2
+    },
+    {
+      "set_number": 3,
+      "name": "Peasant Haven's Challenge",
+      "description": "Find beauty in nature. This could be a cool bird on a walk, a pretty landscape you haven't noticed before on your commute, a plant you don't know the name of yet, or something similar.",
+      "submission_channel": 1539853102490984550,
+      "pic_count": 1,
+      "word_count": 0,
+      "message_count": 0,
+      "tickets": 1
+    },
+    {
+      "set_number": 3,
+      "name": "Citizen Science",
+      "description": "Use Zooniverse to contribute to a real scientific research project. Find a project that interests you, read its tutorial, spend 10-20 minutes classifying images, then tell us about the project you contributed to and share a couple screenshots of the images you classified.",
+      "submission_channel": 1074453826834280508,
+      "pic_count": 2,
+      "word_count": 1,
+      "message_count": 1,
+      "tickets": 5
     }
-  ]
+]

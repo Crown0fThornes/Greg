@@ -46,9 +46,20 @@ async def tickets(activator: Neighbor, context: Context):
         
     final_report = []
     tickets_accumulated = 0;
+    
+    set2_role = context.guild.get_role(1539861798960767027)
+    set3_role = context.guild.get_role(1539861822461579264)
         
     # Check all tasks!
     for task in task_info:
+        set_num = int(task["set_number"])
+        required_tickets = (set_num-1)*10
+        if tickets_accumulated < required_tickets:
+            break;
+        if set_num == 2:
+            await target_member.add_roles(set2_role)
+            await target_member.add_roles(set3_role)
+        
         channels_to_search = task["submission_channel"]
         if not isinstance(channels_to_search, list):
             channels_to_search = [channels_to_search]
@@ -102,7 +113,17 @@ async def tickets(activator: Neighbor, context: Context):
         task = task_info[i]
         res += f"Task {i+1}: {task["name"]} {"✅" if is_task_completed else "❌"}\n"
     
-    res += "\n:arrow_right: See the task board: ⁠<#1533137141498908875>\n"
+    res += "\n:arrow_right: See the set 1 task board: ⁠<#1533137141498908875>\n"
+    if i > 16:
+        res += "\n:arrow_right: See the set 2 task board: ⁠<#1533137175774756874>\n"
+        res += ":arrow_right: See the set 3 task board: ⁠<#1533137197702713558>\n"
+
+    elif i > 8:
+        res += "\n:arrow_right: See the set 2 task board: ⁠<#1533137175774756874>\n"
+        res += f"Unlock more tasks with {20 - tickets_accumulated} more tickets!\n"
+
+    else:
+        res += f"Unlock more tasks with {10 - tickets_accumulated} more tickets!\n"
     res += "\n:arrow_right: Tasks due <t:1788235140:R>"
     
     await context.send(res,reply=True)
