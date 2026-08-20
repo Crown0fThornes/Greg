@@ -58,6 +58,7 @@ async def tickets(activator: Neighbor, context: Context):
             break;
         if set_num == 2:
             await target_member.add_roles(set2_role)
+        if set_num == 3:
             await target_member.add_roles(set3_role)
         
         channels_to_search = task["submission_channel"]
