@@ -641,8 +641,7 @@ class Scheduled:
     
 Command.set_prefix("$");
 
-import commands.commands as commands 
-import commands.harvest as harvest
-import commands.summer_fest as summer_fest
-
-print(Command.available_commands);
+import commands.commands 
+import commands.harvest
+import commands.summer_fest
+import commands.minigames
