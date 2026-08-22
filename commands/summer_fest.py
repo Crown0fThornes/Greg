@@ -17,8 +17,231 @@ import datetime
 LOCAL_UTC_OFFSET = -4  # EDT
 LOCAL_TZ = datetime.timezone(datetime.timedelta(hours=LOCAL_UTC_OFFSET))
 
-import json
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def insert_submission(conn, member_id, task_num, channel_id, message_id):
+    """
+    Record a Discord message as evidence for a member's task submission.
+
+    Returns True if a new row was inserted.
+    Returns False if that exact submission already existed.
+    """
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT OR IGNORE INTO fair_task_submissions (
+            member_id,
+            task_num,
+            channel_id,
+            message_id
+        )
+        VALUES (?, ?, ?, ?)
+        """,
+        (member_id, task_num, channel_id, message_id)
+    )
+
+    return cursor.rowcount > 0
+
+
+def insert_task_complete(conn, member_id, task_num):
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT OR IGNORE INTO fair_task_completions (
+            member_id,
+            task_num
+        )
+        VALUES (?, ?)
+        """,
+        (member_id, task_num)
+    )
+
+    return cursor.rowcount > 0
+
+
+def remove_task_complete(conn, member_id, task_num):
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        DELETE FROM fair_task_completions
+        WHERE member_id = ?
+          AND task_num = ?
+        """,
+        (member_id, task_num)
+    )
+
+    return cursor.rowcount > 0
+
+def is_submission_in_table(conn, channel_id, message_id):
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT 1
+        FROM fair_task_submissions
+        WHERE channel_id = ?
+          AND message_id = ?
+        LIMIT 1
+        """,
+        (channel_id, message_id,)
+    )
+
+    return cursor.fetchone() is not None
+
+def get_task_submissions(conn, member_id, task_num):
+    """
+    Returns all submissions for a member and task as dictionaries.
+    """
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT channel_id, message_id
+        FROM fair_task_submissions
+        WHERE member_id = ?
+          AND task_num = ?
+        """,
+        (member_id, task_num)
+    )
+
+    return [
+        {
+            "channel_id": channel_id,
+            "message_id": message_id
+        }
+        for channel_id, message_id in cursor.fetchall()
+    ]
+
+@command_handler.Command(access_type=AccessType.PRIVILEGED)
+async def ticket_recount(activator: Neighbor, context: Context):
+    task_db_path = BASE_DIR / "data" / "fair_task_submissions.db"
+    with sqlite3.connect(task_db_path) as conn:
+    
+        guild = context.guild
+        
+        task_info_path = BASE_DIR / "lookups" / "fair_tasks.json"
+        with task_info_path.open("r", encoding="utf-8") as f:
+            task_info = json.load(f)
+            
+        target_message = await context.send("Indexing")
+            
+        # Index all submissions
+        for i, task in enumerate(task_info, start=1):
+            await target_message.edit(content=f"Indexing {task["name"]}")
+            
+            num_pics = task["pic_count"]
+            num_words = task["word_count"]
+            num_messages = task["message_count"]
+            
+            needs_pics = num_pics > 0
+            needs_messages = num_words > 0 or num_messages > 0
+            
+            start_month = task["start_month"]
+            start_day = task["start_day"]
+                    
+            channels_to_search = task["submission_channel"]
+            if not isinstance(channels_to_search, list):
+                channels_to_search = [channels_to_search]
+            
+            await add_submissions_after_date(conn, guild, channels_to_search, i, needs_pics, needs_messages, start_month, start_day)
+                
+        # Validate task completion 
+        for i, task in enumerate(task_info, start=1):
+            await target_message.edit(content=f"Counting {task["name"]}")
+            
+            num_pics = task["pic_count"]
+            num_words = task["word_count"]
+            num_messages = task["message_count"]
+            
+            needs_pics = num_pics > 0
+            needs_messages = num_words > 0 or num_messages > 0
+            
+            start_month = task["start_month"]
+            start_day = task["start_day"]
+                    
+            async for member in guild.fetch_members():
+                add_task_completions(conn, guild, i, member.id, num_pics, num_words, num_messages, start_month, start_day)
+        
+        await target_message.edit(content="Done!")
+        
+async def add_task_completions(conn, guild, task_num, member_id, num_pics, num_words, num_messages, start_month, start_day):
+    
+    async def has_ghost_reaction_from_role(message, role_id):
+        for reaction in message.reactions:
+            if str(reaction.emoji) != "👻":
+                continue
+
+            async for user in reaction.users():
+                if isinstance(user, discord.Member):
+                    if any(role.id == role_id for role in user.roles):
+                        return True
+        return False
+    
+    # does member exist?
+    try:
+        member = guild.fetch_member(member_id)
+    except:
+        return
+    
+    # get submission links from db
+    submissions = get_task_submissions(conn, member_id, task_num)
+    
+    pic_count = 0
+    word_count = 0
+    message_count = 0
+    
+    for submission in submissions:        
+        # try to find message (may have been deleted since indexing)
+        try:
+            channel = await guild.fetch_channel(submission["channel_id"])
+            message = await channel.fetch_message(submission["message_id"])
+        except:
+            continue
+        
+        # check if message has been invalidated with 👻
+        if has_ghost_reaction_from_role(message, 648188387836166168):
+            continue
+        
+        message_count += 1
+        word_count += len(message.content.split())
+        pic_count += sum(att.content_type and att.content_type.startswith("image/") for att in message.attachments)
+        
+    # add or remove completion
+    if pic_count > num_pics and word_count > num_words and message_count > num_messages:
+        insert_task_complete(conn,member_id,task_num)
+    else:
+        remove_task_complete(conn,member_id,task_num)
+        
+        
+                    
+async def add_submissions_after_date(conn, guild, channel_ids, task_num, needs_pics, needs_messages, start_month, start_day):
+    # cycle through submission channels
+    for channel_id in channel_ids:
+        cur_channel = await guild.fetch_channel(channel_id)
+        async for message in cur_channel.history(limit=None,oldest_first=False):
+            # end search if message too old
+            msg_time = message.created_at
+            if msg_time.tzinfo is None:
+                msg_time = msg_time.replace(tzinfo=datetime.timezone.utc)
+            msg_time = msg_time.astimezone(LOCAL_TZ)
+            month = msg_time.month
+            day = msg_time.day
+            if month < start_month:
+                break
+            if day < start_day:
+                break
+            
+            # determine if message worth saving & save
+            if needs_messages:
+                insert_submission(conn, message.author.id, task_num, channel_id, message.id)
+                    
+            elif needs_pics and any(att.content_type and att.content_type.startswith("image/") for att in message.attachments):
+                insert_submission(conn, message.author.id, task_num, channel_id, message.id)
+    
 
 @command_handler.Command(access_type=AccessType.PUBLIC,desc="See your Fair progress!")
 async def tickets(activator: Neighbor, context: Context):
@@ -128,34 +351,7 @@ async def tickets(activator: Neighbor, context: Context):
     res += "\n:arrow_right: Tasks due <t:1788235140:R>"
     
     await context.send(res,reply=True)
-        
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
+         
                 
 def parse_mention(content):
     start = content.find("<@")

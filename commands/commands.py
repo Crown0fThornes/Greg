@@ -9545,8 +9545,6 @@ async def set_roles(user, guild):
                         role = guild.get_role(role_id)
                         if role:
                             await user.remove_roles(role)
-                    
-    
 
 def strip(neighbor, levels: int = None, xp: int = None):
     if not xp is None:

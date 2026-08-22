@@ -7,7 +7,9 @@
       "pic_count": 3,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 2
+      "tickets": 2,
+      "start_month": 8,
+      "start_date": 3
     },
     {
       "set_number": 1,
@@ -17,7 +19,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 1
+      "tickets": 1,
+      "start_month": 8,
+      "start_date": 3
     },
     {
       "set_number": 1,
@@ -27,7 +31,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 1
+      "tickets": 1,
+      "start_month": 8,
+      "start_date": 3
     },
     {
       "set_number": 1,
@@ -37,7 +43,9 @@
       "pic_count": 1,
       "word_count": 15,
       "message_count": 0,
-      "tickets": 5
+      "tickets": 5,
+      "start_month": 8,
+      "start_date": 3
     },
     {
       "set_number": 1,
@@ -47,7 +55,9 @@
       "pic_count": 0,
       "word_count": 15,
       "message_count": 0,
-      "tickets": 3
+      "tickets": 3,
+      "start_month": 8,
+      "start_date": 3
     },
     {
       "set_number": 1,
@@ -57,7 +67,9 @@
       "pic_count": 3,
       "word_count": 1,
       "message_count": 0,
-      "tickets": 4
+      "tickets": 4,
+      "start_month": 8,
+      "start_date": 3
     },
     {
       "set_number": 1,
@@ -67,7 +79,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 1
+      "tickets": 1,
+      "start_month": 8,
+      "start_date": 3
     },
     {
       "set_number": 1,
@@ -77,7 +91,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 2
+      "tickets": 2,
+      "start_month": 8,
+      "start_date": 3
     },
     {
       "set_number": 2,
@@ -87,7 +103,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 5
+      "tickets": 5,
+      "start_month": 8,
+      "start_date": 10
     },
     {
       "set_number": 2,
@@ -105,7 +123,9 @@
       "pic_count": 0,
       "word_count": 5,
       "message_count": 1,
-      "tickets": 1
+      "tickets": 1,
+      "start_month": 8,
+      "start_date": 10
     },
     {
       "set_number": 2,
@@ -115,7 +135,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 3
+      "tickets": 3,
+      "start_month": 8,
+      "start_date": 10
     },
     {
       "set_number": 2,
@@ -125,7 +147,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 4
+      "tickets": 4,
+      "start_month": 8,
+      "start_date": 10
     },
     {
       "set_number": 2,
@@ -135,7 +159,9 @@
       "pic_count": 0,
       "word_count": 0,
       "message_count": 2,
-      "tickets": 1
+      "tickets": 1,
+      "start_month": 8,
+      "start_date": 10
     },
     {
       "set_number": 2,
@@ -145,7 +171,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 1
+      "tickets": 1,
+      "start_month": 8,
+      "start_date": 10
     },
     {
       "set_number": 2,
@@ -155,7 +183,9 @@
       "pic_count": 0,
       "word_count": 8,
       "message_count": 1,
-      "tickets": 3
+      "tickets": 3,
+      "start_month": 8,
+      "start_date": 10
     },
     {
       "set_number": 2,
@@ -165,7 +195,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 2
+      "tickets": 2,
+      "start_month": 8,
+      "start_date": 10
     },
     {
       "set_number": 3,
@@ -175,7 +207,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 3
+      "tickets": 3,
+      "start_month": 8,
+      "start_date": 17
     },
     {
       "set_number": 3,
@@ -185,7 +219,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 2
+      "tickets": 2,
+      "start_month": 8,
+      "start_date": 17
     },
     {
       "set_number": 3,
@@ -195,7 +231,9 @@
       "pic_count": 2,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 3
+      "tickets": 3,
+      "start_month": 8,
+      "start_date": 17
     },
     {
       "set_number": 3,
@@ -205,7 +243,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 2
+      "tickets": 2,
+      "start_month": 8,
+      "start_date": 17
     },
     {
       "set_number": 3,
@@ -215,7 +255,9 @@
       "pic_count": 0,
       "word_count": 1,
       "message_count": 1,
-      "tickets": 2
+      "tickets": 2,
+      "start_month": 8,
+      "start_date": 17
     },
     {
       "set_number": 3,
@@ -225,7 +267,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 2
+      "tickets": 2,
+      "start_month": 8,
+      "start_date": 17
     },
     {
       "set_number": 3,
@@ -235,7 +279,9 @@
       "pic_count": 1,
       "word_count": 0,
       "message_count": 0,
-      "tickets": 1
+      "tickets": 1,
+      "start_month": 8,
+      "start_date": 10
     },
     {
       "set_number": 3,
@@ -245,6 +291,8 @@
       "pic_count": 2,
       "word_count": 1,
       "message_count": 1,
-      "tickets": 5
+      "tickets": 5,
+      "start_month": 8,
+      "start_date": 10
     }
 ]
