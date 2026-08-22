@@ -627,7 +627,7 @@ async def wordle_leaderboard(activator: Neighbor, context: Context):
         res += "🏆 **Wordle Leaderboard for last month!**\n```"
     else:
         res = "🏆 **Wordle Leaderboard for this month!**\n```"
-    res += f"{'#':<4}{'Guess':<8}{'Time':<11}Player\n"
+    res += f"{'#':<4}{'Guesses':<8}{'Time (seconds)':<11}Player\n"
 
     for i, leaderboard_entry in enumerate(wordle_leaderboard["leaderboard"]):
         member_id = leaderboard_entry["member_id"]
@@ -650,7 +650,7 @@ async def wordle_leaderboard(activator: Neighbor, context: Context):
 
         f"{i+1:<4}"
         f"{num_guesses:<8}"
-        f"{seconds_to_solve:<10.2f}s "
+        f"{seconds_to_solve:<10.2f} "
         f"{name}\n"
         )
         
