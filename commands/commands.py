@@ -105,7 +105,10 @@ def remember(key, value=Ellipsis, delete=False):
     """Persistent key/value storage.
     
     Args:
-        key: key
+        key: name of data
+        value: value to store or Ellipsis to return data or None to delete data
+        delete: delete data from storage if True
+        
     """
     with shelve.open("data/persistentdata") as db:
         if value is not None and value is not Ellipsis:

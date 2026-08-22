@@ -468,6 +468,7 @@ async def wordle_game(
 
         await update_wordle_leaderboard(
             activator,
+            context,
             end_time - start_time,
             num_guesses
         )
@@ -562,5 +563,75 @@ async def wordle(activator: Neighbor, context: Context):
         await wordle_easy(activator, context);
         return;
     
-async def update_wordle_leaderboard(activator: Neighbor, seconds_to_solve, num_guesses):
+async def update_wordle_leaderboard(activator: Neighbor, context: Context, seconds_to_solve, num_guesses):
+    current_month = datetime.datetime.now(datetime.timezone.utc).month
     
+    leaderboard = commands.remember("wordle_leaderboard")
+    
+    delete_leaderboard = False
+    if not leaderboard:
+        delete_leaderboard = True
+    current_month = leaderboard["month"]
+    if current_month != leaderboard:
+        delete_leaderboard = True
+    
+    if delete_leaderboard:
+        commands.remember("wordle_leaderboard", delete=True)
+        
+        leaderboard = {
+            "month": current_month,
+            "leaderboard": [] #0 is best; #9 is worst
+        }
+        
+    new_leaderboard = []
+    broke_into_leaderboard = False
+    for leaderboard_entry in leaderboard["leaderboard"]:
+        if num_guesses < leaderboard_entry["num_guesses"] or num_guesses == leaderboard_entry["num_guesses"] and seconds_to_solve < leaderboard_entry["seconds_to_solve"]:
+            new_leaderboard_entry = {
+                "member_id": activator.ID,
+                "num_guesses": num_guesses,
+                "seconds_to_solve": seconds_to_solve
+            }
+            new_leaderboard.append(new_leaderboard)
+            
+            broke_into_leaderboard = True;
+        
+        if len(new_leaderboard) == 10:
+            break
+        
+    commands.remember("wordle_leaderboard", new_leaderboard)
+        
+    if broke_into_leaderboard:
+        if commands.chance(5):
+            await context.send("I think I could have done better personally, but you've broken into the top 10 Wordle Solvers this month regardless! `$wordle_leaderboard` to see!")
+        else:
+            await context.send("Wowzers! You've broken into the top 10 Wordle solvers this month! `$wordle_leaderboard` to see!")
+            
+@command_handler.Command(access_type=AccessType.PUBLIC, desc="View top 10 Wordle solvers this month!")
+async def wordle_leaderboard(activator: Neighbor, context: Context):
+    guild = context.guild
+    
+    wordle_leaderboard = commands.remember("wordle_leaderboard")
+    
+    current_month = datetime.datetime.now(datetime.timezone.utc).month
+    if current_month != wordle_leaderboard["month"]:
+        await context.send("Wow! It seems that no one has played Wordle yet this month!", reply=True)
+        return
+    
+    res = "🏆 **Wordle Leaderboard for this month!**\n```"
+    res += f"{'#':<4}{'Player':<16}{'Guesses':<10}{'Time':<10}\n"
+
+    for i, leaderboard_entry in enumerate(wordle_leaderboard["leaderboard"]):
+        member_id = leaderboard_entry["member_id"]
+        try:
+            member = await guild.fetch_member(member_id)
+            name = member.display_name
+        except:
+            name = "Unknown"
+            
+        num_guesses = leaderboard_entry["num_guesses"]
+        seconds_to_solve = leaderboard_entry["seconds_to_solve"]
+        
+        res += f"{i:<4}{name:<16}{num_guesses:<10}{seconds_to_solve:.2f}s\n"
+        
+    await context.send(res, reply=True)
