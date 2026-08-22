@@ -253,11 +253,23 @@ async def on_message(message):
     #     return;
     context = Context(message=message);
     neighbor = Neighbor(message.author.id, message.guild.id);
+    
+    # if production bot running, don't reply in testing channel
+    # if testing bot, don't reply in regular bot channel
+    if message.channel.id == CHANNEL_ID_DONT_RESPOND:
+        return
+    
     await Command.execute(neighbor, context);
     await Uncontested.execute(context);
             
 @client.event
 async def on_raw_reaction_add(reaction):
+    
+    # if production bot running, don't reply in testing channel
+    # if testing bot, don't reply in regular bot channel
+    if reaction.channel_id == CHANNEL_ID_DONT_RESPOND:
+        return
+    
     if reaction.member.bot:
         return;
     if not reaction.event_type == "REACTION_ADD":
@@ -275,6 +287,7 @@ async def on_raw_reaction_add(reaction):
     context.author_role_ids = [role.id for role in context.message.author.roles];
     context.reaction = reaction;
     context.set_access_type();
+
     await Uncontested.execute(context);
     
 @client.event
@@ -449,10 +462,6 @@ from dotenv import load_dotenv
 
 # Always load .env from the same directory as this file
 load_dotenv(Path(__file__).resolve().parent / ".env")
-
-# try:
 BOT_TOKEN = os.environ["BOT_TOKEN"] 
+CHANNEL_ID_DONT_RESPOND = os.environ["CHANNEL_ID_DONT_RESPOND"]
 client.run(BOT_TOKEN, reconnect=True);
-# except:
-#     print("Get development bot token from Lincoln & set env variable")
-    
