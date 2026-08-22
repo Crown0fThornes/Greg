@@ -646,7 +646,6 @@ async def wordle_leaderboard(activator: Neighbor, context: Context):
         num_guesses = leaderboard_entry["num_guesses"]
         seconds_to_solve = leaderboard_entry["seconds_to_solve"]
         
-        res += f"{i+1:<4}{name:<16}{num_guesses:<10}{seconds_to_solve:.2f}s\n"
         res += (
 
         f"{i+1:<4}"
