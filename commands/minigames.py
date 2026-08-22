@@ -133,7 +133,7 @@ purple_wordle_emojis = {
 }
 
 
-# Wordle logic written entirely by Lincoln, but ChatGPT consolidated Hard Mode & Easy mode into one branch
+# Wordle logic written entirely by Lincoln, but ChatGPT consolidated Hard Mode & Easy mode into one branch. It also cleaned up the code which, while in a style I wouldn't go for, is hard to be mad about.
 async def wordle_easy(
     activator: Neighbor,
     context: Context,
@@ -441,7 +441,7 @@ async def wordle_game(
                     )
 
                 else:
-                    await inc_xp(activator, xp, context)
+                    await commands.inc_xp(activator, xp, context)
 
                     cap_item = activator.get_item_of_name(
                         "Wordle Daily XP"
@@ -464,15 +464,6 @@ async def wordle_game(
         except Exception:
             pass
 
-        # ── LEADERBOARD ──────────────────────────────────────────────────────
-
-        await update_wordle_leaderboard(
-            activator,
-            context,
-            end_time - start_time,
-            num_guesses
-        )
-
         # ── DEFINITION ────────────────────────────────────────────────────────
 
         import requests
@@ -491,11 +482,23 @@ async def wordle_game(
 
             return canonical_word, definition
 
-        definition = get_definition(answer)
+        try:
+            definition = get_definition(answer)
 
-        await context.send(
-            f"**Definition**\n"
-            f"{definition[0]}: {definition[1]}"
+            await context.send(
+                f"**Definition**\n"
+                f"{definition[0]}: {definition[1]}"
+            )
+        except:
+            pass
+        
+        # ── LEADERBOARD ──────────────────────────────────────────────────────
+
+        await update_wordle_leaderboard(
+            activator,
+            context,
+            end_time - start_time,
+            num_guesses
         )
 
         return
@@ -568,44 +571,49 @@ async def update_wordle_leaderboard(activator: Neighbor, context: Context, secon
     
     leaderboard = commands.remember("wordle_leaderboard")
     
-    delete_leaderboard = False
-    if not leaderboard:
-        delete_leaderboard = True
-    current_month = leaderboard["month"]
-    if current_month != leaderboard:
-        delete_leaderboard = True
-    
-    if delete_leaderboard:
-        commands.remember("wordle_leaderboard", delete=True)
-        
+    try:
+        if current_month != leaderboard["month"]:
+            commands.remember("wordle_leaderboard", delete=True)
+            
+            leaderboard = {
+                "month": current_month,
+                "leaderboard": [] #0 is best; #9 is worst
+            }
+    except:
         leaderboard = {
             "month": current_month,
             "leaderboard": [] #0 is best; #9 is worst
         }
         
-    new_leaderboard = []
-    broke_into_leaderboard = False
-    for leaderboard_entry in leaderboard["leaderboard"]:
-        if num_guesses < leaderboard_entry["num_guesses"] or num_guesses == leaderboard_entry["num_guesses"] and seconds_to_solve < leaderboard_entry["seconds_to_solve"]:
-            new_leaderboard_entry = {
-                "member_id": activator.ID,
-                "num_guesses": num_guesses,
-                "seconds_to_solve": seconds_to_solve
-            }
-            new_leaderboard.append(new_leaderboard)
-            
-            broke_into_leaderboard = True;
         
-        if len(new_leaderboard) == 10:
-            break
+    new_leaderboard_entry = {
+        "member_id": activator.ID,
+        "num_guesses": num_guesses,
+        "seconds_to_solve": seconds_to_solve
+    }
+
+    new_leaderboard = leaderboard["leaderboard"].copy()
+    new_leaderboard.append(new_leaderboard_entry)
+
+    new_leaderboard.sort(
+        key=lambda entry: (
+            entry["num_guesses"],
+            entry["seconds_to_solve"]
+        )
+    )
+
+    new_leaderboard = new_leaderboard[:10]
+
+    broke_into_leaderboard = new_leaderboard_entry in new_leaderboard
         
-    commands.remember("wordle_leaderboard", new_leaderboard)
+    leaderboard["leaderboard"] = new_leaderboard
+    commands.remember("wordle_leaderboard", leaderboard)
         
     if broke_into_leaderboard:
         if commands.chance(5):
-            await context.send("I think I could have done better personally, but you've broken into the top 10 Wordle Solvers this month regardless! `$wordle_leaderboard` to see!")
+            await context.send("**🥇 I think I could have done better personally, but you've broken into the top 10 Wordle Solvers this month regardless! 🎉 `$wordle_leaderboard` to see!**")
         else:
-            await context.send("Wowzers! You've broken into the top 10 Wordle solvers this month! `$wordle_leaderboard` to see!")
+            await context.send("**🥇 Wowzers! You've broken into the top 10 Wordle solvers this month! 🎉 `$wordle_leaderboard` to see!**")
             
 @command_handler.Command(access_type=AccessType.PUBLIC, desc="View top 10 Wordle solvers this month!")
 async def wordle_leaderboard(activator: Neighbor, context: Context):
@@ -615,10 +623,10 @@ async def wordle_leaderboard(activator: Neighbor, context: Context):
     
     current_month = datetime.datetime.now(datetime.timezone.utc).month
     if current_month != wordle_leaderboard["month"]:
-        await context.send("Wow! It seems that no one has played Wordle yet this month!", reply=True)
-        return
-    
-    res = "🏆 **Wordle Leaderboard for this month!**\n```"
+        res = "Wow! It seems that no one has played Wordle yet this month!\n"
+        res += "🏆 **Wordle Leaderboard for last month!**\n```"
+    else:
+        res = "🏆 **Wordle Leaderboard for this month!**\n```"
     res += f"{'#':<4}{'Player':<16}{'Guesses':<10}{'Time':<10}\n"
 
     for i, leaderboard_entry in enumerate(wordle_leaderboard["leaderboard"]):
@@ -629,9 +637,19 @@ async def wordle_leaderboard(activator: Neighbor, context: Context):
         except:
             name = "Unknown"
             
+        if i == 0:
+            champion = member_id
+        else:
+            if champion != member_id:
+                champion = None;
+            
         num_guesses = leaderboard_entry["num_guesses"]
         seconds_to_solve = leaderboard_entry["seconds_to_solve"]
         
-        res += f"{i:<4}{name:<16}{num_guesses:<10}{seconds_to_solve:.2f}s\n"
+        res += f"{i+1:<4}{name:<16}{num_guesses:<10}{seconds_to_solve:.2f}s\n"
+        
+    res += "```"
         
     await context.send(res, reply=True)
+    if champion:
+        await context.send(f"**WOAH! {name} has swept the leaderboard! Well done!! 🎉🎉🎉**")
