@@ -37,7 +37,7 @@ intents.message_content = True;
 intents.members = True;
 playing = discord.Game(name="$harvest once per hour!")
 client = discord.Client(intents=intents,activity = playing);
-RUN_AUTO_COMMANDS = True;
+RUN_AUTO_COMMANDS = False;
 # ___________________________
 
 # loop = asyncio.get_event_loop();
@@ -464,4 +464,5 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent / ".env")
 BOT_TOKEN = os.environ["BOT_TOKEN"] 
 CHANNEL_ID_DONT_RESPOND = os.environ["CHANNEL_ID_DONT_RESPOND"]
+print(f"Don't respond to: {CHANNEL_ID_DONT_RESPOND}")
 client.run(BOT_TOKEN, reconnect=True);
