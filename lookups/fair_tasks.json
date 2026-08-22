@@ -9,7 +9,7 @@
       "message_count": 0,
       "tickets": 2,
       "start_month": 8,
-      "start_date": 3
+      "start_day": 3
     },
     {
       "set_number": 1,
@@ -21,7 +21,7 @@
       "message_count": 0,
       "tickets": 1,
       "start_month": 8,
-      "start_date": 3
+      "start_day": 3
     },
     {
       "set_number": 1,
@@ -33,7 +33,7 @@
       "message_count": 0,
       "tickets": 1,
       "start_month": 8,
-      "start_date": 3
+      "start_day": 3
     },
     {
       "set_number": 1,
@@ -45,7 +45,7 @@
       "message_count": 0,
       "tickets": 5,
       "start_month": 8,
-      "start_date": 3
+      "start_day": 3
     },
     {
       "set_number": 1,
@@ -57,7 +57,7 @@
       "message_count": 0,
       "tickets": 3,
       "start_month": 8,
-      "start_date": 3
+      "start_day": 3
     },
     {
       "set_number": 1,
@@ -69,7 +69,7 @@
       "message_count": 0,
       "tickets": 4,
       "start_month": 8,
-      "start_date": 3
+      "start_day": 3
     },
     {
       "set_number": 1,
@@ -81,7 +81,7 @@
       "message_count": 0,
       "tickets": 1,
       "start_month": 8,
-      "start_date": 3
+      "start_day": 3
     },
     {
       "set_number": 1,
@@ -93,7 +93,7 @@
       "message_count": 0,
       "tickets": 2,
       "start_month": 8,
-      "start_date": 3
+      "start_day": 3
     },
     {
       "set_number": 2,
@@ -105,7 +105,7 @@
       "message_count": 0,
       "tickets": 5,
       "start_month": 8,
-      "start_date": 10
+      "start_day": 10
     },
     {
       "set_number": 2,
@@ -125,7 +125,7 @@
       "message_count": 1,
       "tickets": 1,
       "start_month": 8,
-      "start_date": 10
+      "start_day": 10
     },
     {
       "set_number": 2,
@@ -137,7 +137,7 @@
       "message_count": 0,
       "tickets": 3,
       "start_month": 8,
-      "start_date": 10
+      "start_day": 10
     },
     {
       "set_number": 2,
@@ -149,7 +149,7 @@
       "message_count": 0,
       "tickets": 4,
       "start_month": 8,
-      "start_date": 10
+      "start_day": 10
     },
     {
       "set_number": 2,
@@ -161,7 +161,7 @@
       "message_count": 2,
       "tickets": 1,
       "start_month": 8,
-      "start_date": 10
+      "start_day": 10
     },
     {
       "set_number": 2,
@@ -173,7 +173,7 @@
       "message_count": 0,
       "tickets": 1,
       "start_month": 8,
-      "start_date": 10
+      "start_day": 10
     },
     {
       "set_number": 2,
@@ -185,7 +185,7 @@
       "message_count": 1,
       "tickets": 3,
       "start_month": 8,
-      "start_date": 10
+      "start_day": 10
     },
     {
       "set_number": 2,
@@ -197,7 +197,7 @@
       "message_count": 0,
       "tickets": 2,
       "start_month": 8,
-      "start_date": 10
+      "start_day": 10
     },
     {
       "set_number": 3,
@@ -209,7 +209,7 @@
       "message_count": 0,
       "tickets": 3,
       "start_month": 8,
-      "start_date": 17
+      "start_day": 17
     },
     {
       "set_number": 3,
@@ -221,7 +221,7 @@
       "message_count": 0,
       "tickets": 2,
       "start_month": 8,
-      "start_date": 17
+      "start_day": 17
     },
     {
       "set_number": 3,
@@ -233,7 +233,7 @@
       "message_count": 0,
       "tickets": 3,
       "start_month": 8,
-      "start_date": 17
+      "start_day": 17
     },
     {
       "set_number": 3,
@@ -245,7 +245,7 @@
       "message_count": 0,
       "tickets": 2,
       "start_month": 8,
-      "start_date": 17
+      "start_day": 17
     },
     {
       "set_number": 3,
@@ -257,7 +257,7 @@
       "message_count": 1,
       "tickets": 2,
       "start_month": 8,
-      "start_date": 17
+      "start_day": 17
     },
     {
       "set_number": 3,
@@ -269,7 +269,7 @@
       "message_count": 0,
       "tickets": 2,
       "start_month": 8,
-      "start_date": 17
+      "start_day": 17
     },
     {
       "set_number": 3,
@@ -281,7 +281,7 @@
       "message_count": 0,
       "tickets": 1,
       "start_month": 8,
-      "start_date": 10
+      "start_day": 10
     },
     {
       "set_number": 3,
@@ -293,6 +293,6 @@
       "message_count": 1,
       "tickets": 5,
       "start_month": 8,
-      "start_date": 10
+      "start_day": 10
     }
 ]
