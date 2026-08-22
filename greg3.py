@@ -463,6 +463,6 @@ from dotenv import load_dotenv
 # Always load .env from the same directory as this file
 load_dotenv(Path(__file__).resolve().parent / ".env")
 BOT_TOKEN = os.environ["BOT_TOKEN"] 
-CHANNEL_ID_DONT_RESPOND = os.environ["CHANNEL_ID_DONT_RESPOND"]
+CHANNEL_ID_DONT_RESPOND = int(os.environ["CHANNEL_ID_DONT_RESPOND"])
 print(f"Don't respond to: {CHANNEL_ID_DONT_RESPOND}")
 client.run(BOT_TOKEN, reconnect=True);
