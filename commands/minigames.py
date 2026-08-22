@@ -132,325 +132,423 @@ purple_wordle_emojis = {
     25: "<:3_z:1129837113005842432>",
 }
 
-async def wordle_easy(activator: Neighbor, context: Context, response: ResponsePackage = None):
-    
-    with open("words.txt", "r") as fWords:
-        words = [line.strip() for line in fWords.readlines()]
-    with open("answers.txt", "r") as fAnswers:
-        answers = [line.strip() for line in fAnswers.readlines()]
-    answers = answers[0:1499]
+
+# Wordle logic written entirely by Lincoln, but ChatGPT consolidated Hard Mode & Easy mode into one branch
+async def wordle_easy(
+    activator: Neighbor,
+    context: Context,
+    response: ResponsePackage = None
+):
+    await wordle_game(
+        activator,
+        context,
+        response,
+        hard_mode=False
+    )
+
+
+async def wordle_hard(
+    activator: Neighbor,
+    context: Context,
+    response: ResponsePackage = None
+):
+    await wordle_game(
+        activator,
+        context,
+        response,
+        hard_mode=True
+    )
+
+
+async def wordle_game(
+    activator: Neighbor,
+    context: Context,
+    response: ResponsePackage = None,
+    hard_mode: bool = False
+):
+    # ── MODE SETTINGS ────────────────────────────────────────────────────────
+
+    if hard_mode:
+        callback = wordle_hard
+        opponent_name = "Rose"
+        answer_count = 3500
+        daily_limit_level = 6
+        max_xp_guesses = 6
+        xp_multiplier = 85
+    else:
+        callback = wordle_easy
+        opponent_name = "Tom"
+        answer_count = 1500
+        daily_limit_level = 3
+        max_xp_guesses = 8
+        xp_multiplier = 25
+
+    # ── WORD LISTS ───────────────────────────────────────────────────────────
+
+    with open("words.txt", "r") as f:
+        words = [line.strip() for line in f]
+
+    with open("answers.txt", "r") as f:
+        answers = [line.strip() for line in f][:answer_count]
+
+    # ── NEW GAME ─────────────────────────────────────────────────────────────
 
     if response is None:
-        daily_limit_hit = False;
-    
-        # ── DAILY WORDLE XP RESET & CHECK ──────────────────────────────────────────────
-        daily_limit = Neighbor.get_XP_for_level(3)
-        today_str   = datetime.date.today().isoformat()
+        daily_limit = Neighbor.get_XP_for_level(daily_limit_level)
+        today_str = datetime.date.today().isoformat()
+
         cap_item = activator.get_item_of_name("Wordle Daily XP")
+
         if cap_item:
-            # if the stored date isn't today, reset
             if cap_item.get_value("date") != today_str:
                 cap_item.update_value("date", today_str)
-                cap_item.update_value("xp",   0)
+                cap_item.update_value("xp", 0)
                 activator.update_item(cap_item)
+
             xp_today = int(cap_item.get_value("xp"))
+
         else:
-            # first play today: create tracking item
-            cap_item = Item("Wordle Daily XP", "xp_daily", -1,
-                        date=today_str, xp=0, hidden="true")
+            cap_item = Item(
+                "Wordle Daily XP",
+                "xp_daily",
+                -1,
+                date=today_str,
+                xp=0,
+                hidden="true"
+            )
             activator.bestow_item(cap_item)
             xp_today = 0
 
-        # if they've already hit the cap, bail out
-        if xp_today >= daily_limit:
-            daily_limit_hit = True;
-        # ───────────────────────────────────────────────────────────────────────────────
-        
-        res = "**Welcome to Greg's ";
-        res += green_wordle_emojis[22] + yellow_wordle_emojis[14] + green_wordle_emojis[17] + green_wordle_emojis[3] + red_wordle_emojis[11] + green_wordle_emojis[4];
-        res += "!**\n\nI have already selected a word! Guess valid 5-letter words in this channel and I will give clues toward the answer. If you write a message that is not a valid 5 letter word in my dictionary, I will just ignore it. You have two minutes to make each guess.\n\n**Scoring:** Tom will also play alongside you and I will reveal his guesses once you have successfully guessed the word. You will get XP based on how many guesses it takes you to get the word. If you get the word in fewer guesses than Tom, you will get double XP! Let's begin, guess your first word!\n\n**Note:** Different forms of words are fair game. For example, plural words may be chosen as the Wordle and may be guessed.";
-        target = await context.send(res, reply = True);
-        start_time = time.monotonic()
-        response_context = Context(message = target)
-        answer = random.choice(answers);
-        # await context.send(answer);
-        def key(context):
-            if not context.content.lower() in words:
-                return False;
-            return True;
-        
-        ResponseRequest(wordle_easy, "guess", "MESSAGE", context, response_context, answer = answer, key = key, guesses = [], daily_limit_hit = daily_limit_hit, start_time=start_time)
-        
-    else:
-        print("here! wordle")
-        guess_list = response.values["guesses"];
-        answer = response.values["answer"];
-        dlh = response.values["daily_limit_hit"]
-        start_time = response.values["start_time"]
-        candidate = response.content.lower();
-        guess_list.append(candidate);
-        response = wordle_helper.get_response(answer, candidate);
-        if len(guess_list) == 1:
-            await context.send("Red: This letter is not in the word.\nYellow: This letter is in the word in a different position (careful, this is slightly different from NYT Wordle mechanics)\nGreen: This letter is in the word in this position\nPurple: Easy Mode Only, This letter is in the word in this position AND another position")
-        if not "0" in response and not "1" in response:
-            end_time = time.monotonic();
-            # correct!
-            res = "**You got it!!**\n\n";
-            for guess in guess_list[-9:]:
-                response = wordle_helper.get_response(answer, guess);
-                for i, char in enumerate(guess):
-                    if response[i] == "0":
-                        res += red_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "1":
-                        res += yellow_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "2":
-                        res += green_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "3":
-                        res += purple_wordle_emojis[ord(char) - 97];
-                res += "\n";
-            target = await context.send(res);
+        daily_limit_hit = xp_today >= daily_limit
 
-            res = "**Let's see how Tom did!**\n\n";
-            word_info = wordle_helper.WordInfo();
-            tom_guesses = [];
-            while not word_info.is_word_complete():
-                possible = word_info.cleanse(words);
-                if len(possible) == 0 or len(tom_guesses) > 15:
-                    await context.send("Uh oh! Something has gone wrong on my end.");
-                    return
-                sorted = wordle_helper.sort_by_letter_frequency(possible);
-                difficulty = int(len(possible) / 2);
-                if difficulty == 0:
-                    difficulty += 1;
-                if len(sorted) > difficulty:
-                    next_guess = random.choice(sorted[:difficulty]);
-                else:
-                    next_guess = random.choice(sorted);
-                tom_guesses.append(next_guess);
-                response = wordle_helper.get_response(answer, next_guess);
-                word_info.register_guess(next_guess, response)
-                for i, char in enumerate(next_guess):
-                    if response[i] == "0":
-                        res += red_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "1":
-                        res += yellow_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "2":
-                        res += green_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "3":
-                        res += purple_wordle_emojis[ord(char) - 97];
-                res += "\n";
-            await context.send(res);
-            num_guesses = len(guess_list);
-            num_tom_guesses = len(tom_guesses);
-            try:
-                if num_guesses < 9:
-                    xp = 25 * (9 - len(guess_list));
-                    if len(guess_list) < len(tom_guesses):
-                        await context.send(f"Wow! You beat tom by {len(tom_guesses) - len(guess_list)} guesses!\n\nYou get {xp}xp for getting the word in {len(guess_list)}, doubled for beating Tom! {xp * 2}xp total!");
-                        xp *= 2;
-                    else:
-                        await context.send(f"Unfortunately you did not beat tom!!\n\nHowever, you get {xp}xp for getting the word in {len(guess_list)}!");
-                    if dlh:
-                        await context.send("You've actually hit the daily limit for earning XP with Wordle, so no XP for this round. However, you can continue to play for fun!")
-                    else:
-                        await inc_xp(activator, xp, context)
-                        cap_item.update_value("xp", int(cap_item.get_value("xp")) + xp)
-                        activator.update_item(cap_item)
-                else:
-                    await context.send(f"Unfortunately, {len(guess_list)} guesses is too many to earn XP! Good job getting the Wordle though, better luck next time!");
-                    
-            except:
-                pass
-            import requests
+        wordle_title = (
+            green_wordle_emojis[22]
+            + yellow_wordle_emojis[14]
+            + green_wordle_emojis[17]
+            + green_wordle_emojis[3]
+            + red_wordle_emojis[11]
+            + green_wordle_emojis[4]
+        )
 
-            def get_definition(word):
-                url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
-                res = requests.get(url).json()
-                canonical_word = res[0]["word"]
-                return canonical_word, res[0]["meanings"][0]["definitions"][0]["definition"]
-
-            definiton = get_definition(answer)
-            await context.send(f"**Definition**\n{definiton[0]}: {definiton[1]}")
-            
-            await update_wordle_leaderboard(activator, end_time-start_time, len(guess_list));
+        if hard_mode:
+            res = (
+                f"**Welcome to Greg's {wordle_title} HARD MODE!**\n\n"
+                "You know the drill! Hard mode wordle works the same as regular "
+                "mode with a few changes. Firstly, there are 1500 more possible "
+                "Wordles. Secondly, you play against Rose instead of Tom, who is "
+                "better at guessing. Thirdly, more XP is available to be won but "
+                "you must get the word in 6 guesses or less instead of 8 to earn "
+                "any. Finally, no purple letters will be shown.\n\n"
+                "**Scoring:** Rose will also play alongside you and I will reveal "
+                "her guesses once you have successfully guessed the word. You will "
+                "get XP based on how many guesses it takes you to get the word. "
+                "If you get the word in fewer guesses than Rose, you will get "
+                "double XP! Let's begin, guess your first word!\n\n"
+                "**Note:** Different forms of words are fair game. For example, "
+                "plural words may be chosen as the Wordle and may be guessed."
+            )
         else:
-            res = "";
-            for guess in guess_list[-9:]:
-                response = wordle_helper.get_response(answer, guess);
-                for i, char in enumerate(guess):
-                    if response[i] == "0":
-                        res += red_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "1":
-                        res += yellow_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "2":
-                        res += green_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "3":
-                        res += purple_wordle_emojis[ord(char) - 97];
-                res += "\n";
-            target = await context.send(res);
-            response_context = Context(message = target);
-            def key(context):
-                if not context.content.lower() in words:
-                    return False;
-                return True;
-            ResponseRequest(wordle_easy, "guess", "MESSAGE", context, response_context, answer = answer, key = key, guesses = guess_list, daily_limit_hit=dlh, start_time=start_time)
+            res = (
+                f"**Welcome to Greg's {wordle_title}!**\n\n"
+                "I have already selected a word! Guess valid 5-letter words in "
+                "this channel and I will give clues toward the answer. If you "
+                "write a message that is not a valid 5 letter word in my "
+                "dictionary, I will just ignore it. You have two minutes to make "
+                "each guess.\n\n"
+                "**Scoring:** Tom will also play alongside you and I will reveal "
+                "his guesses once you have successfully guessed the word. You "
+                "will get XP based on how many guesses it takes you to get the "
+                "word. If you get the word in fewer guesses than Tom, you will "
+                "get double XP! Let's begin, guess your first word!\n\n"
+                "**Note:** Different forms of words are fair game. For example, "
+                "plural words may be chosen as the Wordle and may be guessed."
+            )
 
+        target = await context.send(res, reply=True)
 
-async def wordle_hard(activator: Neighbor, context: Context, response: ResponsePackage = None):
-        
-    daily_limit_hit = False;
-    
-    # ── DAILY WORDLE XP RESET & CHECK ──────────────────────────────────────────────
-    daily_limit = Neighbor.get_XP_for_level(6)
-    today_str   = datetime.date.today().isoformat()
-    cap_item = activator.get_item_of_name("Wordle Daily XP")
-    if cap_item:
-        # if the stored date isn't today, reset
-        if cap_item.get_value("date") != today_str:
-            cap_item.update_value("date", today_str)
-            cap_item.update_value("xp",   0)
-            activator.update_item(cap_item)
-        xp_today = int(cap_item.get_value("xp"))
-    else:
-        # first play today: create tracking item
-        cap_item = Item("Wordle Daily XP", "xp_daily", -1,
-                    date=today_str, xp=0, hidden="true")
-        activator.bestow_item(cap_item)
-        xp_today = 0
-
-    # if they've already hit the cap, bail out
-    if xp_today >= daily_limit:
-        daily_limit_hit = True;
-    # ───────────────────────────────────────────────────────────────────────────────
-    
-    with open("words.txt", "r") as fWords:
-        words = [line.strip() for line in fWords.readlines()]
-    with open("answers.txt", "r") as fAnswers:
-        answers = [line.strip() for line in fAnswers.readlines()]
-    answers = answers[0:3499]
-
-    if response is None:
-        res = "**Welcome to Greg's ";
-        res += green_wordle_emojis[22] + yellow_wordle_emojis[14] + green_wordle_emojis[17] + green_wordle_emojis[3] + red_wordle_emojis[11] + green_wordle_emojis[4];
-        res += " HARD MODE!**\n\nYou know the drill! Hard mode wordle works the same as regular mode with a few changes. Firstly, there are 1500 more possible Wordles. Secondly, you play against Rose instead of Tom, who is better at guessing. Thirdly, more XP is available to be won but you must get the word in 6 guesses or less instead of 8 to earn any. Finally, no purple letters will be shown.\n\n**Scoring:** Rose will also play alongside you and I will reveal her guesses once you have successfully guessed the word. You will get XP based on how many guesses it takes you to get the word. If you get the word in fewer guesses than Rose, you will get double XP! Let's begin, guess your first word!\n\n**Note:** Different forms of words are fair game. For example, plural words may be chosen as the Wordle and may be guessed.";
-        target = await context.send(res, reply = True);
         start_time = time.monotonic()
-        response_context = Context(message = target)
-        answer = random.choice(answers);
-        # answer = "dived"
-        # await context.send(answer);
+        response_context = Context(message=target)
+        answer = random.choice(answers)
+
         def key(context):
-            if not context.content.lower() in words:
-                return False;
-            return True;
-        ResponseRequest(wordle_hard, "guess", "MESSAGE", context, response_context, answer = answer, key = key, guesses = [], daily_limit_hit=daily_limit_hit, start_time=start_time)
+            return context.content.lower() in words
+
+        ResponseRequest(
+            callback,
+            "guess",
+            "MESSAGE",
+            context,
+            response_context,
+            answer=answer,
+            key=key,
+            guesses=[],
+            daily_limit_hit=daily_limit_hit,
+            start_time=start_time
+        )
+
+        return
+
+    # ── EXISTING GAME ────────────────────────────────────────────────────────
+
+    guess_list = response.values["guesses"]
+    answer = response.values["answer"]
+    daily_limit_hit = response.values["daily_limit_hit"]
+    start_time = response.values["start_time"]
+
+    candidate = response.content.lower()
+    guess_list.append(candidate)
+
+    clue_response = wordle_helper.get_response(answer, candidate)
+
+    if len(guess_list) == 1:
+        purple_description = (
+            "~~Purple: Easy Mode Only, This letter is in the word in this "
+            "position AND another position~~"
+            if hard_mode
+            else
+            "Purple: Easy Mode Only, This letter is in the word in this "
+            "position AND another position"
+        )
+
+        await context.send(
+            "Red: This letter is not in the word.\n"
+            "Yellow: This letter is in the word in a different position "
+            "(careful, this is slightly different from NYT Wordle mechanics)\n"
+            "Green: This letter is in the word in this position\n"
+            f"{purple_description}"
+        )
+
+    # ── HELPER FOR RENDERING GUESSES ─────────────────────────────────────────
+
+    def render_guess(guess):
+        clue = wordle_helper.get_response(answer, guess)
+        result = ""
+
+        for i, char in enumerate(guess):
+            if clue[i] == "0":
+                result += red_wordle_emojis[ord(char) - 97]
+
+            elif clue[i] == "1":
+                result += yellow_wordle_emojis[ord(char) - 97]
+
+            elif clue[i] == "2":
+                result += green_wordle_emojis[ord(char) - 97]
+
+            elif clue[i] == "3":
+                if hard_mode:
+                    result += green_wordle_emojis[ord(char) - 97]
+                else:
+                    result += purple_wordle_emojis[ord(char) - 97]
+
+        return result
+
+    # ── CORRECT ANSWER ───────────────────────────────────────────────────────
+
+    if "0" not in clue_response and "1" not in clue_response:
+        end_time = time.monotonic()
+
+        res = "**You got it!!**\n\n"
+
+        for guess in guess_list[-9:]:
+            res += render_guess(guess) + "\n"
+
+        await context.send(res)
+
+        # ── OPPONENT ─────────────────────────────────────────────────────────
+
+        res = f"**Let's see how {opponent_name} did!**\n\n"
+
+        word_info = wordle_helper.WordInfo()
+        opponent_guesses = []
+
+        if hard_mode:
+            difficulty = random.randint(1, 5)
+
+        while not word_info.is_word_complete():
+            possible = word_info.cleanse(words)
+
+            if len(possible) == 0 or len(opponent_guesses) > 15:
+                await context.send("Uh oh! Something has gone wrong on my end.")
+                return
+
+            sorted_words = wordle_helper.sort_by_letter_frequency(possible)
+
+            if hard_mode:
+                opponent_pool_size = difficulty
+            else:
+                opponent_pool_size = max(1, len(possible) // 2)
+
+            if len(sorted_words) > opponent_pool_size:
+                next_guess = random.choice(
+                    sorted_words[:opponent_pool_size]
+                )
+            else:
+                next_guess = random.choice(sorted_words)
+
+            opponent_guesses.append(next_guess)
+
+            opponent_response = wordle_helper.get_response(
+                answer,
+                next_guess
+            )
+
+            word_info.register_guess(
+                next_guess,
+                opponent_response
+            )
+
+            res += render_guess(next_guess) + "\n"
+
+        await context.send(res)
+
+        # ── XP ────────────────────────────────────────────────────────────────
+
+        num_guesses = len(guess_list)
+        num_opponent_guesses = len(opponent_guesses)
+
+        try:
+            if num_guesses <= max_xp_guesses:
+                xp = xp_multiplier * (
+                    max_xp_guesses + 1 - num_guesses
+                )
+
+                if num_guesses < num_opponent_guesses:
+                    difference = num_opponent_guesses - num_guesses
+
+                    await context.send(
+                        f"Wow! You beat {opponent_name} by "
+                        f"{difference} guesses!\n\n"
+                        f"You get {xp}xp for getting the word in "
+                        f"{num_guesses}, doubled for beating "
+                        f"{opponent_name}! {xp * 2}xp total!"
+                    )
+
+                    xp *= 2
+
+                else:
+                    await context.send(
+                        f"Unfortunately you did not beat "
+                        f"{opponent_name}!!\n\n"
+                        f"However, you get {xp}xp for getting the "
+                        f"word in {num_guesses}!"
+                    )
+
+                if daily_limit_hit:
+                    await context.send(
+                        "You've actually hit the daily limit for earning XP "
+                        "with Wordle, so no XP for this round. However, you "
+                        "can continue to play for fun!"
+                    )
+
+                else:
+                    await inc_xp(activator, xp, context)
+
+                    cap_item = activator.get_item_of_name(
+                        "Wordle Daily XP"
+                    )
+
+                    cap_item.update_value(
+                        "xp",
+                        int(cap_item.get_value("xp")) + xp
+                    )
+
+                    activator.update_item(cap_item)
+
+            else:
+                await context.send(
+                    f"Unfortunately, {num_guesses} guesses is too many "
+                    f"to earn XP! Good job getting the Wordle though, "
+                    f"better luck next time!"
+                )
+
+        except Exception:
+            pass
+
+        # ── LEADERBOARD ──────────────────────────────────────────────────────
+
+        await update_wordle_leaderboard(
+            activator,
+            end_time - start_time,
+            num_guesses
+        )
+
+        # ── DEFINITION ────────────────────────────────────────────────────────
+
+        import requests
+
+        def get_definition(word):
+            url = (
+                "https://api.dictionaryapi.dev/api/v2/entries/en/"
+                f"{word}"
+            )
+            res = requests.get(url).json()
+
+            canonical_word = res[0]["word"]
+            definition = (
+                res[0]["meanings"][0]["definitions"][0]["definition"]
+            )
+
+            return canonical_word, definition
+
+        definition = get_definition(answer)
+
+        await context.send(
+            f"**Definition**\n"
+            f"{definition[0]}: {definition[1]}"
+        )
+
+        return
+
+    # ── INCORRECT GUESS ──────────────────────────────────────────────────────
+
+    res = ""
+
+    for guess in guess_list[-9:]:
+        res += render_guess(guess) + "\n"
+
+    target = await context.send(res)
+    response_context = Context(message=target)
+
+    def key(context):
+        return context.content.lower() in words
+
+    ResponseRequest(
+        callback,
+        "guess",
+        "MESSAGE",
+        context,
+        response_context,
+        key=key,
+        answer=answer,
+        guesses=guess_list,
+        daily_limit_hit=daily_limit_hit,
+        start_time=start_time
+    )
+
+
+@command_handler.Command(
+    AccessType.PRIVATE,
+    desc="Play Wordle!",
+    generic=True
+)
+async def wordle(activator: Neighbor, context: Context):
+    has_easy = activator.get_item_of_name("Greg Wordle Minigame")
+    has_hard = activator.get_item_of_name("Wordle 2 (Hard Mode)")
+    is_owner = activator.ID == 355169964027805698
+
+    if not has_easy and not has_hard and not is_owner:
+        await context.send(
+            "Whoops! Looks like you haven't purchased the Wordle minigame "
+            "from my rss yet!\n\n"
+            "Play with someone else or buy it for yourself by calling $rss. "
+            "#sorrynotsorry"
+        )
+        return
+
+    if has_hard:
+        await wordle_hard(activator, context)
     else:
-        guess_list = response.values["guesses"];
-        answer = response.values["answer"];
-        dlh = response.values["daily_limit_hit"]
-        start_time = response.values["start_time"]
-        candidate = response.content.lower();
-        guess_list.append(candidate);
-        response = wordle_helper.get_response(answer, candidate);
-        if len(guess_list) == 1:
-            await context.send("Red: This letter is not in the word.\nYellow: This letter is in the word in a different position (careful, this is slightly different from NYT Wordle mechanics)\nGreen: This letter is in the word in this position\n~~Purple: Easy Mode Only, This letter is in the word in this position AND another position~~")
-        if not "0" in response and not "1" in response:
-            # correct!
-            end_time = time.monotonic()
-            res = "**You got it!!**\n\n";
-            for guess in guess_list[-9:]:
-                response = wordle_helper.get_response(answer, guess);
-                for i, char in enumerate(guess):
-                    if response[i] == "0":
-                        res += red_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "1":
-                        res += yellow_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "2" or response[i] == "3":
-                        res += green_wordle_emojis[ord(char) - 97];
-                res += "\n";
-            target = await context.send(res);
-
-            res = "**Let's see how Rose did!**\n\n";
-            word_info = wordle_helper.WordInfo();
-            tom_guesses = [];
-            choices = [i + 1 for i in range(5)];
-            difficulty = random.choice(choices)
-            while not word_info.is_word_complete():
-                possible = word_info.cleanse(words);
-                if len(possible) == 0 or len(tom_guesses) > 15:
-                    await context.send("Uh oh! Something has gone wrong on my end.");
-                    return
-                sorted = wordle_helper.sort_by_letter_frequency(possible);
-                if len(sorted) > difficulty:
-                    next_guess = random.choice(sorted[:difficulty]);
-                else:
-                    next_guess = random.choice(sorted);
-                tom_guesses.append(next_guess);
-                response = wordle_helper.get_response(answer, next_guess);
-                word_info.register_guess(next_guess, response)
-                for i, char in enumerate(next_guess):
-                    if response[i] == "0":
-                        res += red_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "1":
-                        res += yellow_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "2" or response[i] == "3":
-                        res += green_wordle_emojis[ord(char) - 97];
-                res += "\n";
-            await context.send(res);
-            num_guesses = len(guess_list);
-            num_tom_guesses = len(tom_guesses);
-            try:
-                if num_guesses < 7:
-                    xp = 85 * (7 - len(guess_list));
-                    if len(guess_list) < len(tom_guesses):
-                        await context.send(f"Wow! You beat Rose by {len(tom_guesses) - len(guess_list)} guesses!\n\nYou get {xp}xp for getting the word in {len(guess_list)}, doubled for beating Rose! {xp * 2}xp total!");
-                        xp *= 2;
-                    else:
-                        await context.send(f"Unfortunately you did not beat Rose!!\n\nHowever, you get {xp}xp for getting the word in {len(guess_list)}!");
-                    if dlh:
-                        await context.send("You've actually hit the daily limit for earning XP with Wordle, so no XP for this round. However, you can continue to play for fun!")
-                    else:
-                        await inc_xp(activator, xp, context)
-                        cap_item.update_value("xp", int(cap_item.get_value("xp")) + xp)
-                        activator.update_item(cap_item)
-                else:
-                    await context.send(f"Unfortunately, {len(guess_list)} guesses is too many to earn XP! Good job getting the Wordle though, better luck next time!");
-            except:
-                pass
-            import requests
-
-            def get_definition(word):
-                url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
-                res = requests.get(url).json()
-                canonical_word = res[0]["word"]
-                return canonical_word, res[0]["meanings"][0]["definitions"][0]["definition"]
-
-            definiton = get_definition(answer)
-            await context.send(f"**Definition**\n{definiton[0]}: {definiton[1]}")
-            
-            await update_wordle_leaderboard(activator, end_time-start_time, len(guess_list))
-            
-        else:
-            res = "";
-            for guess in guess_list[-9:]:
-                response = wordle_helper.get_response(answer, guess);
-                for i, char in enumerate(guess):
-                    if response[i] == "0":
-                        res += red_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "1":
-                        res += yellow_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "2":
-                        res += green_wordle_emojis[ord(char) - 97];
-                    elif response[i] == "2" or response[i] == "3":
-                        res += green_wordle_emojis[ord(char) - 97];
-                res += "\n";
-            target = await context.send(res);
-            response_context = Context(message = target);
-            def key(context):
-                if not context.content.lower() in words:
-                    return False;
-                return True;
-            ResponseRequest(wordle_hard, "guess", "MESSAGE", context, response_context, key = key, answer = answer, guesses = guess_list, daily_limit_hit=dlh, start_time=start_time)
+        await wordle_easy(activator, context)
 
 @command_handler.Command(AccessType.PRIVATE, desc = "Play Wordle!", generic=True)
 async def wordle(activator: Neighbor, context: Context):
