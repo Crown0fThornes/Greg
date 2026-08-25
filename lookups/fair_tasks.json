@@ -67,7 +67,7 @@
       "pic_count": 3,
       "word_count": 1,
       "message_count": 0,
-      "tickets": 4,
+      "tickets": 5,
       "start_month": 8,
       "start_day": 3
     },
@@ -294,5 +294,53 @@
       "tickets": 5,
       "start_month": 8,
       "start_day": 10
+    },
+    {
+      "set_number": "Bonus",
+      "name": "Good Sportsmanship :person_bouncing_ball:",
+      "description": "Help 1 person who has 0 Fair tickets, who **belongs to the Family which currently has the fewest tickets overall**, to gain 5 tickets.",
+      "submission_channel": 1541590117712531476,
+      "pic_count": 2,
+      "word_count": 0,
+      "message_count": 0,
+      "tickets": 0,
+      "start_month": 8,
+      "start_day": 24
+    },
+    {
+      "set_number": "Bonus",
+      "name": "Discussion Board :speech_balloon:",
+      "description": "Reply to a Fair submission in each of the following channels with a thoughtful question, comment, or connection to spark conversation. (No \"cool!\"s pls)",
+      "submission_channel": [1179484606370689074,1471644154693029950,1071930737651097720],
+      "pic_count": 0,
+      "word_count": 30,
+      "message_count": 6,
+      "tickets": 0,
+      "start_month": 8,
+      "start_day": 24
+    },
+    {
+      "set_number": "Bonus",
+      "name": "Run it back! :smirk:",
+      "description": "Pick a second Fair-themed production machine (different from your first) and collect at least 10 of **every** item that you have unlocked in that machine.",
+      "submission_channel": 1536578888216608768,
+      "pic_count": 2,
+      "word_count": 0,
+      "message_count": 2,
+      "tickets": 0,
+      "start_month": 8,
+      "start_day": 24
+    },
+    {
+      "set_number": "Bonus",
+      "name": "Idea Machine 🚜",
+      "description": "Post your 2027 FF Fair ideas.",
+      "submission_channel": 1541589957116821516,
+      "pic_count": 0,
+      "word_count": 100,
+      "message_count": 1,
+      "tickets": 0,
+      "start_month": 8,
+      "start_day": 24
     }
 ]
