@@ -37,7 +37,7 @@ intents.message_content = True;
 intents.members = True;
 playing = discord.Game(name="$harvest once per hour!")
 client = discord.Client(intents=intents,activity = playing);
-RUN_AUTO_COMMANDS = False;
+RUN_AUTO_COMMANDS = True;
 # ___________________________
 
 # loop = asyncio.get_event_loop();
