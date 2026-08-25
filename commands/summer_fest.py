@@ -615,7 +615,7 @@ async def tickets_message(activator: Neighbor, context: Context, response: Respo
             res += f"❌ {task['name']}\n"
 
     if final_report["total"] < 30:
-        res += f"\nUnlock more tasks with {10 - (final_report["total"] % 10)} more tickets!\n"
+        res += f"\n**Unlock more tasks with {10 - (final_report["total"] % 10)} more tickets!** \n"
     
     task_set_links = {
         1: 1533137141498908875,
