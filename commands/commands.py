@@ -3056,7 +3056,7 @@ async def open_barn_sale(client):
     await barn_sale_channel.send(
         "1. **For my challenge, put up as many barn items in your RSS as your farm level!** "
         "For example, a level 20 player should sell at least 20 items; a level 100 player "
-        "should sell at least 100."
+        "should sell at least 100. Max price is fine."
     )
 
     await barn_sale_channel.send(
@@ -3144,6 +3144,9 @@ async def choose_barn_sale_winner(client):
     await barn_sale_channel.send(
         "Come back next month for another chance at BEMs!"
     )
+    
+    gc = await guild.fetch_channel(648223397205114910)
+    await gc.send(f"Barn sale day is over. This month we had {len(participants)} participants! Let's go!! <#{barn_sale_channel.id}")
 
 
 @command_handler.Scheduled("20:00", day_of_month=3)
