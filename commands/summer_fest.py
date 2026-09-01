@@ -780,9 +780,14 @@ async def tickets(activator: Neighbor, context: Context):
 
     res = "# FF Fair Progress\n"
     if target_is_author:
-        res += f"**You have collected {tickets_accumulated} <:blue_carnival_ticket:1246080867114422335>!**\n\n"
+        res += f"**You have collected {tickets_accumulated} <:blue_carnival_ticket:1246080867114422335>!**\n"
     else:
-        res += f"{target_member.display_name} has collected {tickets_accumulated} <:blue_carnival_ticket:1246080867114422335>!\n\n"
+        res += f"{target_member.display_name} has collected {tickets_accumulated} <:blue_carnival_ticket:1246080867114422335>!\n"
+
+    if tickets_accumulated == 60:
+        res += f"And earned 89 BEMs from the FF Treasury!! Well done!\n\n"
+    else:
+        res += f"And earned {tickets_accumulated} BEMs from the FF Treasury!\n\n"
 
     for i,is_task_completed in enumerate(final_report):
         task = task_info[i]

@@ -384,7 +384,7 @@ async def open_farmers_market(client):
         await target.react(crop_info[crop]["emoji"])
         
     gc = await guild.fetch_channel(648223397205114910);
-    await gc.send(f"The Farmers Market has come to town once again! Check out the offers @ <#{market_channel.id}>")
+    await gc.send(f"The Farmers Market has come to Town once again! Check out the offers @ <#{market_channel.id}>")
         
 @command_handler.Scheduled("20:00", day_of_week=0)
 async def close_farmers_market(client):
@@ -397,7 +397,7 @@ async def close_farmers_market(client):
     channel_id = market_info["market_channel_id"]
     channel = await guild.fetch_channel(channel_id)
     await channel.delete();
-    await gc.send("The Farmers Market has left down! Check back next Sunday for more offers.")
+    await gc.send("The Farmers Market has left Town! Check back next Sunday for more offers.")
     
 from pathlib import Path
 
