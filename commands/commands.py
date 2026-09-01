@@ -3022,6 +3022,149 @@ async def long_time_members(client):
         #         continue;
         
         
+@command_handler.Scheduled("08:00", day_of_month=1)
+async def open_barn_sale(client):
+    guild = client.get_guild(647883751853916162)
+    if guild is None:
+        return
+
+    town_square = await guild.fetch_channel(648223363600351263)
+
+    barn_sale_channel = await guild.create_text_channel(
+        "🪧barn-sale-day",
+        category=town_square
+    )
+
+    await barn_sale_channel.send("# 🪧 It's Barn Sale Day! 🌾")
+    
+    await barn_sale_channel.send("<@1181330910747054211>")
+
+    await barn_sale_channel.send(
+        "A strong flow of goods and coins is crucial for a strong Neighborhood economy. "
+        "Hosting a barn sale is a great way to earn yourself some coins and help your "
+        "Neighbors with valuable items."
+    )
+
+    await barn_sale_channel.send(
+        "You are encouraged to host a barn sale whenever you like! But today I'm "
+        "challenging as many people as possible to all host one & help us start the "
+        "new month off right."
+    )
+
+    await barn_sale_channel.send("# Instructions")
+
+    await barn_sale_channel.send(
+        "1. **For my challenge, put up as many barn items in your RSS as your farm level!** "
+        "For example, a level 20 player should sell at least 20 items; a level 100 player "
+        "should sell at least 100."
+    )
+
+    await barn_sale_channel.send(
+        "2. **Don't put a newspaper ad on your shop.** Instead, post in your NH chat "
+        "(on Discord or in-game) that you're hosting a barn sale."
+    )
+
+    await barn_sale_channel.send(
+        "3. **Take before & after pictures** showing your RSS before Neighbors start "
+        "buying things up, then again afterward (before you collect the coins)."
+    )
+
+    await barn_sale_channel.send(
+        "4. **Post your screenshots below!** A lucky poster will win 20 BEMs tomorrow!"
+    )
+
+    remember("barn_sale_channel_id", barn_sale_channel.id)
+
+    gc = await guild.fetch_channel(648223397205114910)
+
+    await gc.send(
+        f"A new month is here; start it off right with a barn sale! "
+        f"There's even a chance to earn **20 BEMs!!** <#{barn_sale_channel.id}>"
+    )
+
+
+@command_handler.Scheduled("20:00", day_of_month=2)
+async def choose_barn_sale_winner(client):
+    guild = client.get_guild(647883751853916162)
+    if guild is None:
+        return
+
+    barn_sale_channel_id = remember("barn_sale_channel_id")
+    if barn_sale_channel_id is None:
+        return
+
+    try:
+        barn_sale_channel = await guild.fetch_channel(barn_sale_channel_id)
+    except discord.NotFound:
+        return
+
+    participants = set()
+
+    async for message in barn_sale_channel.history(
+        limit=None,
+        oldest_first=True
+    ):
+        if message.author.bot:
+            continue
+
+        has_image = any(
+            attachment.content_type
+            and attachment.content_type.startswith("image/")
+            for attachment in message.attachments
+        )
+
+        if has_image:
+            participants.add(message.author.id)
+
+    if not participants:
+        await barn_sale_channel.send(
+            "**Looks like nobody entered this month's Barn Sale Day drawing!** 😔\n"
+            "We'll try again next month!"
+        )
+        return
+
+    winner = random.choice(tuple(participants))
+
+    await barn_sale_channel.send(
+        f"**Thanks all for participating!** We have a winner! It's <@{winner}>! "
+        "Open a ticket at <#1033207181857800242> to claim your 20 BEMs!"
+    )
+
+    possible_messages = [
+        "<:yayy:1060019006112796772><:yayy:1060019006112796772><:yayy:1060019006112796772>",
+        "<:cutefrog:1060011712453025872><:cutefrog:1060011712453025872><:cutefrog:1060011712453025872>",
+        "Nothing like some good ole artificial economic stimulation! "
+        "<:ff_logo:1111011971953872976> That's the FF Difference",
+        "But you're all winners in my heart",
+        "When will I win anything <:cry:1159831384676909186>",
+        "<:strongman2:1248819697747497042><:strongman2:1248819697747497042><:strongman2:1248819697747497042>"
+    ]
+
+    await barn_sale_channel.send(random.choice(possible_messages))
+    await barn_sale_channel.send(
+        "Come back next month for another chance at BEMs!"
+    )
+
+
+@command_handler.Scheduled("20:00", day_of_month=3)
+async def close_barn_sale(client):
+    guild = client.get_guild(647883751853916162)
+    if guild is None:
+        return
+
+    barn_sale_channel_id = remember("barn_sale_channel_id")
+    if barn_sale_channel_id is None:
+        return
+
+    try:
+        barn_sale_channel = await guild.fetch_channel(barn_sale_channel_id)
+    except discord.NotFound:
+        remember("barn_sale_channel_id", None)
+        return
+
+    await barn_sale_channel.delete()
+    remember("barn_sale_channel_id", None)
+        
         
 import datetime
 import discord
