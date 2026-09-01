@@ -4106,7 +4106,7 @@ async def birthdays(client):
             
             member = await guild.fetch_member(bday)
             
-            nh = get_neighborhood_from_user(member)
+            nh = get_neighborhood_from_user(member).lower()
             nh_role = None;
             
             if nh == "ffp":
