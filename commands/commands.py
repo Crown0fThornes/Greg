@@ -3022,7 +3022,7 @@ async def long_time_members(client):
         #         continue;
         
         
-@command_handler.Scheduled("00:01", day_of_month=1)
+@command_handler.Scheduled("08:00", day_of_month=1)
 async def open_barn_sale(client):
     guild = client.get_guild(647883751853916162)
     if guild is None:
@@ -3036,6 +3036,8 @@ async def open_barn_sale(client):
     )
 
     await barn_sale_channel.send("# 🪧 It's Barn Sale Day! 🌾")
+    
+    await barn_sale_channel.send("<@1181330910747054211>")
 
     await barn_sale_channel.send(
         "A strong flow of goods and coins is crucial for a strong Neighborhood economy. "
@@ -3081,7 +3083,7 @@ async def open_barn_sale(client):
     )
 
 
-@command_handler.Scheduled("12:01", day_of_month=2)
+@command_handler.Scheduled("20:00", day_of_month=2)
 async def choose_barn_sale_winner(client):
     guild = client.get_guild(647883751853916162)
     if guild is None:
@@ -3144,7 +3146,7 @@ async def choose_barn_sale_winner(client):
     )
 
 
-@command_handler.Scheduled("23:59", day_of_month=3)
+@command_handler.Scheduled("20:00", day_of_month=3)
 async def close_barn_sale(client):
     guild = client.get_guild(647883751853916162)
     if guild is None:
