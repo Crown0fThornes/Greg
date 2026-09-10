@@ -3037,7 +3037,7 @@ async def open_barn_sale(client):
 
     await barn_sale_channel.send("# 🪧 It's Barn Sale Day! 🌾")
     
-    await barn_sale_channel.send("<@1181330910747054211>")
+    await barn_sale_channel.send("<@&1181330910747054211>")
 
     await barn_sale_channel.send(
         "A strong flow of goods and coins is crucial for a strong Neighborhood economy. "
