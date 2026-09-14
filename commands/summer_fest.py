@@ -707,20 +707,17 @@ async def tickets_message(activator: Neighbor, context: Context, response: Respo
             else:
                 res += f"❌ {task['name']}\n"
 
-    if final_report["total"] < 30:
-        res += f"\n**Unlock more tasks with {10 - (final_report["total"] % 10)} more tickets!** \n"
-    
+        if final_report["total"] < 30:
+            res += f"\n**Unlock more tasks with {10 - (final_report['total'] % 10)} more tickets!** \n"
+
         task_set_links = {
             1: 1533137141498908875,
             2: 1533137175774756874,
             3: 1533137197702713558,
             "Bonus": 1540733835774402600,
         }
-    
-    res += f"\n:arrow_right: Link to this set's task board: <#{task_set_links[page_num]}>"
-    
-    res += "\n:arrow_right: Tasks due <t:1788235140:R>"
-    
+        res += f"\n:arrow_right: Link to this set's task board: <#{task_set_links[page_num]}>"
+
     await target_message.edit(content=res)
     
     total_tickets = final_report["total"]
