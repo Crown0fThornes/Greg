@@ -17,6 +17,27 @@ import datetime
 LOCAL_UTC_OFFSET = -4  # EDT
 LOCAL_TZ = datetime.timezone(datetime.timedelta(hours=LOCAL_UTC_OFFSET))
 
+# Exclusive end: September 2, 2026 at 00:00 EDT.
+FAIR_CUTOFF_UTC = datetime.datetime(2026, 9, 2, 4, tzinfo=datetime.timezone.utc)
+
+
+def fair_message_time(message):
+    timestamp = message.created_at
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.replace(tzinfo=datetime.timezone.utc)
+    return timestamp.astimezone(datetime.timezone.utc)
+
+
+def fair_bem_prize(blue_tickets, golden_tickets):
+    if golden_tickets >= 3:
+        return 267
+    if blue_tickets >= 60:
+        return 178
+    if blue_tickets >= 40:
+        return 89
+    return max(0, blue_tickets)
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 def is_task_complete(conn, member_id, task_num):
@@ -291,6 +312,10 @@ async def add_task_completions(conn, guild, task_num, member_id, num_pics, num_w
         except:
             continue
         
+        # Stored submissions must obey the deadline too.
+        if fair_message_time(message) >= FAIR_CUTOFF_UTC:
+            continue
+
         # check if message has been invalidated with 👻
         if await has_ghost_reaction_from_role(message, 648188387836166168):
             continue
@@ -312,6 +337,8 @@ async def add_submissions_after_date(conn, guild, channel_ids, task_num, needs_p
         cur_channel = await guild.fetch_channel(channel_id)
         async for message in cur_channel.history(limit=None,oldest_first=False):
             # end search if message too old
+            if fair_message_time(message) >= FAIR_CUTOFF_UTC:
+                continue
             msg_time = message.created_at
             if msg_time.tzinfo is None:
                 msg_time = msg_time.replace(tzinfo=datetime.timezone.utc)
@@ -330,13 +357,24 @@ async def add_submissions_after_date(conn, guild, channel_ids, task_num, needs_p
             elif needs_pics and any(att.content_type and att.content_type.startswith("image/") for att in message.attachments):
                 insert_submission(conn, message.author.id, task_num, channel_id, message.id)
     
-async def update_fair_data(conn, guild, task_info, last_counted):
-    affected = set()
-    
+async def update_fair_data(conn, guild, task_info, last_counted, progress=None):
+    # Discord snowflakes encode UTC creation time. Revalidate previously indexed
+    # late evidence even when there are no new submissions after the event.
+    cutoff_id = discord.utils.time_snowflake(FAIR_CUTOFF_UTC)
+    affected = set(conn.execute(
+        "SELECT DISTINCT member_id, task_num FROM fair_task_submissions WHERE message_id >= ?",
+        (cutoff_id,)
+    ).fetchall())
+
     scan_started = datetime.datetime.now(LOCAL_TZ)
     
+    if progress:
+        await progress("Indexing Fair submissions...", force=True)
+
     # Index new submissions
     for i, task in enumerate(task_info, start=1):
+        if progress:
+            await progress(f"Indexing submissions — task {i}/{len(task_info)}: {task['name']}")
         num_pics = task["pic_count"]
         num_words = task["word_count"]
         num_messages = task["message_count"]
@@ -369,9 +407,13 @@ async def update_fair_data(conn, guild, task_info, last_counted):
         
         affected.update(new_affected)
     
-    # Recalculate only member/task pairs that got new submissions
-    for member_id, task_num in affected:
+    # Recalculate pairs with new submissions or stored post-cutoff evidence
+    if progress:
+        await progress(f"Checking task completions — {len(affected)} to review...", force=True)
+    for index, (member_id, task_num) in enumerate(affected, start=1):
         task = task_info[task_num - 1]
+        if progress:
+            await progress(f"Checking completion {index}/{len(affected)}: {task['name']}")
         
         await add_task_completions(
             conn,
@@ -389,12 +431,16 @@ async def update_fair_data(conn, guild, task_info, last_counted):
 
 async def add_submissions_after_date(conn, guild, channel_ids, task_num, needs_pics, needs_messages, start_time):
     affected = set()
-    
+    if start_time >= FAIR_CUTOFF_UTC:
+        return affected
+
     for channel_id in channel_ids:
         ("Next channel")
         cur_channel = await guild.fetch_channel(channel_id)
         
         async for message in cur_channel.history(limit=None, oldest_first=False):
+            if fair_message_time(message) >= FAIR_CUTOFF_UTC:
+                continue
             msg_time = message.created_at
             
             if msg_time.tzinfo is None:
@@ -446,6 +492,17 @@ async def tickets(activator: Neighbor, context: Context):
     else:
         target_message = await context.send("Thinking...", reply=True)
     
+    last_progress_edit = 0.0
+
+    async def progress(content, force=False):
+        nonlocal last_progress_edit
+        # Limit loop updates so large recounts do not flood Discord with edits.
+        if not force and time.monotonic() - last_progress_edit < 2.0:
+            return
+        await target_message.edit(content=content)
+        last_progress_edit = time.monotonic()
+
+    await progress("Loading Fair tasks and finding the member...", force=True)
     guild = context.guild
     
     task_db_path = BASE_DIR / "data" / "fair_task_submissions.db"
@@ -471,30 +528,12 @@ async def tickets(activator: Neighbor, context: Context):
     target_member = context.author if target is None else target
     target_is_author = target is None
     
-    # Find when submissions were last indexed
-    last_counted = commands.remember("tickets_last_counted_Fair_2026")
-
-    if last_counted is None:
-        last_counted = datetime.datetime(2026, 8, 22, tzinfo=LOCAL_TZ)
-
-    elif isinstance(last_counted, tuple):
-        if len(last_counted) == 2:
-            month, day = last_counted
-            last_counted = datetime.datetime(2026, month, day, tzinfo=LOCAL_TZ)
-        else:
-            last_counted = datetime.datetime(*last_counted, tzinfo=LOCAL_TZ)
-    
-    if last_counted is None:
-        last_counted = datetime.datetime(2026, 8, 22, tzinfo=LOCAL_TZ)
-    
-    task_db_path = BASE_DIR / "data" / "fair_task_submissions.db"
-    create_fair_task_tables(task_db_path)
+    # Fair 2026 has ended: display saved completions without scanning Discord.
+    # Use $ticket_recount to refresh evidence. Keep update_fair_data and the
+    # submission-indexing helpers available for future live events.
     with sqlite3.connect(task_db_path) as conn:
-        
-        # Index all new submissions and update affected completions
-        new_last_counted = await update_fair_data(conn, guild, task_info, last_counted)
-        commands.remember("tickets_last_counted_Fair_2026", new_last_counted)
-        
+        await progress("Calculating blue tickets, golden tickets, and prizes...", force=True)
+
         # Build report
         final_report = {
             "total": 0,
@@ -545,7 +584,41 @@ async def tickets(activator: Neighbor, context: Context):
                 final_report["sets"][set_num]["total"] += task["tickets"]
         
         final_report["total"] = tickets_accumulated
-    
+        task_ids = {task["name"]: i for i, task in enumerate(task_info, start=1)}
+        bonus_task_ids = {
+            i for i, task in enumerate(task_info, start=1)
+            if task["set_number"] == "Bonus"
+        }
+        completed_task_ids = {
+            task["task_num"]
+            for task_set in final_report["sets"].values()
+            for task in task_set["tasks"] if task["completed"]
+        }
+        golden_tickets = (
+            min(4, len(completed_task_ids & bonus_task_ids))
+            if tickets_accumulated >= 60 else 0
+        )
+        final_report["golden"] = golden_tickets
+        final_report["bems"] = fair_bem_prize(tickets_accumulated, golden_tickets)
+        science_task_id = task_ids.get("Citizen Scientist", task_ids.get("Citizen Science"))
+        final_report["emoji_prizes"] = [
+            {"name": "3+ golden tickets", "emoji": "🎟️", "earned": golden_tickets >= 3},
+            {"name": "Copy Cats", "emoji": "🤹", "earned": task_ids.get("Copy Cats") in completed_task_ids},
+            {"name": "Fair Vendor", "emoji": "🎪", "earned": task_ids.get("Fair Vendor") in completed_task_ids},
+            {"name": "Citizen Scientist", "emoji": "🎡", "earned": science_task_id in completed_task_ids},
+        ]
+
+    await progress("Awarding earned nickname emojis...", force=True)
+    neighbor = Neighbor(target_member.id, guild.id)
+    for prize in final_report["emoji_prizes"]:
+        item_name = f"Fair 2026 {prize['name']} nickname emoji"
+        if prize["earned"] and not neighbor.get_item_of_name(item_name):
+            item = Item(item_name, "event_emoji", time.time() + 21086592,
+                        emoji=prize["emoji"], display="None")
+            neighbor.bestow_item(item)
+
+    await progress("Updating task board roles...", force=True)
+
     # Give task board roles
     set2_role = guild.get_role(1539861798960767027)
     set3_role = guild.get_role(1539861822461579264)
@@ -563,7 +636,7 @@ async def tickets(activator: Neighbor, context: Context):
         except (discord.Forbidden, discord.HTTPException):
             pass
                     
-    if final_report["total"] == 60 and setbonus_role not in target_member.roles:
+    if final_report["total"] >= 60 and setbonus_role not in target_member.roles:
         try:
             await target_member.add_roles(setbonus_role)
         except (discord.Forbidden, discord.HTTPException):
@@ -581,6 +654,7 @@ async def tickets_message(activator: Neighbor, context: Context, response: Respo
         page_num            =response.content.name
         
         emoji_to_digit = {
+                "🎁": "Prizes",
                 "1️⃣": 1,
                 "2️⃣": 2,
                 "3️⃣": 3,
@@ -589,40 +663,59 @@ async def tickets_message(activator: Neighbor, context: Context, response: Respo
 
         page_num = emoji_to_digit[page_num]
     else:
-        page_num = 1
-        
+        page_num = "Prizes"
+
     await target_message.clear_reactions()
         
     task_info_path = BASE_DIR / "lookups" / "fair_tasks.json"
     with task_info_path.open("r", encoding="utf-8") as f:
         task_info = json.load(f)
     
-    res = f"# FF Fair Progress (Task Set {page_num})\n"
-    if target_is_author:
-        res += f"**You have collected {final_report["total"]} <:blue_carnival_ticket:1246080867114422335>!**\n\n"
+    member_suffix = f" ({target_member.display_name})" if target_member.id != context.author.id else ""
+    if page_num == "Prizes":
+        res = f"## FF Fair Prizes{member_suffix}\n"
     else:
-        res += f"{target_member.display_name} has collected {final_report["total"]} <:blue_carnival_ticket:1246080867114422335>!\n\n"
+        res = f"# FF Fair Progress (Task Set {page_num}){member_suffix}\n"
 
-    if page_num == "Bonus":
-        res += "**Wow! You've tackled everything the FF Fair has thrown at you, but now you've found the secret Bonus Tasks. Do you have what it takes to conquer these extra-hard challenges?**\n\n"
+    res += f"**{final_report['total']} <:blue_carnival_ticket:1246080867114422335> earned!**\n"
+    if final_report["total"] >= 60:
+        res += f"**{final_report['golden']}/4 <:golden_carnival_ticket:1246080949620441190> earned!**\n"
+    res += "\n"
 
-    cur_report = final_report["sets"][page_num]
-    
-    for task in cur_report["tasks"]:
-        if task["completed"]:
-            res += f"✅ **{task['name']}** — {task['tickets']} <:blue_carnival_ticket:1246080867114422335>\n"
+    if page_num == "Prizes":
+        bems = final_report["bems"]
+        if bems in (89, 178, 267):
+            sets = bems // 89
+            bem_prize = f"{sets} BEM {'Set' if sets == 1 else 'Sets'} ({bems} BEMs)"
         else:
-            res += f"❌ {task['name']}\n"
+            bem_prize = f"{bems} {'BEM' if bems == 1 else 'BEMs'}"
+        res += f"**BEMs won: {bem_prize}**\n"
+        earned_emojis = " ".join(prize["emoji"] for prize in final_report["emoji_prizes"] if prize["earned"])
+        if earned_emojis:
+            res += f"**Emojis won:** {earned_emojis}\n"
+        res += "\n➡️ Open a ticket to collect: <#1033207181857800242>"
+    else:
+        if page_num == "Bonus":
+            res += "**Wow! You've tackled everything the FF Fair has thrown at you, but now you've found the secret Bonus Tasks. Do you have what it takes to conquer these extra-hard challenges?**\n\n"
+
+        cur_report = final_report["sets"][page_num]
+    
+        for task in cur_report["tasks"]:
+            if task["completed"]:
+                reward = "1 <:golden_carnival_ticket:1246080949620441190>" if page_num == "Bonus" else f"{task['tickets']} <:blue_carnival_ticket:1246080867114422335>"
+                res += f"✅ **{task['name']}** — {reward}\n"
+            else:
+                res += f"❌ {task['name']}\n"
 
     if final_report["total"] < 30:
         res += f"\n**Unlock more tasks with {10 - (final_report["total"] % 10)} more tickets!** \n"
     
-    task_set_links = {
-        1: 1533137141498908875,
-        2: 1533137175774756874,
-        3: 1533137197702713558,
-        "Bonus": 1540733835774402600,
-    }
+        task_set_links = {
+            1: 1533137141498908875,
+            2: 1533137175774756874,
+            3: 1533137197702713558,
+            "Bonus": 1540733835774402600,
+        }
     
     res += f"\n:arrow_right: Link to this set's task board: <#{task_set_links[page_num]}>"
     
@@ -632,18 +725,19 @@ async def tickets_message(activator: Neighbor, context: Context, response: Respo
     
     total_tickets = final_report["total"]
     
+    await target_message.add_reaction("🎁")
     await target_message.add_reaction("1️⃣")
     if total_tickets >= 10:
         await target_message.add_reaction("2️⃣")
     if total_tickets >= 20:
         await target_message.add_reaction("3️⃣")
-    if total_tickets == 60:
+    if total_tickets >= 60:
         await target_message.add_reaction("✨")
         
     def key(ctx):
         if not ctx.message.id == target_message.id:
             return False;
-        if not ctx.emoji.name in ["1️⃣","2️⃣","3️⃣","✨"]:
+        if not ctx.emoji.name in ["🎁","1️⃣","2️⃣","3️⃣","✨"]:
             return False;
         return True;
     
@@ -939,6 +1033,18 @@ def build_tickets_stats(conn, task_info):
         if total > 0
     ]
     
+    bonus_task_ids = {
+        i for i, task in enumerate(task_info, start=1)
+        if task["set_number"] == "Bonus"
+    }
+    total_bems = sum(
+        fair_bem_prize(
+            blue_tickets,
+            min(4, len(set(member_earned_tasks[member_id]) & bonus_task_ids))
+            if blue_tickets >= 60 else 0
+        )
+        for member_id, blue_tickets in member_totals.items()
+    )
     total_tickets = sum(member_totals.values())
     total_raw_completions = sum(task["completions"] for task in task_stats.values())
     total_ticket_completions = sum(task["ticket_completions"] for task in task_stats.values())
@@ -961,6 +1067,7 @@ def build_tickets_stats(conn, task_info):
         "top_members": top_members,
         "sets": sets,
         "total_tickets": total_tickets,
+        "total_bems": total_bems,
         "total_raw_completions": total_raw_completions,
         "total_ticket_completions": total_ticket_completions,
         "participant_count": len(participants),
@@ -1031,6 +1138,7 @@ async def tickets_stats_message(activator: Neighbor, context: Context, response:
         
         res += f"**Participating Farmers:** {stats_report['participant_count']}\n"
         res += f"**Tickets Awarded:** {stats_report['total_tickets']} 🎟️\n"
+        res += f"**Total BEMs Earned:** {stats_report['total_bems']:,}\n"
         res += f"**Recorded Task Completions:** {stats_report['total_raw_completions']}\n"
         res += f"**Ticket-Earning Completions:** {stats_report['total_ticket_completions']}\n"
         res += f"**Average Tickets per Farmer:** {stats_report['average_tickets']:.1f}\n"
