@@ -4070,43 +4070,87 @@ async def set_time(client):
     
 @command_handler.Scheduled(time="12:00")
 async def birthdays(client):
+    import calendar
+    from zoneinfo import ZoneInfo
 
     guild = client.get_guild(FF.guild)
-    current_time_utc = time.time()
-    est_offset = datetime.timedelta(hours=-4)
-    est_time = datetime.datetime.fromtimestamp(current_time_utc, datetime.timezone.utc) + est_offset
+    if guild is None:
+        return
+
+    eastern = ZoneInfo("America/New_York")
+    est_time = datetime.datetime.now(eastern)
+    current_time_utc = est_time.timestamp()
+    tag_duration = 90 * 24 * 60 * 60
 
     def is_last_day(dt):
         return (dt + datetime.timedelta(days=1)).day == 1
-    
-    birthdays_channel = await guild.fetch_channel(1392147228684058644);
+
+    def birthday_datetime(year, month, day):
+        if month == 2 and day == 29 and not calendar.isleap(year):
+            day = 28
+        return datetime.datetime(year, month, day, tzinfo=eastern)
+
+    birthdays_channel = await guild.fetch_channel(1392147228684058644)
     council_role = guild.get_role(648188387836166168)
-    general_channel = await guild.fetch_channel(648223397205114910);
+    general_channel = await guild.fetch_channel(648223397205114910)
     this_month_birthdays = []
     today_bdays = []
     today_council_bdays = []
-    
+    seen_users = set()
+
     async for message in birthdays_channel.history(limit=None, oldest_first=False):
         bday = normalize_birthday(message.content)
         if not bday:
             await message.add_reaction("🤷‍♂️")
             await message.add_reaction("❌")
             continue
-        elif (is_today_birthday(bday)):
-            if has_role(message.author, council_role):
-                today_council_bdays.append(message.author.id)
+
+        month, day = bday
+        try:
+            datetime.date(2000, month, day)
+            birthday_this_year = birthday_datetime(est_time.year, month, day)
+        except (TypeError, ValueError):
+            await message.add_reaction("🤷‍♂️")
+            await message.add_reaction("❌")
+            continue
+
+        user_id = message.author.id
+        if user_id in seen_users:
+            continue
+        seen_users.add(user_id)
+
+        if birthday_this_year.date() == est_time.date():
+            member = guild.get_member(user_id)
+            if member is None:
+                member = await guild.fetch_member(user_id)
+            if council_role is not None and council_role in member.roles:
+                today_council_bdays.append(user_id)
             else:
-                today_bdays.append(message.author.id)
-        if is_last_day(est_time):
-            if bday[0] == est_time.month:
-                this_month_birthdays.append((message.author.id,bday));
-    
+                today_bdays.append(user_id)
+
+        if is_last_day(est_time) and month == est_time.month:
+            this_month_birthdays.append((user_id, bday))
+
+        # Keep late-year birthdays eligible during the following year.
+        most_recent_birthday = birthday_this_year
+        if most_recent_birthday > est_time:
+            most_recent_birthday = birthday_datetime(est_time.year - 1, month, day)
+
+        timestamp = most_recent_birthday.timestamp()
+        expires_at = timestamp + tag_duration
+        if not timestamp <= current_time_utc < expires_at:
+            continue
+
+        neighbor = Neighbor(user_id, guild.id)
+        if not neighbor.get_item_of_name("Birthday tag"):
+            item = Item("Birthday tag", "event_emoji", expires_at, emoji="🎂", display="None")
+            neighbor.bestow_item(item)
+
     if today_bdays:
         for bday in today_bdays:
-            
             member = await guild.fetch_member(bday)
             
-            nh = get_neighborhood_from_user(member).lower()
+            nh = (get_neighborhood_from_user(member) or "").lower()
             nh_role = None;
             
             if nh == "ffp":
