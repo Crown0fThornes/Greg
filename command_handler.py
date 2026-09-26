@@ -645,3 +645,4 @@ import commands.commands
 import commands.harvest
 import commands.summer_fest
 import commands.minigames
+import commands.task_logs
