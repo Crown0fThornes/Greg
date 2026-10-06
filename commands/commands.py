@@ -3031,11 +3031,11 @@ async def open_barn_sale(client):
     town_square = await guild.fetch_channel(648223363600351263)
 
     barn_sale_channel = await guild.create_text_channel(
-        "🪧barn-sale-day",
+        "🪧neighborhood-barn-sale",
         category=town_square
     )
 
-    await barn_sale_channel.send("# 🪧 It's Barn Sale Day! 🌾")
+    await barn_sale_channel.send("# 🪧 Neighborhood Barn Sale! 🌾")
     
     await barn_sale_channel.send("<@&1181330910747054211>")
 
@@ -4067,6 +4067,171 @@ async def set_time(client):
     await derby_reminder(client, guild, est_time);
     await trade_reminder(client, guild, est_time);
     # await birthdays(client, guild, est_time)
+    
+# Derby knockout
+
+task_sets = [
+    [
+        "Catch fish with lures",
+        "Collect wool",
+        "Complete truck deliveries",
+        "Produce & collect mixed smoothie",
+        "Serve town visitors in Beach Café",
+        "Harvest cucumber fields",
+    ],
+    [
+        "Harvest chili pepper fields",
+        "Complete and send off boats",
+        "Feed animals",
+        "Produce & collect yogurt smoothie",
+        "Harvest indigo fields",
+        "Harvest wheat fields",
+    ],
+    [
+        "Harvest wheat fields",
+        "Catch fish with lures",
+        "Basket: Apple juice, carrot cake, feta pie",
+        "Excavate ores from the mine",
+        "Fully serve visitors in your town",
+        "Produce & collect roasted tomatoes",
+    ],
+    [
+        "Produce & collect raspberry muffin",
+        "Produce & collect mushroom salad",
+        "Complete truck deliveries",
+        "Fully serve visitors in your town",
+        "Produce & collect bacon and eggs",
+        "Produce & collect pumpkin pie",
+    ],
+    [
+        "Serve town visitors in Gift Shop",
+        "Harvest cotton fields",
+        "Catch fish with lures",
+        "Collect milk",
+        "Collect bacon",
+        "Basket: Strongmen, bacon and eggs, ores",
+    ],
+    [
+        "Catch fish with lures",
+        "Complete and send off boats",
+        "Harvest grape fields",
+        "Help other farmers",
+        "Feed animals",
+        "Produce & collect fancy cake",
+    ],
+    [
+        "Fully serve visitors in your town",
+        "Catch fish with lures",
+        "Produce & collect plum smoothie",
+        "Collect goat milk",
+        "Basket: Ice cream, red berry cake, cotton shirts",
+        "Feed animals",
+    ],
+    [
+        "Collect milk",
+        "Produce & collect chickpea stew",
+        "Fully serve visitors in your town",
+        "Basket: Olive oil, goat cheese, strawberry candles",
+        "Feed animals",
+        "Produce & collect chili poppers",
+    ],
+    [
+        "Produce & collect tomato juice",
+        "Fully serve mechanic",
+        "Produce & collect blue woolly hat",
+        "Complete truck deliveries",
+        "Excavate ores from the mine",
+        "Basket: Apple juice, carrot cake, feta pie",
+    ],
+    [
+        "Catch fish with lures",
+        "Fully serve strongman",
+        "Collect bacon",
+        "Basket: Wool, raspberry candles, pumpkins",
+        "Complete and send off boats",
+        "Collect wool",
+    ],
+    [
+        "Serve town visitors in Beach Café",
+        "Fully serve visitors in your town",
+        "Help other farmers",
+        "Harvest sunflower fields",
+        "Produce & collect blue woolly hat",
+        "Basket: Milk, eggs, bacon",
+    ],
+    [
+        "Complete truck deliveries",
+        "Feed animals",
+        "Complete and send off boats",
+        "Fully serve cowboy",
+        "Basket: Wool, raspberry candles, pumpkins",
+        "Fully serve visitors in your town",
+    ],
+]
+
+async def announce_task_bounty(slot: int, bounty_channel):
+    from datetime import datetime, date, timedelta
+    from zoneinfo import ZoneInfo
+
+    DERBY_START = date(2026, 10, 6)
+    DERBY_TIMEZONE = ZoneInfo("America/New_York")
+
+    # slot 0 = morning; slot 1 = evening
+    if slot not in (0, 1):
+        raise ValueError("slot must be 0 or 1")
+
+    now = datetime.now(DERBY_TIMEZONE)
+    day_index = (now.date() - DERBY_START).days
+    set_index = day_index * 2 + slot
+
+    # Don't announce before the start or after the final set.
+    if day_index < 0 or set_index >= len(task_sets):
+        return
+
+    tasks = task_sets[set_index]
+    day_number = day_index + 1
+    part_number = slot + 1
+    expires_at = int((now + timedelta(hours=24)).timestamp())
+
+    message = f"**Day {day_number} Bounties Pt {part_number}**\n\n<@&1181330910747054211>\n"
+
+    if slot == 1:
+        message += (
+            f"If you have already completed a day {day_number} bounty, "
+            "you can skip these.\n\n"
+        )
+
+    message += "\n".join(f"• {task}" for task in tasks)
+    
+    await bounty_channel.send(message)
+
+    message = (
+        f"\n\nThese bounties expire in 24 hours (<t:{expires_at}:R>)"
+        "\n\n**Reminders:**"
+        "\n• Post a screenshot after you have started "
+        "(don't need to finish) any one of these derby tasks."
+        f"\n• You can only get credit for any 1 of all of the day "
+        f"{day_number} bounties in either part."
+        "\n• The same task can't count on two different days "
+        "unless you actually take that task twice."
+        "\n• If you took one of these tasks before the bounty was announced, you can still submit it."
+    )
+
+    await bounty_channel.send(message)
+
+
+@command_handler.Scheduled(time="8:00")
+async def announce_task_bounty_part1(client):
+    guild = client.get_guild(FF.guild)
+    channel = await guild.fetch_channel(1203772906497380472)
+    await announce_task_bounty(slot=0,bounty_channel=channel)
+
+
+@command_handler.Scheduled(time="20:00")
+async def announce_task_bounty_part2(client):
+    guild = client.get_guild(FF.guild)
+    channel = await guild.fetch_channel(1203772906497380472)
+    await announce_task_bounty(slot=1,bounty_channel=channel)
     
 @command_handler.Scheduled(time="12:00")
 async def birthdays(client):
