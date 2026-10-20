@@ -278,6 +278,133 @@ async def publish_heart_react_msg(client):
         
     remember("message_done", True)
 
+_ab_race_lock = asyncio.Lock()
+_AB_RACE_CHANNEL_ID = 1203772906497380472
+_AB_RACE_START_MESSAGE_ID = 1562014317749075980
+_AB_RACE_TITLE = "# A&B Race Update"
+
+
+def _ab_race_has_image(message):
+    image_extensions = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tif", ".tiff", ".heic", ".avif")
+    return any(
+        (attachment.content_type or "").startswith("image/")
+        or (not attachment.content_type and attachment.filename.lower().endswith(image_extensions))
+        for attachment in message.attachments
+    ) or any(
+        embed.type == "image" or (embed.image and embed.image.url)
+        for embed in message.embeds
+    )
+
+
+def _ab_race_summary(latest_submissions, family_names):
+    """All family players place; only each family's first ten score."""
+    placements = {name: [] for name in family_names}
+    for place, (_, family_name) in enumerate(sorted(latest_submissions.values()), start=1):
+        placements[family_name].append(place)
+
+    total_players = len(latest_submissions)
+    lines = [_AB_RACE_TITLE]
+    for family_name, places in placements.items():
+        score = sum(places[:10])
+        needed = max(0, 10 - len(places))
+        # Assume this family's missing scorers take all the next available places.
+        projected = score + sum(range(total_players + 1, total_players + needed + 1))
+        lines.extend([
+            "",
+            f"{family_name}:",
+            f"> Current score: {score}",
+            ">",
+            f"> {needed} more submission{'s' if needed != 1 else ''} needed to lock in score",
+            ">",
+            f"> Projected minimum score: {projected}",
+        ])
+    return "\n".join(lines)
+
+
+def _ab_race_overtakes(previous_summary, current_summary):
+    """Compare projected scores, which include each family's missing scorers."""
+    def scores(summary):
+        return {
+            name: int(score)
+            for name, score in re.findall(
+                r"^([^\n:]+):\n> Current score: \d+\n>\n"
+                r"> \d+ more submissions? needed to lock in score\n>\n"
+                r"> Projected minimum score: (\d+)$",
+                summary, re.MULTILINE,
+            )
+        }
+
+    previous = scores(previous_summary)
+    current = scores(current_summary)
+    return [
+        f"**{family} has overtaken {other}!**"
+        for family in current
+        for other in current
+        if family in previous and other in previous
+        and previous[family] > previous[other]
+        and current[family] < current[other]
+    ]
+
+
+@command_handler.Uncontested(type="MESSAGE", desc="Updates A&B race scores after image submissions")
+async def update_ab_race_scoring(context: Context):
+    if (context.channel.id != _AB_RACE_CHANNEL_ID
+            or context.author.bot
+            or context.message.id <= _AB_RACE_START_MESSAGE_ID
+            or not _ab_race_has_image(context.message)):
+        return
+
+    async with _ab_race_lock:
+        with open("lookups/families.json", encoding="utf-8") as family_file:
+            families = json.load(family_file)
+        family_names = [family["name"] for family in families]
+
+        latest_submissions = {}
+        previous_summaries = []
+        bot_id = context.guild.me.id
+        # No limit: reconstruct both standings and our previous update after restarts.
+        async for message in context.channel.history(
+                after=discord.Object(id=_AB_RACE_START_MESSAGE_ID),
+                oldest_first=True, limit=None):
+            if message.author.id == bot_id:
+                if message.content.split("\n", 1)[0] == _AB_RACE_TITLE:
+                    previous_summaries.append(message)
+                continue
+            if message.author.bot or not _ab_race_has_image(message):
+                continue
+            member = message.author
+            if not isinstance(member, discord.Member):
+                member = context.guild.get_member(member.id)
+                if member is None:
+                    try:
+                        member = await context.guild.fetch_member(message.author.id)
+                    except discord.NotFound:
+                        continue
+            family = get_family_from_user(member)
+            if family is None or family["name"] not in family_names:
+                continue
+            # Snowflake order is submission time, including a deterministic tie break.
+            latest_submissions[member.id] = (message.id, family["name"])
+
+        summary = _ab_race_summary(latest_submissions, family_names)
+        overtakes = _ab_race_overtakes(previous_summaries[-1].content, summary) if previous_summaries else []
+        ping_roles = []
+        if overtakes:
+            ping_roles = [discord.Object(id=family["role_id"]) for family in families
+                          if family["name"] in {"Penguin", "Hippo", "Fox"}]
+            notes = "\n".join(overtakes)
+            pings = " ".join(f"<@&{role.id}>" for role in ping_roles)
+            summary = summary.replace(_AB_RACE_TITLE, f"{_AB_RACE_TITLE}\n\n{notes}\n{pings}", 1)
+        # Send first so a failed send leaves the existing standings visible.
+        await context.channel.send(summary, allowed_mentions=discord.AllowedMentions(
+            everyone=False, users=False, roles=ping_roles, replied_user=False))
+        for previous_summary in previous_summaries:
+            try:
+                await previous_summary.delete()
+            except discord.NotFound:
+                pass
+
+
 # @command_handler.Uncontested(type="MESSAGE", desc="Updates cross country style scoring")
 async def update_xc_scoring(context: Context):
     if context.channel.id != 1203772906497380472:
