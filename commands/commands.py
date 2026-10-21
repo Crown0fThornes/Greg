@@ -280,8 +280,8 @@ async def publish_heart_react_msg(client):
 
 _ab_race_lock = asyncio.Lock()
 _AB_RACE_CHANNEL_ID = 1203772906497380472
-_AB_RACE_START_MESSAGE_ID = 1562014317749075980
 _AB_RACE_TITLE = "# A&B Race Update"
+_AB_RACE_DISPLAY_FAMILIES = ("Hippo", "Penguin", "Fox")
 
 
 def _ab_race_has_image(message):
@@ -299,24 +299,40 @@ def _ab_race_has_image(message):
 def _ab_race_summary(latest_submissions, family_names):
     """All family players place; only each family's first ten score."""
     placements = {name: [] for name in family_names}
-    for place, (_, family_name) in enumerate(sorted(latest_submissions.values()), start=1):
-        placements[family_name].append(place)
+    ordered = sorted(latest_submissions.items(), key=lambda item: item[1][0])
+    for place, (user_id, (_, family_name)) in enumerate(ordered, start=1):
+        placements[family_name].append((place, user_id))
 
     total_players = len(latest_submissions)
-    lines = [_AB_RACE_TITLE]
-    for family_name, places in placements.items():
-        score = sum(places[:10])
+    standings = {}
+    for family_name in _AB_RACE_DISPLAY_FAMILIES:
+        if family_name not in placements:
+            continue
+        places = placements[family_name]
+        score = sum(place for place, _ in places[:10])
         needed = max(0, 10 - len(places))
         # Assume this family's missing scorers take all the next available places.
         projected = score + sum(range(total_players + 1, total_players + needed + 1))
+        standings[family_name] = (score, needed, projected, places[:10])
+
+    lines = [_AB_RACE_TITLE]
+    if standings:
+        best_score = min(row[2] for row in standings.values())
+        leaders = [name for name, row in standings.items() if row[2] == best_score]
+        if len(leaders) == 1:
+            lines.append(f"## {leaders[0]} family is in the lead!")
+        else:
+            lines.append(f"## {', '.join(leaders)} families are tied for the lead!")
+    lines.append("-# Lowest score wins. Standings use projected minimum scores.")
+    for family_name, (score, needed, projected, scorers) in standings.items():
+        scorer_list = ", ".join(f"<@{user_id}> ({place})" for place, user_id in scorers) or "None yet"
         lines.extend([
             "",
             f"{family_name}:",
             f"> Current score: {score}",
-            ">",
             f"> {needed} more submission{'s' if needed != 1 else ''} needed to lock in score",
-            ">",
             f"> Projected minimum score: {projected}",
+            f"> Scorers (placement): {scorer_list}",
         ])
     return "\n".join(lines)
 
@@ -327,11 +343,12 @@ def _ab_race_overtakes(previous_summary, current_summary):
         return {
             name: int(score)
             for name, score in re.findall(
-                r"^([^\n:]+):\n> Current score: \d+\n>\n"
-                r"> \d+ more submissions? needed to lock in score\n>\n"
+                r"^([^\n:]+):\n> Current score: \d+\n(?:>[ \t]*\n)?"
+                r"> \d+ more submissions? needed to lock in score\n(?:>[ \t]*\n)?"
                 r"> Projected minimum score: (\d+)$",
                 summary, re.MULTILINE,
             )
+            if name in _AB_RACE_DISPLAY_FAMILIES
         }
 
     previous = scores(previous_summary)
