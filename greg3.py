@@ -10,7 +10,6 @@ import commands.commands as commands
 import command_handler
 from command_handler import Context, Command, Uncontested, Loop, Scheduled
 from custom_types import Neighbor
-import commands.commands as commands
 from importlib import reload as sync
 from id_bundle import FF
 from phoenix_bundle import PHOENIX
@@ -37,6 +36,7 @@ intents.message_content = True;
 intents.members = True;
 playing = discord.Game(name="$harvest once per hour!")
 client = discord.Client(intents=intents,activity = playing);
+command_handler.Deprecated.client = client
 RUN_AUTO_COMMANDS = True;
 # ___________________________
 
@@ -241,10 +241,17 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    global Context, Command, Uncontested, Loop, Scheduled
     if message.content == "$sync" and message.author.id == 355169964027805698:
         sync(custom_types)
         sync(command_handler);
         sync(commands);
+        Context = command_handler.Context
+        Command = command_handler.Command
+        Uncontested = command_handler.Uncontested
+        Loop = command_handler.Loop
+        Scheduled = command_handler.Scheduled
+        command_handler.Deprecated.client = client
         await message.channel.send("Done! Modules synced");
     
     if message.author.bot:

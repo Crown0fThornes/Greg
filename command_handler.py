@@ -16,6 +16,7 @@ from id_bundle import FF
 from phoenix_bundle import PHOENIX
 import shlex
 import re
+from copy import copy
 
 """
 Greg 3.0!
@@ -210,6 +211,8 @@ class Command:
         if Command.prefix is None:
             raise ValueError("Prefix not set. Please define with Command.set_prefix(new: str)") 
         if context.content.startswith(Command.prefix):
+            if await Deprecated.execute(activator, context):
+                return
             target = context.content.split(" ")[0][1:];
             for name, command in Command.available_commands.items():
                 if name == target:
@@ -246,6 +249,75 @@ class Command:
                     res += f"> **{Command.prefix}{name}** | *{command.access_type.name}*\n";
         return res;
     
+class Deprecated:
+    """Retired entry points, available only through an explicit developer command.
+
+    Return the original callable so existing internal helper calls keep working.
+    These definitions never enter the live command, listener, or timer registries.
+    """
+
+    available_commands = {}
+    client = None
+
+    def __init__(self, *, kind="Command", access_type=AccessType.DEVELOPER,
+                 event_type="MESSAGE", desc=None):
+        self.kind = kind
+        self.access_type = access_type
+        self.event_type = event_type
+        self.desc = desc
+
+    def __call__(self, func):
+        self.name = func.__name__
+        self.func = func
+        Deprecated.available_commands[self.name] = self
+        return func
+
+    @staticmethod
+    async def execute(activator, context):
+        """Consume $deprecated list or $deprecated <name> [original arguments]."""
+        if not context.tokens or context.tokens[0] != f"{Command.prefix}deprecated":
+            return False
+        if context.access_type.value < AccessType.DEVELOPER.value:
+            await context.send("Deprecated commands require developer access.")
+            return True
+        if context.guild.id != FF.guild:
+            await context.send("Deprecated commands are only available in the FF server.")
+            return True
+        if not context.args or context.args[0] == "list":
+            names = ", ".join(sorted(Deprecated.available_commands))
+            await context.send(f"Retired commands: {names}\n"
+                               f"Use `{Command.prefix}deprecated <name> [arguments]` to run one once.")
+            return True
+        command = Deprecated.available_commands.get(context.args[0])
+        if command is None:
+            await context.send(f"Unknown retired command. Use `{Command.prefix}deprecated list`.")
+            return True
+
+        # Give the retired function its original command name/arguments, while
+        # leaving the real message and other live listeners' context untouched.
+        retired_context = copy(context)
+        remainder = context.content[len(context.tokens[0]):].lstrip()
+        retired_context.content = f"{Command.prefix}{remainder}"
+        retired_context.tokens = safe_tokenize(retired_context.content)
+        retired_context.args = retired_context.tokens[1:]
+        retired_context.type = command.event_type
+        try:
+            if command.kind in {"Loop", "Scheduled"}:
+                if Deprecated.client is None:
+                    raise CommandArgsError("The bot client is not available for retired jobs.")
+                await command.func(Deprecated.client)
+            elif command.kind == "Uncontested":
+                if command.event_type != "MESSAGE":
+                    raise CommandArgsError("This archived listener requires its original event payload and cannot be run from a message.")
+                await command.func(retired_context)
+            else:
+                await command.func(activator, retired_context)
+        except Exception as error:
+            traceback.print_exc()
+            await context.send(f"Retired command `{command.name}` failed: {type(error).__name__}: {error}")
+        return True
+
+
 # Uncontested commands are not like regular commands. These commands are run every time someone sends
 #   a message, adds a reaction, etc. This is useful, for example, when you need to incrememnt someone's
 #   server xp every time they send a message. This means the bot should look for all messages sent,
@@ -641,8 +713,4 @@ class Scheduled:
     
 Command.set_prefix("$");
 
-import commands.commands 
-import commands.harvest
-import commands.summer_fest
-import commands.minigames
-import commands.task_logs
+import commands.commands
