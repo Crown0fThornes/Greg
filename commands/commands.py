@@ -280,7 +280,7 @@ async def publish_heart_react_msg(client):
 
 _ab_race_lock = asyncio.Lock()
 _AB_RACE_CHANNEL_ID = 1203772906497380472
-_AB_RACE_START_MESSAGE_ID = 1562014317749075980
+_AB_RACE_START_MESSAGE_ID = 1559886104000471063
 _AB_RACE_TITLE = "# A&B Race Update"
 _AB_RACE_DISPLAY_FAMILIES = ("Hippo", "Penguin", "Fox")
 _AB_RACE_PENALTIES = {"Penguin": 10, "Fox": 26, "Hippo": 12}
