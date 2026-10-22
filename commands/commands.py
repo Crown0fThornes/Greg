@@ -298,7 +298,7 @@ def _ab_race_has_image(message):
     )
 
 
-def _ab_race_summary(latest_submissions, family_names):
+def _ab_race_summary(latest_submissions, family_names, player_names):
     """Only participating families place; their first ten players score, plus penalties."""
     placements = {name: [] for name in _AB_RACE_DISPLAY_FAMILIES if name in family_names}
     ordered = sorted(
@@ -331,7 +331,7 @@ def _ab_race_summary(latest_submissions, family_names):
             lines.append(f"## {', '.join(leaders)} families are tied for the lead!")
     lines.append("-# Lowest score wins. Standings use projected minimum scores.")
     for family_name, (score, needed, projected, scorers) in standings.items():
-        scorer_list = ", ".join(f"<@{user_id}> ({place})" for place, user_id in scorers) or "None yet"
+        scorer_list = ", ".join(f"{player_names[user_id]} ({place})" for place, user_id in scorers) or "None yet"
         lines.extend([
             "",
             f"{family_name}:",
@@ -341,6 +341,7 @@ def _ab_race_summary(latest_submissions, family_names):
             f"> Scorers (placement): {scorer_list}",
             f"> Penalty Points: {_AB_RACE_PENALTIES[family_name]}",
         ])
+    lines.extend(["", "**Continue posting A&B completion screenshots below ⬇️**"])
     return "\n".join(lines)
 
 
@@ -385,6 +386,7 @@ async def update_ab_race_scoring(context: Context):
                         if family["name"] in _AB_RACE_DISPLAY_FAMILIES]
 
         latest_submissions = {}
+        player_names = {}
         previous_summaries = []
         bot_id = context.guild.me.id
         # No limit: reconstruct both standings and our previous update after restarts.
@@ -410,8 +412,11 @@ async def update_ab_race_scoring(context: Context):
                 continue
             # Snowflake order is submission time, including a deterministic tie break.
             latest_submissions[member.id] = (message.id, family["name"])
+            player_names[member.id] = discord.utils.escape_mentions(
+                discord.utils.escape_markdown(member.display_name)
+            ).replace("\n", " ")
 
-        summary = _ab_race_summary(latest_submissions, family_names)
+        summary = _ab_race_summary(latest_submissions, family_names, player_names)
         overtakes = _ab_race_overtakes(previous_summaries[-1].content, summary) if previous_summaries else []
         ping_roles = []
         if overtakes:
