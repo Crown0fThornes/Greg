@@ -280,8 +280,10 @@ async def publish_heart_react_msg(client):
 
 _ab_race_lock = asyncio.Lock()
 _AB_RACE_CHANNEL_ID = 1203772906497380472
+_AB_RACE_START_MESSAGE_ID = 1562014317749075980
 _AB_RACE_TITLE = "# A&B Race Update"
 _AB_RACE_DISPLAY_FAMILIES = ("Hippo", "Penguin", "Fox")
+_AB_RACE_PENALTIES = {"Penguin": 10, "Fox": 26, "Hippo": 12}
 
 
 def _ab_race_has_image(message):
@@ -297,19 +299,23 @@ def _ab_race_has_image(message):
 
 
 def _ab_race_summary(latest_submissions, family_names):
-    """All family players place; only each family's first ten score."""
-    placements = {name: [] for name in family_names}
-    ordered = sorted(latest_submissions.items(), key=lambda item: item[1][0])
+    """Only participating families place; their first ten players score, plus penalties."""
+    placements = {name: [] for name in _AB_RACE_DISPLAY_FAMILIES if name in family_names}
+    ordered = sorted(
+        ((user_id, submission) for user_id, submission in latest_submissions.items()
+         if submission[1] in placements),
+        key=lambda item: item[1][0],
+    )
     for place, (user_id, (_, family_name)) in enumerate(ordered, start=1):
         placements[family_name].append((place, user_id))
 
-    total_players = len(latest_submissions)
+    total_players = len(ordered)
     standings = {}
     for family_name in _AB_RACE_DISPLAY_FAMILIES:
         if family_name not in placements:
             continue
         places = placements[family_name]
-        score = sum(place for place, _ in places[:10])
+        score = sum(place for place, _ in places[:10]) + _AB_RACE_PENALTIES[family_name]
         needed = max(0, 10 - len(places))
         # Assume this family's missing scorers take all the next available places.
         projected = score + sum(range(total_players + 1, total_players + needed + 1))
@@ -333,6 +339,7 @@ def _ab_race_summary(latest_submissions, family_names):
             f"> {needed} more submission{'s' if needed != 1 else ''} needed to lock in score",
             f"> Projected minimum score: {projected}",
             f"> Scorers (placement): {scorer_list}",
+            f"> Penalty Points: {_AB_RACE_PENALTIES[family_name]}",
         ])
     return "\n".join(lines)
 
@@ -374,7 +381,8 @@ async def update_ab_race_scoring(context: Context):
     async with _ab_race_lock:
         with open("lookups/families.json", encoding="utf-8") as family_file:
             families = json.load(family_file)
-        family_names = [family["name"] for family in families]
+        family_names = [family["name"] for family in families
+                        if family["name"] in _AB_RACE_DISPLAY_FAMILIES]
 
         latest_submissions = {}
         previous_summaries = []
