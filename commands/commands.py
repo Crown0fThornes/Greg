@@ -281,9 +281,11 @@ async def publish_heart_react_msg(client):
 _ab_race_lock = asyncio.Lock()
 _AB_RACE_CHANNEL_ID = 1203772906497380472
 _AB_RACE_START_MESSAGE_ID = 1559886104000471063
-_AB_RACE_TITLE = "# A&B Race Update"
+_AB_RACE_LEGACY_TITLE = "# A&B Race Update"
+_AB_RACE_TITLE = "# A&B Race Update 🥊🥊🥊"
 _AB_RACE_DISPLAY_FAMILIES = ("Hippo", "Penguin", "Fox")
 _AB_RACE_PENALTIES = {"Penguin": 10, "Fox": 26, "Hippo": 12}
+_AB_RACE_FAMILY_EMOJIS = {"Hippo": "🦛", "Penguin": "🐧", "Fox": "🦊"}
 
 
 def _ab_race_has_image(message):
@@ -325,16 +327,17 @@ def _ab_race_summary(latest_submissions, family_names, player_names):
     if standings:
         best_score = min(row[2] for row in standings.values())
         leaders = [name for name, row in standings.items() if row[2] == best_score]
+        leader_names = [f"{_AB_RACE_FAMILY_EMOJIS[name]} **{name}**" for name in leaders]
         if len(leaders) == 1:
-            lines.append(f"## {leaders[0]} family is in the lead!")
+            lines.append(f"## {leader_names[0]} family is in the lead!")
         else:
-            lines.append(f"## {', '.join(leaders)} families are tied for the lead!")
+            lines.append(f"## {', '.join(leader_names)} families are tied for the lead!")
     lines.append("-# Lowest score wins. Standings use projected minimum scores.")
     for family_name, (score, needed, projected, scorers) in standings.items():
         scorer_list = ", ".join(f"{player_names[user_id]} ({place})" for place, user_id in scorers) or "None yet"
         lines.extend([
             "",
-            f"{family_name}:",
+            f"{_AB_RACE_FAMILY_EMOJIS[family_name]} **{family_name}**:",
             f"> Current score: {score}",
             f"> {needed} more submission{'s' if needed != 1 else ''} needed to lock in score",
             f"> Projected minimum score: {projected}",
@@ -348,16 +351,19 @@ def _ab_race_summary(latest_submissions, family_names, player_names):
 def _ab_race_overtakes(previous_summary, current_summary):
     """Compare projected scores, which include each family's missing scorers."""
     def scores(summary):
-        return {
-            name: int(score)
-            for name, score in re.findall(
-                r"^([^\n:]+):\n> Current score: \d+\n(?:>[ \t]*\n)?"
+        result = {}
+        for name in _AB_RACE_DISPLAY_FAMILIES:
+            emoji = re.escape(_AB_RACE_FAMILY_EMOJIS[name])
+            match = re.search(
+                rf"^(?:{emoji} )?(?:\*\*)?{re.escape(name)}(?:\*\*)?:\n"
+                r"> Current score: \d+\n(?:>[ \t]*\n)?"
                 r"> \d+ more submissions? needed to lock in score\n(?:>[ \t]*\n)?"
                 r"> Projected minimum score: (\d+)$",
                 summary, re.MULTILINE,
             )
-            if name in _AB_RACE_DISPLAY_FAMILIES
-        }
+            if match:
+                result[name] = int(match.group(1))
+        return result
 
     previous = scores(previous_summary)
     current = scores(current_summary)
@@ -394,7 +400,7 @@ async def update_ab_race_scoring(context: Context):
                 after=discord.Object(id=_AB_RACE_START_MESSAGE_ID),
                 oldest_first=True, limit=None):
             if message.author.id == bot_id:
-                if message.content.split("\n", 1)[0] == _AB_RACE_TITLE:
+                if message.content.split("\n", 1)[0] in {_AB_RACE_TITLE, _AB_RACE_LEGACY_TITLE}:
                     previous_summaries.append(message)
                 continue
             if message.author.bot or not _ab_race_has_image(message):
