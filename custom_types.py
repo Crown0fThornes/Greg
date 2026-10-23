@@ -373,10 +373,14 @@ class Item:
             self.values.setdefault("awarded_at", int(time.time()))
 
     def __str__(self):
+        name = self.name
+        if self.type in {"custom_nickname_emoji", "trex_auction"}:
+            emoji = self.values.get("emoji", "🦖" if self.type == "trex_auction" else "")
+            name = f"{emoji} {name}".strip()
         if self.expiration == -1:
-            res = f"{self.name}; expires never... probably";
+            res = f"{name}; expires never... probably";
         else:
-            res = f"{self.name}; expires in {timedelta(seconds=round(self.expiration - time.time()))}";
+            res = f"{name}; expires in {timedelta(seconds=round(self.expiration - time.time()))}";
         # res = self.name + "self.type + "* [expires in: " + str(timedelta(seconds=round(self.expiration - time.time()))) + "]";
         return res;
     

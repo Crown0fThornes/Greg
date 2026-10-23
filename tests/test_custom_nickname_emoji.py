@@ -18,7 +18,7 @@ RESERVED = json.loads((ROOT / 'lookups/nickname_emoji_reserved.json').read_text(
 CATEGORY = next(c for c in CATALOG if c['name'] == 'Server Perks')
 PRODUCT = next(i for i in CATEGORY['items'] if i['type'] == 'custom_nickname_emoji')
 TREE = ast.parse((ROOT / 'commands/commands.py').read_text())
-NODES = [node for node in TREE.body if getattr(node, 'name', None) in {'rss', '_custom_nickname_emoji_error'}]
+NODES = [node for node in TREE.body if getattr(node, 'name', None) in {'rss', '_rss_item_cost', '_custom_nickname_emoji_error'}]
 for node in NODES:
     if isinstance(node, ast.AsyncFunctionDef):
         node.decorator_list = []
@@ -110,6 +110,23 @@ class PurchaseTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(before + 28*86400 - 1 <= item.expiration <= time.time() + 28*86400)
         self.env['set_nick'].assert_awaited_once()
 
+    async def test_owner_can_test_at_zero_levels_without_any_deduction(self):
+        self.activator.ID = 355169964027805698
+        self.level = 0
+        await self.choose('🦄')
+        self.assertIn('Cost: 0 levels (developer testing)', self.target.edit.await_args.kwargs['content'])
+        await self.call('confirmation', NS(name='✅'), self.requests[-1].values['item'])
+        self.assertEqual(self.deductions, [])
+        self.assertEqual(self.level, 0)
+        self.assertEqual(len(self.items), 1)
+
+    async def test_free_testing_is_scoped_to_owner_and_custom_emoji_only(self):
+        price = self.env['_rss_item_cost']
+        self.assertEqual(price(PRODUCT, 123), 20)
+        self.assertEqual(price(PRODUCT, 355169964027805698), 0)
+        self.assertEqual(price(dict(type='trex_auction', cost=7), 355169964027805698), 7)
+        self.assertEqual(price(dict(type='tag', cost=5), 355169964027805698), 5)
+
     async def test_reserved_choice_does_not_charge_and_allows_retry(self):
         await self.choose('🦖')
         self.assertEqual(self.requests[-1].name, 'custom_emoji_choice')
@@ -176,6 +193,18 @@ class PurchaseTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.requests[-1].name, 'confirmation')
         self.assertEqual(self.requests[-1].values['item']['cost'], 2)
         self.assertEqual(self.deductions, [])
+
+
+class InventoryDisplayTests(unittest.TestCase):
+    def test_custom_emoji_is_visible_without_changing_stored_name(self):
+        item = Item('Custom Nickname Emoji', 'custom_nickname_emoji', -1, emoji='🦄')
+        self.assertTrue(str(item).startswith('🦄 Custom Nickname Emoji;'))
+        self.assertEqual(item.name, 'Custom Nickname Emoji')
+        self.assertTrue(Item.decode(item.encode()).get_value('emoji') == '🦄')
+
+    def test_trex_is_visible_in_inventory(self):
+        item = Item('Highest Bidder', 'trex_auction', int(time.time()) + 86400, emoji='🦖')
+        self.assertTrue(str(item).startswith('🦖 Highest Bidder; expires in'))
 
 
 if __name__ == '__main__':

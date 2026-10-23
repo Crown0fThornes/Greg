@@ -8492,6 +8492,12 @@ async def reset_trex_auction(client):
         await _trex_quote(guild)
 
 
+def _rss_item_cost(item, user_id):
+    if item["type"] == "custom_nickname_emoji" and user_id == 355169964027805698:
+        return 0
+    return int(item["cost"])
+
+
 def _custom_nickname_emoji_error(emoji, families, rss_info, extra_reserved):
     """Reserve permanent nickname identities, excluding variable event rewards."""
     if not emoji or len(emoji) > 32 or any(char.isspace() for char in emoji) or "<" in emoji or ">" in emoji:
@@ -8694,8 +8700,10 @@ async def rss(activator: Neighbor, context: Context, response: ResponsePackage =
         if 'warning' in chosen_item:
             res += f"> Warning: {chosen_item['warning']}\n"
         if 'cost' in chosen_item:
-            cost = int(chosen_item['cost']);
-            if activator.get_level() >= cost:
+            cost = _rss_item_cost(chosen_item, activator.ID)
+            if cost == 0 and chosen_item["type"] == "custom_nickname_emoji":
+                res += "> Cost: 0 levels (developer testing)\n"
+            elif activator.get_level() >= cost:
                 xp_conversion = Neighbor.get_XP_for_level(activator.get_level()) - Neighbor.get_XP_for_level(activator.get_level() - cost);
                 res += f"> Cost: {cost} levels [xp conversion ≈ {xp_conversion}xp]\n";
             else:
@@ -8792,16 +8800,17 @@ async def rss(activator: Neighbor, context: Context, response: ResponsePackage =
                     await context.send(error + " No levels have been charged.")
                     return
 
-        cost = int(chosen_item["cost"])
+        cost = _rss_item_cost(chosen_item, activator.ID)
         xp_cost = int(Neighbor.get_XP_for_level(int(chosen_item['cost'])) * 1.25);
         if response.content.name == unicodes['check']:
-            if not activator.get_level() >= int(chosen_item["cost"]):
+            if not activator.get_level() >= cost:
                 await context.send("Whoops! You're too poor for this item.")
                 ResponseRequest(rss, "confirmation", "REACTION", context, target_context, response.key, category = chosen_category, item = chosen_item)
                 return;
             else:
                 if not activator.get_item_of_name(chosen_item["name"]):
-                    strip(activator, levels = cost);
+                    if cost > 0:
+                        strip(activator, levels = cost);
                 else:
                     await context.send("You already have this item!");
                     return;
