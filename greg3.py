@@ -248,6 +248,8 @@ async def on_message(message):
         await message.channel.send("Done! Modules synced");
     
     if message.author.bot:
+        if message.guild is not None and message.channel.id != CHANNEL_ID_DONT_RESPOND:
+            await commands.hype_announcement_reactions(message)
         return;
     # if not message.guild.id == 647883751853916162:
     #     return;

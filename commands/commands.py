@@ -1810,6 +1810,104 @@ async def schedule_test(client):
     bc = await guild.fetch_channel(704366328089280623)
     await bc.send("This is a test of the new scheduled command system. This command was scheduled for 1:05pm");
 
+_HYPE_SOURCE_CHANNEL_ID = 1551415752358105199
+_HYPE_NEIGHBORS_ROLE_ID = 1181330910747054211
+_hype_emoji_cache_lock = asyncio.Lock()
+
+
+def _hype_emoji_key(value):
+    custom = re.fullmatch(r"<a?:[A-Za-z0-9_]+:([0-9]+)>", value)
+    return ("custom", custom.group(1)) if custom else ("unicode", value.replace("\ufe0f", "").replace("\ufe0e", ""))
+
+
+def _parse_hype_emojis(content):
+    import emoji as emoji_parser
+
+    custom_pattern = r"<a?:[A-Za-z0-9_]+:[0-9]+>"
+    entries = [(match.start(), match.group()) for match in re.finditer(custom_pattern, content)]
+    # Mask custom markup so its name cannot be mistaken for a Unicode emoji.
+    unicode_content = re.sub(custom_pattern, lambda match: " " * len(match.group()), content)
+    entries.extend((match["match_start"], match["emoji"])
+                   for match in emoji_parser.emoji_list(unicode_content))
+    found = {}
+    for _, value in sorted(entries):
+        found.setdefault(_hype_emoji_key(value), value)
+    return list(found.values())
+
+
+async def _load_hype_emojis(guild, force=False):
+    key = f"hype_emojis_{guild.id}_{_HYPE_SOURCE_CHANNEL_ID}"
+    async with _hype_emoji_cache_lock:
+        cached = remember(key)
+        now = time.time()
+        if not force and cached and now - cached["updated_at"] < 7 * 86400:
+            return cached["emojis"]
+        # Replace the saved pool only after the entire scan succeeds.
+        try:
+            channel = await guild.fetch_channel(_HYPE_SOURCE_CHANNEL_ID)
+            found = {}
+            async for message in channel.history(limit=None, oldest_first=True):
+                for value in _parse_hype_emojis(message.content):
+                    found.setdefault(_hype_emoji_key(value), value)
+        except discord.HTTPException:
+            if cached:
+                traceback.print_exc()
+                return cached["emojis"]
+            raise
+        values = list(found.values())
+        remember(key, {"updated_at": now, "emojis": values})
+        return values
+
+
+@command_handler.Scheduled(time="00:05", day_of_week=0, timezone="America/New_York",
+                           desc="Refresh the hype emoji pool weekly")
+async def refresh_hype_emojis(client):
+    guild = client.get_guild(FF.guild)
+    if guild is not None:
+        await _load_hype_emojis(guild, force=True)
+
+
+async def hype_announcement_reactions(message):
+    """React to actual all-neighbors/everyone mentions, including bot posts."""
+    if message.guild is None or message.guild.id != FF.guild:
+        return
+    neighbors_ping = any(role.id == _HYPE_NEIGHBORS_ROLE_ID for role in message.role_mentions)
+    everyone_ping = message.mention_everyone and re.search(r"@everyone\b", message.content)
+    if not (neighbors_ping or everyone_ping):
+        return
+    try:
+        pool = await _load_hype_emojis(message.guild)
+    except discord.HTTPException:
+        traceback.print_exc()
+        return
+    already_used = {_hype_emoji_key(str(reaction.emoji)) for reaction in message.reactions if reaction.me}
+    available = [value for value in pool if _hype_emoji_key(value) not in already_used]
+    if not available:
+        return
+    counts = list(range(1, min(5, len(available)) + 1))
+    target_count = random.choices(counts, weights=[1 / count for count in counts], k=1)[0]
+    added = 0
+    for value in random.sample(available, len(available)):
+        try:
+            await message.add_reaction(value)
+        except discord.HTTPException as error:
+            if error.code == 10014:  # Deleted or inaccessible custom emoji: try another.
+                continue
+            if isinstance(error, (discord.Forbidden, discord.NotFound)) or error.code == 30010:
+                return
+            if error.status == 400:
+                continue
+            raise
+        added += 1
+        if added >= target_count:
+            break
+
+
+@command_handler.Uncontested(type="MESSAGE", desc="Hype up all-neighbors announcements")
+async def hype_announcement(context: Context):
+    await hype_announcement_reactions(context.message)
+
+
 @command_handler.Uncontested(type = "MESSAGE", desc = "If a message contains the word greg, Greg will react with an emoji", priority = 2, generic = True)
 async def greg_react(context: Context):
     neighbor = Neighbor(context.author.id, context.guild.id);
