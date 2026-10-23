@@ -10143,6 +10143,98 @@ async def inc_xp(neighbor: Neighbor, amount, context=None):
             neighbor.bestow_item(boost);
 
 
+_CARNIVAL_REVIEW_CHANNEL_ID = 1342334494048387082
+_CARNIVAL_REVIEW_ROLE_ID = 1342329281015058442
+_CARNIVAL_MEMBER_ROLE_ID = 1342329111359656008
+_CARNIVAL_IMAGE_CHANNEL_ID = 1342333687429070918
+
+
+def _carnival_inactivity_messages(members, latest_images, now):
+    """Build staff-only review recommendations, without taking member actions."""
+    labels = {
+        4: "🚨 4+ weeks — ALERT: extended inactivity",
+        3: "3 weeks — consider for kick if member",
+        2: "2 weeks — consider for demotion",
+        1: "1 week — potentially DM warning",
+    }
+    groups = {tier: [] for tier in labels}
+    unknown = []
+    for member in members:
+        last_image = latest_images.get(member.id)
+        reference = last_image if last_image is not None else member.joined_at
+        if reference is None:
+            unknown.append(f"- <@{member.id}> — no submission found; join date unavailable, review manually")
+            continue
+        if reference.tzinfo is None:
+            reference = reference.replace(tzinfo=datetime.timezone.utc)
+        days = (now - reference).days
+        if days < 7:
+            continue
+        tier = min(4, days // 7)
+        detail = (f"last image {days} days ago" if last_image is not None
+                  else f"no submission found; joined {days} days ago")
+        groups[tier].append((days, member.id, f"- <@{member.id}> — {detail}"))
+
+    title = "# Weekly carnival submission review"
+    lines = [title, f"<@&{_CARNIVAL_REVIEW_ROLE_ID}>",
+             f"Image submissions: <#{_CARNIVAL_IMAGE_CHANNEL_ID}>"]
+    messages = []
+    sections = [(f"## {labels[tier]}", [row[2] for row in sorted(rows, reverse=True)])
+                for tier, rows in groups.items() if rows]
+    if unknown:
+        sections.append(("## Review manually — inactivity duration unknown", sorted(unknown)))
+    if not sections:
+        lines.extend(["", "No members with the carnival role are overdue by a week."])
+    for heading, rows in sections:
+        for line in ["", heading, *rows]:
+            if len("\n".join([*lines, line])) > 1900:
+                messages.append("\n".join(lines))
+                lines = [title + " (continued)"]
+                if line != heading:
+                    lines.append(heading)
+            lines.append(line)
+    reminder = (
+        "**Reminder:** Carnies not listed above have submitted images this week, "
+        "however submitted images have not been verified for acceptability. "
+        "In a pinch it may be safe to assume someone on discord posting anything "
+        "at all is active enough for Carnival."
+    )
+    if len("\n".join([*lines, "", reminder])) > 1900:
+        messages.append("\n".join(lines))
+        lines = [title + " (continued)"]
+    lines.extend(["", reminder])
+    messages.append("\n".join(lines))
+    return messages
+
+
+@command_handler.Scheduled(time="12:00", day_of_week=0, timezone="America/New_York",
+                           desc="Monday carnival image submission inactivity review")
+async def carnival_inactivity_review(client):
+    guild = client.get_guild(FF.guild)
+    if guild is None:
+        return
+    members = [member async for member in guild.fetch_members(limit=None)
+               if not member.bot and any(role.id == _CARNIVAL_MEMBER_ROLE_ID for role in member.roles)]
+    image_channel = await guild.fetch_channel(_CARNIVAL_IMAGE_CHANNEL_ID)
+    review_channel = await guild.fetch_channel(_CARNIVAL_REVIEW_CHANNEL_ID)
+    member_ids = {member.id for member in members}
+    latest_images = {}
+    if member_ids:
+        async for message in image_channel.history(limit=None, oldest_first=False):
+            if message.author.id not in member_ids or message.author.id in latest_images:
+                continue
+            if not _ab_race_has_image(message):
+                continue
+            latest_images[message.author.id] = message.created_at
+            if len(latest_images) == len(member_ids):
+                break
+    now = datetime.datetime.now(datetime.timezone.utc)
+    for report in _carnival_inactivity_messages(members, latest_images, now):
+        await review_channel.send(report, allowed_mentions=discord.AllowedMentions(
+            everyone=False, users=False,
+            roles=[discord.Object(id=_CARNIVAL_REVIEW_ROLE_ID)], replied_user=False))
+
+
 @command_handler.Scheduled(time="12:00",day_of_month=10)
 async def election_reminder(client):
     guild = client.get_guild(FF.guild);

@@ -16,6 +16,7 @@ from id_bundle import FF
 from phoenix_bundle import PHOENIX
 import shlex
 import re
+from zoneinfo import ZoneInfo
 
 """
 Greg 3.0!
@@ -511,7 +512,7 @@ class Scheduled:
     _state_loaded = False;
     _state = {};
 
-    def __init__(self, time, day_of_month: int = None, day_of_week: int = None, desc: str = "", priority: int = 10):
+    def __init__(self, time, day_of_month: int = None, day_of_week: int = None, desc: str = "", priority: int = 10, timezone: str = None):
         if day_of_month is not None and day_of_week is not None:
             raise ValueError("Scheduled commands should specify at most one of day_of_month or day_of_week.");
 
@@ -532,6 +533,7 @@ class Scheduled:
 
         self.day_of_month = day_of_month;  # 1–31, if monthly
         self.day_of_week = day_of_week;    # 0=Monday ... 6=Sunday, if weekly
+        self.timezone = ZoneInfo(timezone) if timezone else None
         self.desc = desc;
         self.priority = priority;
 
@@ -600,12 +602,11 @@ class Scheduled:
         """
         Scheduled._ensure_state_loaded();
 
-        now = datetime.datetime.now();
-        today = now.date();
-
         # Insertion order is maintained by dicts in modern Python. You can
         # sort by priority here if you ever want a strict order.
         for name, command in Scheduled.available_commands.items():
+            now = datetime.datetime.now(command.timezone)
+            today = now.date()
             # Skip if already run today
             if command.last_run_date == today:
                 continue;
@@ -624,7 +625,7 @@ class Scheduled:
             # Daily: both day_of_month and day_of_week are None, so every day is eligible
 
             # Compute today's scheduled datetime
-            scheduled_dt = datetime.datetime.combine(today, command.time);
+            scheduled_dt = datetime.datetime.combine(today, command.time, tzinfo=command.timezone);
 
             # If we are at or past the scheduled time and haven't run yet today,
             # we should run now. This covers both "on time" and "a bit late".
