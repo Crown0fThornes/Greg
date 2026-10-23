@@ -4657,6 +4657,27 @@ async def event_emojis(client):
                 continue;
             item = Item("Yee haw July deco comp", "event_emoji", time.time() + 21086592, emoji="🤠", display="None")
             neighbor.bestow_item(item)  
+
+        if month == 8:
+            neighbor = Neighbor(message.author.id, message.guild.id)
+            if neighbor.get_item_of_name("Fair August deco comp"):
+                continue
+            item = Item("Fair August deco comp", "event_emoji", time.time() + 21086592, emoji="🐲", display="None")
+            neighbor.bestow_item(item)
+
+        if month == 9:
+            neighbor = Neighbor(message.author.id, message.guild.id)
+            if neighbor.get_item_of_name("Fall September deco comp"):
+                continue
+            item = Item("Fall September deco comp", "event_emoji", time.time() + 21086592, emoji="🍂", display="None")
+            neighbor.bestow_item(item)
+
+        if month == 10:
+            neighbor = Neighbor(message.author.id, message.guild.id)
+            if neighbor.get_item_of_name("Halloween October deco comp"):
+                continue
+            item = Item("Halloween October deco comp", "event_emoji", time.time() + 21086592, emoji="🎃", display="None")
+            neighbor.bestow_item(item)
             
         await set_nick(message.author, message.guild)
         print(message.author.display_name);
@@ -9799,12 +9820,25 @@ async def clean_nick(user, guild):
     
     return new_nick
 
+def _nickname_with_event_emojis(nickname, event_emojis):
+    """Reserve room for complete event emojis, shortening the name on its right."""
+    suffix = ""
+    for emoji in event_emojis:
+        if len(suffix + emoji) <= 30:
+            suffix += emoji
+    if not suffix:
+        return nickname[:32]
+    name = nickname[:32 - len(suffix) - 1].rstrip()
+    return f"{name} {suffix}" if name else suffix
+
+
 async def set_nick(user, guild, was_changed = False):
     member = guild.get_member(user.id)
     if member is None:
         return
 
     neighbor = Neighbor(user.id, guild.id);
+    neighbor.expire_items()
     user_role_ids = [role.id for role in user.roles];
 
     name = user.display_name;
@@ -9859,6 +9893,7 @@ async def set_nick(user, guild, was_changed = False):
     new_nick = re.sub(emoj, '', new_nick)
 
     new_nick = new_nick.strip();
+    event_emojis = []
 
     if not neighbor.get_item_of_name("Invisibility Cloak"):
 
@@ -9979,14 +10014,7 @@ async def set_nick(user, guild, was_changed = False):
         for item in neighbor.get_items_of_type("event_emoji"):
             print(f"checking: {item.get_value("emoji")}")
             print(item.get_value("display"))
-            display = False;
-            if item.get_value("display") == "True":
-                display = True;
-            elif item.get_value("display") == "None":
-                if item.expiration - time.time() < 17280000 and item.get_value("display") == "None":
-                    display = False;
-                else:
-                    display = True;
+            display = item.should_display_event_emoji()
                     
             if display:
                 emoji = item.get_value("emoji");
@@ -10000,7 +10028,7 @@ async def set_nick(user, guild, was_changed = False):
                 counter += 1;
                 emoji = item.get_value("emoji");
                 print(f"found this emoji activated!")
-                new_nick = item.get_value("emoji") + new_nick
+                event_emojis.insert(0, item.get_value("emoji"))
             
         # donated_channel_id = 1367560282519507004
         # donated_channel = await guild.fetch_channel(donated_channel_id);
@@ -10025,13 +10053,14 @@ async def set_nick(user, guild, was_changed = False):
             
             
         if neighbor.get_items_of_type("coe"):
-            new_nick = "[coe] " + name;
+            new_nick = "[coe] " + new_nick;
         
+    new_nick = _nickname_with_event_emojis(new_nick, event_emojis)
     # print(new_nick)
     if new_nick != name:
         try:
             if new_nick != "":
-                await user.edit(nick = new_nick[0:32]);
+                await user.edit(nick = new_nick);
                 print(new_nick);
             else:
                 await user.edit(nick=user.name)

@@ -360,9 +360,7 @@ class Neighbor:
         """
         # print("beg exp:" + str(self.XP));
         if not self.inventory is None:
-            for item in self.inventory:
-                if item.is_expired():
-                    self.vacate_item(item);
+            self.inventory = [item for item in self.inventory if not item.is_expired()]
         # print("End exp" + str(self.XP));use 
 
 class Item:
@@ -371,6 +369,8 @@ class Item:
         self.type = type;
         self.expiration = int(expiration);
         self.values = {} if values is None else values;
+        if self.type == "event_emoji":
+            self.values.setdefault("awarded_at", int(time.time()))
 
     def __str__(self):
         if self.expiration == -1:
@@ -394,11 +394,42 @@ class Item:
 
     def decode(data: str):
         fields = data.split(";")
-        if len(fields) < 4 or fields[3] == "":
-            res = Item(fields[0],fields[1],int(fields[2]));
-        else:
-            res = Item(fields[0],fields[1],int(fields[2]),**{key: str(value) for key, value in (item.split("=") for item in fields[3].split(","))});
+        values = {} if len(fields) < 4 or fields[3] == "" else {
+            key: str(value) for key, value in (item.split("=") for item in fields[3].split(","))
+        }
+        res = Item(fields[0], fields[1], int(fields[2]), **values)
+        # Loading old inventory must not restart an emoji's automatic window.
+        if "awarded_at" not in values:
+            res.values.pop("awarded_at", None)
         return res;
+
+    def should_display_event_emoji(self, now=None):
+        """Honor manual choices; otherwise display for 45 days after award."""
+        if self.type != "event_emoji":
+            return False
+        now = time.time() if now is None else now
+        if self.expiration > 0 and now >= self.expiration:
+            return False
+        preference = str(self.values.get("display", "None"))
+        if preference != "None":
+            return preference == "True"
+
+        awarded_at = self.values.get("awarded_at")
+        if awarded_at is None:
+            # Older records have no award timestamp. Recover it from the
+            # lifetimes used by the original award code, without editing data.
+            if self.expiration <= 0:
+                return False
+            lifetime = {
+                "Birthday tag": 90 * 86400,
+                "April Fools": 30 * 86400,
+            }.get(self.name, 21086592)
+            awarded_at = self.expiration - lifetime
+        try:
+            age = now - float(awarded_at)
+        except (TypeError, ValueError):
+            return False
+        return 0 <= age < 45 * 86400
     
     def get_value(self, attribute: str):
         if attribute in self.values.keys():
