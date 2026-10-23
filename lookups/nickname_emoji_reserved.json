@@ -1,0 +1,4 @@
+{
+  "description": "Extra reserved nickname identities. Current family emojis and existing shop tags are reserved automatically; event rewards are deliberately excluded.",
+  "reserved": ["🦖", "🂡", "👑", "🏆", "🥇", "🥈", "🥉", "🦋", "🐎", "🐴", "🐶"]
+}

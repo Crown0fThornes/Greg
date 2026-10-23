@@ -212,6 +212,22 @@
           "warning": "Superceds less expensive roles!",
           "duration": 1209600,
           "duration_label": "2 weeks"
+        },
+        {
+          "name": "Custom Nickname Emoji",
+          "type": "custom_nickname_emoji",
+          "emoji": "🎨",
+          "description": "Choose any emoji tag you like! It's a Farmmas miracle!",
+          "cost": 20,
+          "duration": 2419200,
+          "duration_label": "4 weeks"
+        },
+        {
+          "name": "Highest Bidder",
+          "type": "trex_auction",
+          "emoji": "🦖",
+          "description": "Buy a pet Trex for your nickname! Careful, anyone else can steal Martha once you've purchased! Martha escapes at the end of the month.",
+          "duration_label": "Until someone bids higher than you, or the month ends"
         }
       ]
     }

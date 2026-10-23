@@ -21,6 +21,8 @@ from PIL import Image
 import requests
 import os
 import wordle_helper
+import unicodedata
+from zoneinfo import ZoneInfo
 
 VERSION = "3.x";
 
@@ -8388,6 +8390,138 @@ def real_round(x):
 
 #  Note to self: fix best_this_month: Actually update special offer count & check before showing category
 
+_trex_auction_lock = asyncio.Lock()
+
+
+def _trex_calendar(now=None):
+    eastern = ZoneInfo("America/New_York")
+    now = datetime.datetime.now(eastern) if now is None else now.astimezone(eastern)
+    next_month = (now.replace(day=28) + datetime.timedelta(days=4)).replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0)
+    return now.strftime("%Y-%m"), int(next_month.timestamp())
+
+
+def _is_trex_item(item):
+    return item.type == "trex_auction" or item.name == "Highest Bidder"
+
+
+def _trex_state(guild_id, now=None):
+    """Called under the auction lock; catch up even after a missed monthly job."""
+    month, expiration = _trex_calendar(now)
+    key = f"trex_auction_{guild_id}"
+    state = remember(key)
+    removed = []
+    if state is None or state["month"] != month:
+        # Also clear historical Highest Bidder items when initializing this feature.
+        for record in Neighbor.read_all_neighbors():
+            if int(record.family) != guild_id or not any(_is_trex_item(item) for item in record.inventory):
+                continue
+            owner = Neighbor(record.ID, guild_id)
+            owner.pull()
+            owner.inventory = [item for item in owner.inventory if not _is_trex_item(item)]
+            owner.push()
+            removed.append(record.ID)
+        state = {"month": month, "next_cost": 1, "owner_id": None}
+        remember(key, state)
+    return dict(state), expiration, removed
+
+
+async def _trex_refresh_nicknames(guild, user_ids):
+    for user_id in set(user_ids):
+        member = guild.get_member(user_id)
+        if member is None:
+            try:
+                member = await guild.fetch_member(user_id)
+            except discord.NotFound:
+                continue
+        await set_nick(member, guild)
+
+
+async def _trex_quote(guild, now=None):
+    async with _trex_auction_lock:
+        state, _, removed = _trex_state(guild.id, now)
+    await _trex_refresh_nicknames(guild, removed)
+    return state
+
+
+async def _trex_purchase(activator, guild, quoted_cost, quoted_month, now=None):
+    async with _trex_auction_lock:
+        state, expiration, removed = _trex_state(guild.id, now)
+        result = {"status": "", "cost": state["next_cost"], "refresh": removed}
+        if state["month"] != quoted_month or state["next_cost"] != quoted_cost:
+            result["status"] = "price_changed"
+        elif state["owner_id"] == activator.ID:
+            result["status"] = "already_owner"
+        elif activator.get_level() < quoted_cost:
+            result["status"] = "insufficient_levels"
+        else:
+            owners = [activator]
+            if state["owner_id"] is not None:
+                owners.append(Neighbor(state["owner_id"], guild.id))
+            snapshots = []
+            for owner in owners:
+                owner.pull()
+                snapshots.append((owner, owner.XP, list(owner.inventory)))
+            try:
+                # No awaits between charging, transferring, and persisting the price.
+                strip(activator, levels=quoted_cost)
+                for owner in owners:
+                    owner.pull()
+                    owner.inventory = [item for item in owner.inventory if not _is_trex_item(item)]
+                    if owner.ID == activator.ID:
+                        owner.inventory.append(Item("Highest Bidder", "trex_auction", expiration, emoji="🦖"))
+                    owner.push()
+                state = dict(state, owner_id=activator.ID, next_cost=quoted_cost + 1)
+                remember(f"trex_auction_{guild.id}", state)
+            except Exception:
+                for owner, xp, inventory in snapshots:
+                    owner.XP, owner.inventory = xp, inventory
+                    owner.push()
+                raise
+            result.update(status="purchased", next_cost=state["next_cost"])
+            result["refresh"].extend(owner.ID for owner in owners)
+    await _trex_refresh_nicknames(guild, result["refresh"])
+    return result
+
+
+@command_handler.Scheduled(time="00:00", day_of_month=1, timezone="America/New_York",
+                           desc="Reset the exclusive T-Rex nickname auction")
+async def reset_trex_auction(client):
+    guild = client.get_guild(FF.guild)
+    if guild is not None:
+        await _trex_quote(guild)
+
+
+def _custom_nickname_emoji_error(emoji, families, rss_info, extra_reserved):
+    """Reserve permanent nickname identities, excluding variable event rewards."""
+    if not emoji or len(emoji) > 32 or any(char.isspace() for char in emoji) or "<" in emoji or ">" in emoji:
+        return "Send one Unicode emoji, rather than text or a custom Discord emoji."
+    if any("HEART" in unicodedata.name(char, "") or char in {"😘", "💌", "💏"} for char in emoji):
+        return "Heart emojis are reserved. Please choose another emoji."
+
+    def base(value):
+        return "".join(char for char in value if char not in "\ufe0e\ufe0f"
+                       and not 0x1F3FB <= ord(char) <= 0x1F3FF)
+
+    reserved = {base(value) for value in extra_reserved}
+    reserved.update(base(family["emoji"]) for family in families)
+    for category in rss_info:
+        for item in category["items"]:
+            if item["type"] not in {"tag", "family tag"}:
+                continue
+            if "emoji" in item:
+                reserved.add(base(unicodes.get(item["emoji"], item["emoji"])))
+            for key in ("emojis", "values"):
+                for value in item.get(key, []):
+                    try:
+                        reserved.add(base(chr(int(value, 16))))
+                    except (ValueError, TypeError):
+                        reserved.add(base(str(value)))
+    if base(emoji) in reserved:
+        return "That emoji is reserved for a family or another nickname perk. Please choose another."
+    return None
+
+
 @command_handler.Command(AccessType.PRIVATE, desc = "Allows Neighbors to purchase discord perks like special roles using server XP", generic = True, active=False)
 async def rss(activator: Neighbor, context: Context, response: ResponsePackage = None):
 
@@ -8469,6 +8603,8 @@ async def rss(activator: Neighbor, context: Context, response: ResponsePackage =
         res += chosen_category['description'] + "\n\n";
         for item in chosen_category['items']:
             #check if correct server
+            if item["type"] == "trex_auction" and context.guild.id != FF.guild:
+                continue
             if item["name"] == "*Family Logo Tag* -- Best Seller":
                 if context.guild.id != FF.guild:
                     continue;
@@ -8495,7 +8631,36 @@ async def rss(activator: Neighbor, context: Context, response: ResponsePackage =
         for emoji in item_emojis:
             await target.add_reaction(emoji);
 
-    elif response.name == "item":
+    elif response.name == "custom_emoji_choice":
+        target_context = response.response_context
+        target = target_context.message
+        chosen_item = dict(response.values["item"])
+        chosen_category = response.values["category"]
+        emoji = response.content.strip()
+        with open("lookups/families.json", encoding="utf-8") as family_file:
+            families = json.load(family_file)
+        with open("lookups/nickname_emoji_reserved.json", encoding="utf-8") as reserved_file:
+            extra_reserved = json.load(reserved_file)["reserved"]
+        error = _custom_nickname_emoji_error(emoji, families, rss_info, extra_reserved)
+        if error is None:
+            # Discord validates that this is one supported Unicode emoji.
+            try:
+                await target.add_reaction(emoji)
+            except discord.HTTPException as exception:
+                if exception.status != 400:
+                    raise
+                error = "Send exactly one supported Unicode emoji."
+        if error:
+            await context.send(error + " No levels have been charged.")
+            ResponseRequest(rss, "custom_emoji_choice", "MESSAGE", context, target_context,
+                            response.key, category=chosen_category, item=chosen_item)
+            return
+        chosen_item["selected_emoji"] = emoji
+        response.name = "custom_emoji_ready"
+        response.values["item"] = chosen_item
+        await rss(activator, context, response)
+
+    elif response.name in {"item", "custom_emoji_ready", "auction_refresh"}:
 
         activation_context = response.activation_context;
         target_context = response.response_context;
@@ -8504,14 +8669,24 @@ async def rss(activator: Neighbor, context: Context, response: ResponsePackage =
         chosen_category = response.values["category"];
         chosen_item = None;
 
-        for item in chosen_category['items']:
-            if response.content.name == item['emoji']:
-                chosen_item = item;
-                break;
+        if response.name in {"custom_emoji_ready", "auction_refresh"}:
+            chosen_item = response.values["item"]
         else:
-            response.name = "main";
-            await rss(activator, context, response);
-            return;
+            for item in chosen_category['items']:
+                if response.content.name == item['emoji']:
+                    chosen_item = item;
+                    break;
+            else:
+                response.name = "main";
+                await rss(activator, context, response);
+                return;
+
+        if chosen_item["type"] == "trex_auction":
+            if context.guild.id != FF.guild:
+                await context.send("The T-Rex auction is available in FF only.")
+                return
+            auction = await _trex_quote(context.guild)
+            chosen_item = dict(chosen_item, cost=auction["next_cost"], auction_month=auction["month"])
 
         res = f"**{chosen_item['name']}**\n";
         res += f"{chosen_item['description']}\n"
@@ -8525,18 +8700,22 @@ async def rss(activator: Neighbor, context: Context, response: ResponsePackage =
                 res += f"> Cost: {cost} levels [xp conversion ≈ {xp_conversion}xp]\n";
             else:
                 res += f"> Cost: {cost} levels [xp conversion ≈ {Neighbor.get_XP_for_level(cost)}]\n";
-            if activator.get_item_of_name("GregBanking(TM)"):
+            if chosen_item["type"] not in {"custom_nickname_emoji", "trex_auction"} and activator.get_item_of_name("GregBanking(TM)"):
                 res += f"> Bank xp cost: " + str(int(Neighbor.get_XP_for_level(int(chosen_item['cost'])) * 1.25)) + "xp\n"
                 bank = True;
         else:
-            if chosen_item['name'] == "Highest Bidder":
-                with open("data/trex_cost.txt", "r") as fRex:
-                    cost = int(fRex.readline());
-                    label = cost
-                    res += f"> Cost: {cost} levels\n"
-            else:
-                res += f"> Cost: **{int(chosen_item['min_cost'])}-{int(chosen_item['max_cost'])}**\n"
+            res += f"> Cost: **{int(chosen_item['min_cost'])}-{int(chosen_item['max_cost'])}**\n"
         res += f"> Lasts: {chosen_item['duration_label']}\n"
+        if chosen_item["type"] == "custom_nickname_emoji":
+            if "selected_emoji" not in chosen_item:
+                res += "\nSend the single Unicode emoji you want in this channel. No levels are charged until you confirm."
+                await target.edit(content=res)
+                def key(ctx):
+                    return ctx.author_id == activator.ID and ctx.channel.id == context.channel.id
+                ResponseRequest(rss, "custom_emoji_choice", "MESSAGE", context, target_context,
+                                key=key, category=chosen_category, item=chosen_item)
+                return
+            res += f"> Selected emoji: {chosen_item['selected_emoji']}\n"
         res += f"*React with {unicodes['check']} to confirm purchase*";
         confirmation_emojis = [];
         confirmation_emojis.append(unicodes['check']);
@@ -8558,7 +8737,7 @@ async def rss(activator: Neighbor, context: Context, response: ResponsePackage =
         ResponseRequest(rss, "confirmation", "REACTION", context, target_context, key, category = chosen_category, item = chosen_item)
 
         await target.add_reaction(unicodes['check']);
-        if activator.get_item_of_name("GregBanking(TM)"):
+        if bank:
             await target.add_reaction(unicodes['bank']);
         await target.add_reaction(unicodes['back']);
 
@@ -8568,6 +8747,50 @@ async def rss(activator: Neighbor, context: Context, response: ResponsePackage =
         target = target_context.message;
         chosen_category = response.values["category"];
         chosen_item = response.values["item"];
+
+        if chosen_item["type"] == "trex_auction":
+            if context.guild.id != FF.guild:
+                await context.send("The T-Rex auction is available in FF only.")
+                return
+            if response.content.name == unicodes['back']:
+                response.name = "re-category"
+                await rss(activator, context, response)
+                return
+            if response.content.name != unicodes['check']:
+                await context.send("The T-Rex must be purchased with levels, not bank XP.")
+                return
+            result = await _trex_purchase(activator, context.guild, int(chosen_item["cost"]), chosen_item["auction_month"])
+            if result["status"] == "purchased":
+                await context.send(f"🦖 You now hold the T-Rex! Paid {result['cost']} level(s). "
+                                   f"The next purchase costs {result['next_cost']} levels and transfers it away from you.")
+            elif result["status"] == "already_owner":
+                await context.send("You already hold the T-Rex. No levels have been charged.")
+            elif result["status"] == "insufficient_levels":
+                await context.send(f"You need {result['cost']} levels to buy the T-Rex. No levels have been charged.")
+                ResponseRequest(rss, "confirmation", "REACTION", context, target_context, response.key,
+                                category=chosen_category, item=chosen_item)
+            else:
+                await context.send(f"The auction price or month changed. The current price is {result['cost']} level(s). "
+                                   "No levels have been charged; confirm the refreshed offer if you still want it.")
+                response.name = "auction_refresh"
+                await rss(activator, context, response)
+            return
+
+        if chosen_item["type"] == "custom_nickname_emoji":
+            activator.expire_items()
+            if response.content.name == unicodes['bank']:
+                await context.send("This item costs 20 levels and cannot be purchased with bank XP.")
+                return
+            if response.content.name == unicodes['check']:
+                with open("lookups/families.json", encoding="utf-8") as family_file:
+                    families = json.load(family_file)
+                with open("lookups/nickname_emoji_reserved.json", encoding="utf-8") as reserved_file:
+                    extra_reserved = json.load(reserved_file)["reserved"]
+                emoji = chosen_item.get("selected_emoji", "")
+                error = _custom_nickname_emoji_error(emoji, families, rss_info, extra_reserved)
+                if error:
+                    await context.send(error + " No levels have been charged.")
+                    return
 
         cost = int(chosen_item["cost"])
         xp_cost = int(Neighbor.get_XP_for_level(int(chosen_item['cost'])) * 1.25);
@@ -8611,6 +8834,8 @@ async def rss(activator: Neighbor, context: Context, response: ResponsePackage =
         item = chosen_item;
 
         match item['type']:
+            case "custom_nickname_emoji":
+                give = Item(item['name'], item['type'], duration, emoji=item['selected_emoji'])
             case "passive":
                 give = Item(item['name'], item['type'], duration, needs = Neighbor.get_XP_for_level(cost + 2), so_far = 0);
             case "bank":
@@ -9816,6 +10041,9 @@ async def clean_nick(user, guild):
 
     new_nick = re.sub(emoj, '', new_nick)
 
+    # Emoji characters outside the broad pictograph ranges, including keycaps.
+    new_nick = re.sub(r"[0-9#*]\ufe0f?\u20e3|[\u00a9\u00ae\u203c\u2049\u2122\u2139\u2194-\u21ff]", "", new_nick)
+
     new_nick = new_nick.strip();
     
     return new_nick
@@ -9892,6 +10120,8 @@ async def set_nick(user, guild, was_changed = False):
 
     new_nick = re.sub(emoj, '', new_nick)
 
+    # Remove text-style emoji and keycaps before reapplying owned nickname tags.
+    new_nick = re.sub(r"[0-9#*]\ufe0f?\u20e3|[\u00a9\u00ae\u203c\u2049\u2122\u2139\u2194-\u21ff]", "", new_nick)
     new_nick = new_nick.strip();
     event_emojis = []
 
@@ -9907,6 +10137,12 @@ async def set_nick(user, guild, was_changed = False):
                     # new_nick = "[" + random.choice(string.ascii_uppercase) + "] " + new_nick;
                 else:
                     new_nick = family["emoji"] + new_nick;
+
+        for custom_emoji in neighbor.get_items_of_type("custom_nickname_emoji"):
+            new_nick = custom_emoji.get_value("emoji") + new_nick
+
+        if neighbor.get_items_of_type("trex_auction"):
+            new_nick = "🦖" + new_nick
 
         if 1492436522228781106 in user_role_ids:
             new_nick = "🂡" + new_nick

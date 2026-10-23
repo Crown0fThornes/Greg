@@ -64,6 +64,33 @@ class NicknameTests(unittest.IsolatedAsyncioTestCase):
         self.reward("🌷")
         self.assertEqual(await self.render(), "⭐[P] Lincoln 🌷")
 
+    async def test_custom_shop_emoji_is_left_and_event_reward_is_right(self):
+        self.items.append(Item("Custom Nickname Emoji", "custom_nickname_emoji", -1, emoji="🦄"))
+        self.reward("🎂")
+        self.assertEqual(await self.render(), "🦄[P] Lincoln 🎂")
+
+    async def test_exclusive_trex_appears_left_and_expires(self):
+        trex = Item("Highest Bidder", "trex_auction", int(time.time()) + 86400, emoji="🦖")
+        self.items.append(trex)
+        self.reward("🌷")
+        self.assertEqual(await self.render(), "🦖[P] Lincoln 🌷")
+        trex.expiration = 1
+        self.user.display_name = "🦖[P] Lincoln 🌷"
+        self.user.edit.reset_mock()
+        self.assertEqual(await self.render(), "[P] Lincoln 🌷")
+
+    async def test_keycap_custom_emoji_does_not_accumulate_on_refresh(self):
+        self.items.append(Item("Custom Nickname Emoji", "custom_nickname_emoji", -1, emoji="1️⃣"))
+        self.user.display_name = "1️⃣[P] Lincoln"
+        self.assertEqual(await self.render(), "1️⃣[P] Lincoln")
+        self.user.edit.assert_not_awaited()
+
+    async def test_expired_custom_shop_emoji_is_removed_from_nickname(self):
+        self.items.append(Item("Custom Nickname Emoji", "custom_nickname_emoji", 1, emoji="🦄"))
+        self.user.display_name = "🦄[P] Lincoln"
+        self.assertEqual(await self.render(), "[P] Lincoln")
+        self.assertEqual(self.items, [])
+
     async def test_long_name_is_shortened_to_preserve_complete_suffix(self):
         self.user.display_name = "A" * 32
         self.reward("👩‍🌾")
