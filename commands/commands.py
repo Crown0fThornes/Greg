@@ -1968,10 +1968,6 @@ async def greg_react(context: Context):
         if chance(25):
             await context.send("Hm... I was going to send a great meme for y'all to enjoy but I don't feel you've been grateful of my antics recently.\nReflect on that.")
         elif chance(5):
-            await context.send("Hi, enjoy this meme 🙂")
-            target = await context.send("$meme")
-            await meme(Neighbor(691338084444274728), Context(target))
-        else:
             def random_phrase(text: str) -> str:
                 words = text.split()
                 if not words:
@@ -1982,6 +1978,23 @@ async def greg_react(context: Context):
                 return " ".join(words[start:start + length])
             
             await context.send(f"Haha *{random_phrase(context.content)}* reminds me of this funny meme I saw recently. Check it out:")
+            target = await context.send("$meme")
+            await meme(Neighbor(691338084444274728), Context(target))
+        elif chance(3):
+            def random_phrase(text: str) -> str:
+                words = text.split()
+                if not words:
+                    return ""
+
+                length = random.randint(1, min(5, len(words)))
+                start = random.randint(0, len(words) - length)
+                return " ".join(words[start:start + length])
+            
+            await context.send(f"Haha that reminds me of this funny meme I saw recently. Check it out:")
+            target = await context.send("$meme")
+            await meme(Neighbor(691338084444274728), Context(target))
+        else:
+            await context.send("Hi, enjoy this meme 🙂")
             target = await context.send("$meme")
             await meme(Neighbor(691338084444274728), Context(target))
 
