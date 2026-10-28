@@ -1,5 +1,5 @@
 """Sunday Council signup posts and Tuesday-to-Monday task assignees."""
-from datetime import timedelta
+from datetime import date, timedelta
 import json
 import logging
 import re
@@ -40,11 +40,13 @@ def signup_pages(tasks,week,*,current_week=False):
             invalid.append(task.title)
             continue
         entries.append((message,task))
+    entries.sort(key=lambda pair: ((pair[1].weekday-1)%7,pair[1].hour,pair[1].minute,pair[0].id))
     pages=[]
     current=[]
     size=0
     for message,task in entries:
-        line=f'{task.emoji} **{discord.utils.escape_mentions(discord.utils.escape_markdown(task.title))}**'
+        ping_date=date.fromisoformat(week)+timedelta(days=(task.weekday-1)%7)
+        line=f'{task.emoji} **{discord.utils.escape_mentions(discord.utils.escape_markdown(task.title))}** ({ping_date.month}/{ping_date.day})'
         if len(current)==20 or size+len(line)>1150:
             pages.append(current)
             current=[]
@@ -55,7 +57,10 @@ def signup_pages(tasks,week,*,current_week=False):
     result=[]
     for i,page in enumerate(pages):
         instructions=INSTRUCTIONS.replace('Good morning and happy weekend! ', '').replace('*next week*','*this week*') if current_week else INSTRUCTIONS
-        content=instructions+f'\n\n**Week beginning Tuesday, {week} (ST)**\nTuesday through Monday.\n\n'
+        headline="**This week's HK sign ups!**" if current_week else "**Next week's HK sign ups!**"
+        start=date.fromisoformat(week)
+        date_label=f'{start.month}/{start.day}'
+        content=headline+'\n\n'+instructions+f'\n\n**Week beginning Tuesday, {date_label} (ST)**\nTuesday through Monday.\n\n'
         content+='\n'.join(line for _,_,line in page) or 'No tasks with unique emojis are available for signup.'
         content+='\n\nYou can change what tasks your Neighborhood is registered for in <#1553522822263869600>'
         if invalid and i==0:
@@ -83,7 +88,9 @@ async def publish(guild,delivery,neighborhoods,tasks,local,*,week=None):
             message_id=row[3]
             if inserted:
                 try:
-                    message=await target.send((f'<@&{role_id}>\n' if part==0 else '')+content,
+                    first_line,rest=content.split('\n',1)
+                    post_content=first_line+(f'\n<@&{role_id}>' if part==0 else '')+'\n'+rest
+                    message=await target.send(post_content,
                                               allowed_mentions=discord.AllowedMentions(
                                                   everyone=False,users=False,
                                                   roles=[discord.Object(id=role_id)] if part==0 else [],
@@ -108,7 +115,7 @@ async def publish(guild,delivery,neighborhoods,tasks,local,*,week=None):
             else:
                 continue
             # Persisted snapshot wins on retries: seed the exact emojis from the published post.
-            for value in set(json.loads(row[4]).values()):
+            for value in dict.fromkeys(json.loads(row[4]).values()):
                 try:
                     await message.add_reaction(value)
                 except discord.HTTPException:

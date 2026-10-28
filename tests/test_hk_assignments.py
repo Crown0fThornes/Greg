@@ -35,12 +35,14 @@ class AssignmentTests(unittest.IsolatedAsyncioTestCase):
         post=next(iter(self.posts.values()))
         self.assertIn(INSTRUCTIONS,post.content)
         role_id=self.config[self.nh][1]
-        self.assertTrue(post.content.startswith(f'<@&{role_id}>'))
+        self.assertTrue(post.content.startswith("**Next week's HK sign ups!**"))
+        self.assertIn(f'\n<@&{role_id}>',post.content)
         mentions=self.target.send.call_args.kwargs['allowed_mentions']
         self.assertEqual([role.id for role in mentions.roles],[role_id])
         self.assertFalse(mentions.everyone)
         self.assertFalse(mentions.users)
-        self.assertIn('2026-10-27',post.content)
+        self.assertIn('Tuesday, 10/27 (ST)',post.content)
+        self.assertNotIn('2026',post.content)
         self.assertIn('👋 **New Joins**',post.content)
         post.add_reaction.assert_awaited_with('👋')
         await publish(self.guild,DeliveryLog(self.path),self.config,self.tasks,self.sunday)
@@ -85,7 +87,8 @@ class AssignmentTests(unittest.IsolatedAsyncioTestCase):
         await publish(self.guild,self.delivery,self.config,tasks,self.sunday)
         calls=self.target.send.call_args_list
         self.assertEqual(len(calls),2)
-        self.assertTrue(calls[0].args[0].startswith('<@&'))
+        self.assertTrue(calls[0].args[0].startswith("**Next week's HK sign ups!**"))
+        self.assertIn('<@&',calls[0].args[0])
         self.assertNotIn('<@&',calls[1].args[0])
         self.assertEqual(calls[1].kwargs['allowed_mentions'].roles,[])
 
@@ -106,7 +109,8 @@ class AssignmentTests(unittest.IsolatedAsyncioTestCase):
         self.target.send.reset_mock()
         await HKReminders(self.path).run(NS(get_guild=lambda gid:self.guild),now=datetime(2026,10,27,12,tzinfo=timezone.utc))
         sent=self.target.send.call_args
-        self.assertTrue(sent.args[0].startswith('<@123>'))
+        self.assertTrue(sent.args[0].startswith('**New Joins**'))
+        self.assertIn('<@123>',sent.args[0])
         self.assertEqual(sent.kwargs['allowed_mentions'].roles,[])
         self.assertEqual([u.id for u in sent.kwargs['allowed_mentions'].users],[123])
 
@@ -138,3 +142,24 @@ class AssignmentTests(unittest.IsolatedAsyncioTestCase):
         again=await runner.publish_current(self.guild,now=now)
         self.assertEqual(again,('2026-10-27',0,5,0,[]))
         self.assertEqual(self.target.send.await_count,5)
+
+    async def test_task_and_reaction_order_tuesday_through_monday_by_time(self):
+        definitions=[('Monday','🐴', 'Monday','08:00'),('Late Tuesday','🏆','Tuesday','14:00'),
+                     ('Sunday','📣','Sunday','12:00'),('Early Tuesday','👋','Tuesday','08:00')]
+        tasks=[(NS(id=i),parse_task(f'{name} / {emoji} / {day} / {time}'),{self.nh})
+               for i,(name,emoji,day,time) in enumerate(definitions,1)]
+        await publish(self.guild,self.delivery,self.config,tasks,self.sunday)
+        post=next(iter(self.posts.values()))
+        self.assertLess(post.content.index('Early Tuesday'),post.content.index('Late Tuesday'))
+        self.assertLess(post.content.index('Late Tuesday'),post.content.index('📣 **Sunday**'))
+        self.assertLess(post.content.index('📣 **Sunday**'),post.content.index('🐴 **Monday**'))
+        self.assertEqual([call.args[0] for call in post.add_reaction.await_args_list],['👋','🏆','📣','🐴'])
+
+    def test_task_dates_follow_tuesday_week_across_month_and_year(self):
+        definitions=[('Tuesday','👋'),('Sunday','🏆'),('Monday','🐴')]
+        tasks=[(NS(id=i),parse_task(f'{day} / {emoji} / {day} / 8:00 AM'))
+               for i,(day,emoji) in enumerate(definitions)]
+        content=signup_pages(tasks,'2026-12-29')[0][0]
+        self.assertIn('**Tuesday** (12/29)',content)
+        self.assertIn('**Sunday** (1/3)',content)
+        self.assertIn('**Monday** (1/4)',content)

@@ -125,7 +125,7 @@ def payloads(task,message,role,users=()):
     content=task.body or 'Time for this week’s task.'
     result=[]
     for index,ping in enumerate(groups):
-        header=f'{ping} **{task.title}**\n'
+        header=f'**{task.title}**\n{ping}\n'
         capacity=1950-len(header)-len(footer)
         chunk=content[:capacity] if index==0 else ''
         if index==0:

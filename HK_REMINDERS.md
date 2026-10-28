@@ -114,3 +114,11 @@ It says "this week" rather than "next week" and omits the morning/weekend greeti
 retained instead of duplicating their signup ping. It reports uncertain deliveries
 and channel-access failures. This does not resend past task reminders or change
 the automatic Sunday schedule. Restart Greg to register the command.
+
+Signup messages begin with **This week's HK sign ups!** for manual current-week
+posts or **Next week's HK sign ups!** for Sunday posts. The Council mention is
+below the headline, so it does not lead the notification preview. Dates display
+as month/day, without a year. Tasks sort Tuesday through Monday and then by
+scheduled hour/minute, with reactions seeded in exactly that list order. Task
+reminders also put their task title before mentions. Already published signup
+posts retain their stored snapshot and are not rewritten or re-pinged.
