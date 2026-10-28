@@ -14,7 +14,7 @@ from ._catalog import LEGACY_EXPORTS, REGISTRATION_ORDER
 _CATEGORY_MODULES = (
     "common", "experience", "events", "support", "races", "deprecated",
     "members", "families", "administration", "carnival", "reminders",
-    "derby", "economy", "community", "carnival_tickets", "giveaways",
+    "derby", "economy", "community", "carnival_tickets", "giveaways", "rolodex",
 )
 _EXISTING_MODULES = ("harvest", "summer_fest", "minigames", "task_logs")
 
