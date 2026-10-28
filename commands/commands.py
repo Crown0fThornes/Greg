@@ -10577,7 +10577,8 @@ def _carnival_inactivity_messages(members, latest_images, now):
     return messages
 
 
-@command_handler.Scheduled(time="12:00", day_of_week=0, timezone="America/New_York",
+# Fixed at 08:00 UTC: 4 AM EDT / 3 AM EST, with no seasonal schedule shift.
+@command_handler.Scheduled(time="08:00", day_of_week=0, timezone="UTC",
                            desc="Monday carnival image submission inactivity review")
 async def carnival_inactivity_review(client):
     guild = client.get_guild(FF.guild)

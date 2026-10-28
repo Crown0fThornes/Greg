@@ -450,6 +450,8 @@ async def manage_scheduled_commands():
     if not RUN_AUTO_COMMANDS:
         return;
     await Scheduled.execute(client)
+    from commands.hk_reminders import run_hk_reminders
+    await run_hk_reminders(client)
 
 @tasks.loop(minutes=5)
 async def manage_timed_commands():
