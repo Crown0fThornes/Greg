@@ -117,3 +117,24 @@ class AssignmentTests(unittest.IsolatedAsyncioTestCase):
         messages=payloads(task,NS(id=1),77,range(100000000000000000,100000000000000100))
         self.assertTrue(all(len(m)<=2000 for m in messages))
         self.assertEqual(''.join(messages).count('x'),5000)
+
+    async def test_manual_current_week_posts_now_and_reuses_posts(self):
+        self.message.content='New Joins / 👋 / Tuesday / 8:00 AM\nInstructions'
+        self.message.reactions=[NS(emoji=NS(id=self.nh),count=1)]
+        async def history(**kwargs):
+            yield self.message
+        signup=NS(history=history)
+        async def fetch(cid):
+            from commands.hk_reminders import SIGNUP_CHANNEL
+            return signup if cid==SIGNUP_CHANNEL else self.target
+        self.guild.id=647883751853916162
+        self.guild.fetch_channel=AsyncMock(side_effect=fetch)
+        runner=HKReminders(self.path)
+        now=datetime(2026,10,27,21,tzinfo=SERVER_TIME)
+        first=await runner.publish_current(self.guild,now=now)
+        self.assertEqual(first,('2026-10-27',5,0,0,[]))
+        self.assertTrue(all('*this week*' in post.content for post in self.posts.values()))
+        self.assertTrue(all('Good morning' not in post.content and 'happy weekend' not in post.content for post in self.posts.values()))
+        again=await runner.publish_current(self.guild,now=now)
+        self.assertEqual(again,('2026-10-27',0,5,0,[]))
+        self.assertEqual(self.target.send.await_count,5)

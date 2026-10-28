@@ -146,6 +146,35 @@ class HKReminders:
         self.refreshed=None
         self.lock=asyncio.Lock()
 
+    async def publish_current(self,guild,*,now=None):
+        async with self.lock:
+            if guild.id!=GUILD_ID:
+                raise ValueError('HK signup is only available in FF.')
+            local=(now or datetime.now(timezone.utc)).astimezone(SERVER_TIME)
+            week=week_start(local)
+            channel=await guild.fetch_channel(SIGNUP_CHANNEL)
+            tasks=[]
+            async for message in channel.history(limit=None,oldest_first=True):
+                task=parse_task(message.content)
+                if task:
+                    tasks.append((message,task,subscribed(message)))
+            delivery=DeliveryLog(self.path)
+            from .hk_assignments import initialize
+            initialize(delivery)
+            with delivery.connection() as db:
+                before=db.execute('SELECT COUNT(*) FROM assignment_post WHERE week=? AND message_id IS NOT NULL',(week,)).fetchone()[0]
+            failures=[]
+            for nh,config in NEIGHBORHOODS.items():
+                try:
+                    await publish(guild,delivery,{nh:config},tasks,local,week=week)
+                except discord.HTTPException:
+                    log.exception('Manual HK signup failed for NH %s',nh)
+                    failures.append(config[0])
+            with delivery.connection() as db:
+                sent=db.execute('SELECT COUNT(*) FROM assignment_post WHERE week=? AND message_id IS NOT NULL',(week,)).fetchone()[0]
+                pending=db.execute('SELECT COUNT(*) FROM assignment_post WHERE week=? AND message_id IS NULL',(week,)).fetchone()[0]
+            return week,sent-before,before,pending,failures
+
     async def run(self,client,*,now=None):
         async with self.lock:
             now=now or datetime.now(timezone.utc)

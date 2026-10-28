@@ -104,3 +104,13 @@ just like uncertain task-reminder deliveries. Keep this database in backups.
 
 Greg needs Add Reactions / Read Message History in each Council channel, and
 access to custom task emojis, in addition to its existing send/mention permissions.
+
+## Manually start the current week
+
+A Council member can run `$hksignup` in FF to publish all five NH signup posts for
+the **current Tuesday–Monday week**, immediately. This uses a fresh central-task
+history scan, pings each NH Council role on its first page and seeds task emojis.
+It says "this week" rather than "next week" and omits the morning/weekend greeting. Existing posts for that week are
+retained instead of duplicating their signup ping. It reports uncertain deliveries
+and channel-access failures. This does not resend past task reminders or change
+the automatic Sunday schedule. Restart Greg to register the command.

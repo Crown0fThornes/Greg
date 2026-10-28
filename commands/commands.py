@@ -11116,3 +11116,19 @@ def is_within_dates(start_date, end_date=None):
         return start_date <= current_date <= end_date
     else:
         return current_date >= start_date
+
+
+@command_handler.Command(access_type=AccessType.PRIVILEGED,
+                         desc="Post this week's HK task signups to all NH Council chats. Reuses existing posts.")
+async def hksignup(activator: Neighbor, context: Context):
+    if context.guild.id != FF.guild:
+        return
+    from commands.hk_reminders import reminders
+    await context.send("Checking HK tasks and posting this week's Council signups…")
+    week,created,existing,pending,failures=await reminders.publish_current(context.guild)
+    result=f"HK signups for the week beginning Tuesday {week}: {created} new post(s); {existing} existing post(s) retained."
+    if pending:
+        result+=f" {pending} delivery attempt(s) are uncertain; check the Council chats before retrying."
+    if failures:
+        result+=" Could not access Council channel(s): "+", ".join(str(cid) for cid in failures)+". Check Greg's permissions."
+    await context.send(result)

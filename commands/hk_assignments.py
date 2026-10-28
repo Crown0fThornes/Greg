@@ -26,7 +26,7 @@ def initialize(delivery):
                    'PRIMARY KEY(nh,week,part))')
 
 
-def signup_pages(tasks,week):
+def signup_pages(tasks,week,*,current_week=False):
     # A Discord message permits at most 20 distinct reaction emojis.
     counts={}
     for message,task in tasks:
@@ -54,8 +54,10 @@ def signup_pages(tasks,week):
     pages.append(current)
     result=[]
     for i,page in enumerate(pages):
-        content=INSTRUCTIONS+f'\n\n**Week beginning Tuesday, {week} (ST)**\nTuesday through Monday; Sunday signup changes start on Tuesday.\n\n'
+        instructions=INSTRUCTIONS.replace('Good morning and happy weekend! ', '').replace('*next week*','*this week*') if current_week else INSTRUCTIONS
+        content=instructions+f'\n\n**Week beginning Tuesday, {week} (ST)**\nTuesday through Monday.\n\n'
         content+='\n'.join(line for _,_,line in page) or 'No tasks with unique emojis are available for signup.'
+        content+='\n\nYou can change what tasks your Neighborhood is registered for in <#1553522822263869600>'
         if invalid and i==0:
             content+='\n\nSome tasks lack a unique emoji and will use the Council role until corrected.'
         mapping={str(message.id):task.emoji for message,task,_ in page}
@@ -63,14 +65,15 @@ def signup_pages(tasks,week):
     return result
 
 
-async def publish(guild,delivery,neighborhoods,tasks,local):
+async def publish(guild,delivery,neighborhoods,tasks,local,*,week=None):
     initialize(delivery)
     # Sunday's signup applies to the Tuesday two days later, not to Sunday/Monday now.
-    week=(local.date()+timedelta(days=2)).isoformat()
+    current=week is not None
+    week=week or (local.date()+timedelta(days=2)).isoformat()
     for nh,(channel_id,role_id) in neighborhoods.items():
         selected=[(m,t) for m,t,logos in tasks if nh in logos]
         target=await guild.fetch_channel(channel_id)
-        pages=signup_pages(selected,week)
+        pages=signup_pages(selected,week,current_week=current)
         for part,(content,mapping) in enumerate(pages):
             with delivery.connection() as db:
                 inserted=db.execute('INSERT OR IGNORE INTO assignment_post VALUES (?,?,?,NULL,?)',
