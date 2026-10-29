@@ -87,6 +87,10 @@ class DeliveryLog:
                        '(message_id INTEGER,emoji_id INTEGER,week TEXT,part INTEGER,'
                        'status TEXT NOT NULL,discord_message_id INTEGER,'
                        'PRIMARY KEY(message_id,emoji_id,week,part))')
+            db.execute('CREATE TABLE IF NOT EXISTS dm_delivery '
+                       '(message_id INTEGER,user_id INTEGER,week TEXT,part INTEGER,'
+                       'status TEXT NOT NULL,discord_message_id INTEGER,'
+                       'PRIMARY KEY(message_id,user_id,week,part))')
 
     @contextmanager
     def connection(self):
@@ -104,6 +108,15 @@ class DeliveryLog:
     def finish(self,key,message_id):
         with self.connection() as db:
             db.execute("UPDATE delivery SET status='sent',discord_message_id=? WHERE message_id=? AND emoji_id=? AND week=? AND part=?",(message_id,*key))
+
+    def claim_dm(self,key):
+        with self.connection() as db:
+            return db.execute("INSERT OR IGNORE INTO dm_delivery VALUES (?,?,?,?,'pending',NULL)",key).rowcount==1
+
+    def finish_dm(self,key,status,message_id=None):
+        with self.connection() as db:
+            db.execute('UPDATE dm_delivery SET status=?,discord_message_id=? WHERE message_id=? AND user_id=? AND week=? AND part=?',
+                       (status,message_id,*key))
 
     def rejected(self,key):
         with self.connection() as db:
@@ -137,6 +150,29 @@ def payloads(task,message,role,users=()):
         result.append(header+content[:capacity]+footer)
         content=content[capacity:]
     return result
+
+
+async def send_task_dms(client,delivery,task,message,users,week):
+    # One DM per task/person/week, even if they volunteer in multiple NHs.
+    for user_id in users:
+        contents=[content.replace(f'\n<@{user_id}>\n','\n',1)
+                  for content in payloads(task,message,0,[user_id])]
+        for part,content in enumerate(contents):
+            key=(message.id,user_id,week,part)
+            if not delivery.claim_dm(key):
+                continue
+            try:
+                user=client.get_user(user_id) or await client.fetch_user(user_id)
+                sent=await user.send(content,allowed_mentions=discord.AllowedMentions.none())
+            except (discord.Forbidden,discord.NotFound):
+                delivery.finish_dm(key,'blocked')
+                log.warning('HK task DM blocked for user %s, task %s',user_id,message.id)
+                break
+            except Exception:
+                log.exception('HK task DM delivery uncertain; review dm_delivery row %r',key)
+                break
+            else:
+                delivery.finish_dm(key,'sent',sent.id)
 
 
 class HKReminders:
@@ -226,6 +262,7 @@ class HKReminders:
                         if delivery is None:
                             delivery=DeliveryLog(self.path)
                         users=await assignees(guild,delivery,emoji_id,target_id,message.id,task.emoji,local)
+                        await send_task_dms(client,delivery,task,message,users,week)
                         for part,content in enumerate(payloads(task,message,role_id,users)):
                             key=(message.id,emoji_id,week,part)
                             if not delivery.claim(key):

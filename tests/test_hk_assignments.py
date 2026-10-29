@@ -107,7 +107,7 @@ class AssignmentTests(unittest.IsolatedAsyncioTestCase):
             return self.target if cid==self.config[self.nh][0] else signup
         self.guild.fetch_channel=AsyncMock(side_effect=fetch)
         self.target.send.reset_mock()
-        await HKReminders(self.path).run(NS(get_guild=lambda gid:self.guild),now=datetime(2026,10,27,12,tzinfo=timezone.utc))
+        await HKReminders(self.path).run(NS(get_guild=lambda gid:self.guild,get_user=lambda uid:NS(send=AsyncMock(return_value=NS(id=12345)))),now=datetime(2026,10,27,12,tzinfo=timezone.utc))
         sent=self.target.send.call_args
         self.assertTrue(sent.args[0].startswith('**New Joins**'))
         self.assertIn('<@123>',sent.args[0])

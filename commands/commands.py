@@ -11132,3 +11132,13 @@ async def hksignup(activator: Neighbor, context: Context):
     if failures:
         result+=" Could not access Council channel(s): "+", ".join(str(cid) for cid in failures)+". Check Greg's permissions."
     await context.send(result)
+
+
+@command_handler.Command(access_type=AccessType.PUBLIC,
+                         desc="DM and server reminder: $remindme month/day/year [hour:minute AM/PM]: text. Default 8 AM ST (UTC−4).")
+async def remindme(activator: Neighbor, context: Context):
+    from commands.personal_reminders import create_reminder
+    try:
+        await create_reminder(context)
+    except ValueError as error:
+        raise CommandArgsError(str(error)) from error

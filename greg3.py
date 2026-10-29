@@ -452,6 +452,8 @@ async def manage_scheduled_commands():
     await Scheduled.execute(client)
     from commands.hk_reminders import run_hk_reminders
     await run_hk_reminders(client)
+    from commands.personal_reminders import run_personal_reminders
+    await run_personal_reminders(client)
 
 @tasks.loop(minutes=5)
 async def manage_timed_commands():

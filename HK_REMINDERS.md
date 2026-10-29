@@ -122,3 +122,12 @@ as month/day, without a year. Tasks sort Tuesday through Monday and then by
 scheduled hour/minute, with reactions seeded in exactly that list order. Task
 reminders also put their task title before mentions. Already published signup
 posts retain their stored snapshot and are not rewritten or re-pinged.
+
+Individual HK task reminders also DM each non-bot volunteer with the task name,
+instructions and source link. Council-role fallback reminders send **no DMs**.
+Closed DMs do not prevent other volunteers' DMs or the Council-channel ping.
+`dm_delivery` in the same database independently tracks each task/person/week/body
+part, so restarts (and volunteering for the same task in multiple NHs) do not
+repeat DMs. Definite rejections are recorded as blocked; uncertain sends remain
+pending for manual review rather than automatically sending duplicates. Assignment
+signup posts themselves do not DM anyone.
