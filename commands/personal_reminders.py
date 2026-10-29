@@ -88,12 +88,8 @@ async def create_reminder(context,*,store=None,now=None):
     when,body=parse_reminder(context.content,now)
     store=store or ReminderStore()
     source=f'https://discord.com/channels/{context.guild.id}/{context.channel.id}/{context.message.id}'
-    key=store.add(context.author_id,context.guild.id,source,when,body)
-    clock=when.strftime('%I:%M %p').lstrip('0')
-    await context.channel.send(
-        f'Reminder #{key} set for {when.month}/{when.day}/{when.year} at {clock} ST (UTC−4). '
-        f'I’ll DM you and ping you in <#{CHANNEL_ID}>. DMs must be open to Greg.',
-        allowed_mentions=discord.AllowedMentions.none())
+    store.add(context.author_id,context.guild.id,source,when,body)
+    await context.message.add_reaction('✅')
 
 
 class ReminderRunner:

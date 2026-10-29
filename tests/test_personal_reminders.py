@@ -82,12 +82,13 @@ class DeliveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.user.send.await_count,1)
         self.channel.send.assert_awaited_once()
 
-    async def test_create_records_requester_and_confirms_default(self):
+    async def test_create_records_requester_and_reacts_without_reply(self):
         context=NS(content='$remindme 10/30/2026: More tasks',author_id=456,
-                   guild=NS(id=GUILD_ID),channel=NS(id=77,send=AsyncMock()),message=NS(id=88))
+                   guild=NS(id=GUILD_ID),channel=NS(id=77,send=AsyncMock()),message=NS(id=88,add_reaction=AsyncMock()))
         await create_reminder(context,store=self.store,now=NOW)
         with self.store.connection() as db:
             row=db.execute('SELECT * FROM reminder WHERE user_id=456').fetchone()
             self.assertEqual(row['body'],'More tasks')
             self.assertTrue(row['source_url'].endswith('/77/88'))
-        self.assertIn('8:00 AM ST',context.channel.send.call_args.args[0])
+        context.message.add_reaction.assert_awaited_once_with('✅')
+        context.channel.send.assert_not_awaited()

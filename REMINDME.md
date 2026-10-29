@@ -17,7 +17,9 @@ command; mentions in the text do not change its recipient.
 At the due time Greg sends a DM and a reminder with the requester's user ping in
 channel `784150346397253682`. Titles precede pings. The original request is linked
 in both messages. Other user/role/everyone mentions in the copied text cannot
-ping. The confirmation explains that DMs must be open. Closed DMs or a failed DM
+ping. Successful scheduling is acknowledged with a ✅ reaction on the request, without
+a confirmation reply. Invalid requests retain the existing CommandArgsError reply.
+DMs must be open to Greg. Closed DMs or a failed DM
 do not suppress the independent server reminder.
 
 `commands/personal_reminders.py` stores reminders in
