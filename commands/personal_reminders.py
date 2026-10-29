@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 import logging
 from pathlib import Path
 import re
+import random
 import sqlite3
 
 import discord
@@ -14,6 +15,28 @@ CHANNEL_ID = 784150346397253682
 SERVER_TIME = timezone(timedelta(hours=-4))
 DB_PATH = Path(__file__).resolve().parent.parent / 'data' / 'personal_reminders.sqlite3'
 log = logging.getLogger(__name__)
+HEADLINES = (
+    "Wakey Wakey! 🍳",
+    "Ooh, I just remembered something!",
+    "Hmmm... what did you need again? Oh yeah I know!",
+    *("Reminder",) * 6,
+    "$remindyou",
+    "Check your calendar!",
+    "Today's the day!",
+)
+
+
+def reminder_message(row, kind, headline):
+    header=f"⏰ **{headline}**\n"+(f"<@{row['user_id']}>\n" if kind=='server' else '')
+    quoted='\n'.join('> '+line for line in row['body'].split('\n'))
+    source=f"Original request: {row['source_url']}"
+    result=header+quoted+'\n\n'+source
+    if len(result)>2000:
+        # Discord's multiline quote keeps very many short lines within its limit.
+        result=header+source+'\n\n>>> '+row['body']
+    return result
+
+
 SYNTAX = 'Use $remindme month/day/year [hour:minute AM/PM]: reminder text. Times use ST (UTC−4); default 8:00 AM.'
 PATTERN = re.compile(r'^\S+\s+(\d{1,2}/\d{1,2}/\d{4})(?:\s+(\d{1,2}):(\d{2})\s*(AM|PM))?\s*:\s*(.+)$', re.I|re.S)
 
@@ -106,6 +129,7 @@ class ReminderRunner:
             for row in store.due(now or datetime.now(timezone.utc)):
                 if row['guild_id']!=GUILD_ID:
                     continue
+                headline=random.choice(HEADLINES)
                 for kind in ('dm','server'):
                     if row[kind+'_status']!='waiting':
                         continue
@@ -126,7 +150,7 @@ class ReminderRunner:
                         continue
                     if not store.claim(row['id'],kind):
                         continue
-                    body=f"⏰ **Reminder**\n"+(f"<@{row['user_id']}>\n" if kind=='server' else '')+row['body']+f"\n\nOriginal request: {row['source_url']}"
+                    body=reminder_message(row,kind,headline)
                     try:
                         await target.send(body,allowed_mentions=discord.AllowedMentions(
                             everyone=False,roles=False,

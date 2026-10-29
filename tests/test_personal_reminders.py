@@ -92,3 +92,23 @@ class DeliveryTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(row['source_url'].endswith('/77/88'))
         context.message.add_reaction.assert_awaited_once_with('✅')
         context.channel.send.assert_not_awaited()
+
+
+class FormattingTests(unittest.TestCase):
+    def test_weighted_headlines_and_multiline_quote(self):
+        from commands.personal_reminders import HEADLINES, reminder_message
+        self.assertEqual(HEADLINES.count('Reminder'),6)
+        self.assertEqual(len(HEADLINES),12)
+        row=dict(user_id=123,body='First line\n\nSecond line',source_url='https://example.test/message')
+        message=reminder_message(row,'server','Wakey Wakey! 🍳')
+        self.assertTrue(message.startswith('⏰ **Wakey Wakey! 🍳**\n<@123>'))
+        self.assertIn('> First line\n> \n> Second line',message)
+        self.assertTrue(message.endswith(row['source_url']))
+
+    def test_many_short_lines_fit_discord_limit_without_losing_text(self):
+        from commands.personal_reminders import reminder_message
+        body='x\n'*750
+        row=dict(user_id=123,body=body,source_url='https://example.test/message')
+        message=reminder_message(row,'dm','Reminder')
+        self.assertLessEqual(len(message),2000)
+        self.assertIn('>>> '+body,message)
