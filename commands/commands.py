@@ -4524,7 +4524,7 @@ async def announce_task_bounty_part2(client):
     await announce_task_bounty(slot=1,bounty_channel=channel)
     
 @command_handler.Scheduled(time="12:00")
-async def birthdays(client):
+async def daily_birthdays(client):
     import calendar
     from zoneinfo import ZoneInfo
 
@@ -4577,7 +4577,11 @@ async def birthdays(client):
         if birthday_this_year.date() == est_time.date():
             member = guild.get_member(user_id)
             if member is None:
-                member = await guild.fetch_member(user_id)
+                try:
+                    member = await guild.fetch_member(user_id)
+                except:
+                    await message.delete()
+                    continue;
             if council_role is not None and council_role in member.roles:
                 today_council_bdays.append(user_id)
             else:
@@ -11141,3 +11145,27 @@ async def remindme(activator: Neighbor, context: Context):
         await create_reminder(context)
     except ValueError as error:
         raise CommandArgsError(str(error)) from error
+
+
+@command_handler.Command(access_type=AccessType.PRIVILEGED,
+                         desc="Run a birthday roundup in General: $birthdays October or $birthdays 10. Defaults to last month.")
+async def birthdays(activator: Neighbor, context: Context):
+    from commands.birthday_roundup import month_number, collect, roundup_messages, GENERAL_CHANNEL
+    if len(context.args)>1:
+        raise CommandArgsError("Use $birthdays October or $birthdays 10.")
+    try:
+        month=month_number(context.args[0] if context.args else None)
+    except ValueError as error:
+        raise CommandArgsError(str(error)) from error
+    entries=await collect(context.guild,month,normalize_birthday)
+    if not entries:
+        await context.send("No current members have recorded birthdays for that month; no roundup was posted.")
+        return
+    general=await context.guild.fetch_channel(GENERAL_CHANNEL)
+    allowed=discord.AllowedMentions(everyone=True,roles=False,
+                                   users=[discord.Object(id=uid) for uid,_ in entries],replied_user=False)
+    for content in roundup_messages(month,entries):
+        await general.send(content,allowed_mentions=allowed)
+    target=await general.send("$celebrate")
+    await celebrate(Neighbor(691338084444274728, 1008089618090049678), Context(target))
+    await context.message.add_reaction("✅")
