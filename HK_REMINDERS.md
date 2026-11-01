@@ -131,3 +131,28 @@ part, so restarts (and volunteering for the same task in multiple NHs) do not
 repeat DMs. Definite rejections are recorded as blocked; uncertain sends remain
 pending for manual review rather than automatically sending duplicates. Assignment
 signup posts themselves do not DM anyone.
+
+HK channel reminders link to the exact weekly Council signup post for that
+task/NH. Volunteer DMs instead link directly to the posted Council-channel task
+ping, and are sent only after that ping is confirmed. The channel ping asks
+people to react with ✅ when the task is complete, and Greg seeds that reaction. If no usable signup post exists, the fallback link is
+explicitly labeled Task details and points to the central task message.
+
+## Unchecked tasks after 24 hours
+
+The first message of each original HK task ping is checked 24 hours after actual
+posting, independently of task schedules or assignment-week rollover. Any
+non-bot person's ✅ reaction counts as completion; they do not have to be an
+assignee or Council member. Greg's seeded reaction and other bots do not count.
+
+If nobody has checked it, Greg sends **one** follow-up in that NH's Council
+channel, mentioning only its Council role and linking back to the original ping.
+It sends no DMs and does not individually mention volunteers. Completed or deleted
+original pings need no follow-up. An outage delays the check until Greg returns.
+
+`delivery.sent_at` stores original ping time; existing confirmed pings are upgraded
+using their Discord snowflake timestamps. `completion_followup` retains sent,
+completed, missing or pending outcomes across restarts, preventing repeated
+follow-ups. Definite send rejections may retry after permissions are fixed;
+uncertain sends remain pending for manual review. No daily repeat escalation is
+added.

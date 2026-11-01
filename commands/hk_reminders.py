@@ -91,6 +91,14 @@ class DeliveryLog:
                        '(message_id INTEGER,user_id INTEGER,week TEXT,part INTEGER,'
                        'status TEXT NOT NULL,discord_message_id INTEGER,'
                        'PRIMARY KEY(message_id,user_id,week,part))')
+            columns={row[1] for row in db.execute('PRAGMA table_info(delivery)')}
+            if 'sent_at' not in columns:
+                db.execute('ALTER TABLE delivery ADD COLUMN sent_at REAL')
+            # Upgrade confirmed older pings using Discord's actual creation timestamp.
+            for row in db.execute("SELECT discord_message_id FROM delivery WHERE status='sent' AND sent_at IS NULL"):
+                if row[0] and row[0]>=10000000000000000:
+                    sent_at=discord.utils.snowflake_time(row[0]).timestamp()
+                    db.execute('UPDATE delivery SET sent_at=? WHERE discord_message_id=?',(sent_at,row[0]))
 
     @contextmanager
     def connection(self):
@@ -103,11 +111,17 @@ class DeliveryLog:
 
     def claim(self,key):
         with self.connection() as db:
-            return db.execute("INSERT OR IGNORE INTO delivery VALUES (?,?,?,?,'pending',NULL)",key).rowcount==1
+            return db.execute("INSERT OR IGNORE INTO delivery (message_id,emoji_id,week,part,status,discord_message_id) VALUES (?,?,?,?,'pending',NULL)",key).rowcount==1
 
-    def finish(self,key,message_id):
+    def finish(self,key,message_id,*,sent_at=None):
         with self.connection() as db:
-            db.execute("UPDATE delivery SET status='sent',discord_message_id=? WHERE message_id=? AND emoji_id=? AND week=? AND part=?",(message_id,*key))
+            db.execute("UPDATE delivery SET status='sent',discord_message_id=?,sent_at=? WHERE message_id=? AND emoji_id=? AND week=? AND part=?",(message_id,sent_at if sent_at is not None else datetime.now(timezone.utc).timestamp(),*key))
+
+    def first_ping(self,message_id,nh,week):
+        with self.connection() as db:
+            row=db.execute("SELECT discord_message_id FROM delivery WHERE message_id=? AND emoji_id=? AND week=? AND part=0 AND status='sent'",
+                           (message_id,nh,week)).fetchone()
+            return row[0] if row else None
 
     def claim_dm(self,key):
         with self.connection() as db:
@@ -123,7 +137,7 @@ class DeliveryLog:
             db.execute('DELETE FROM delivery WHERE message_id=? AND emoji_id=? AND week=? AND part=?',key)
 
 
-def payloads(task,message,role,users=()):
+def payloads(task,message,role,users=(),*,signup_url=None,link_label="Signup"):
     # Bound all messages even when many people volunteer for one task.
     mentions=[f'<@{user}>' for user in users] if users else [f'<@&{role}>']
     groups=[]
@@ -134,29 +148,33 @@ def payloads(task,message,role,users=()):
             current=''
         current+=((' ' if current else '')+mention)
     groups.append(current)
-    footer=f'\n\nSignup: https://discord.com/channels/{GUILD_ID}/{SIGNUP_CHANNEL}/{message.id}'
+    footer=(f'\n\n{link_label}: {signup_url}' if signup_url else
+            f'\n\nTask details: https://discord.com/channels/{GUILD_ID}/{SIGNUP_CHANNEL}/{message.id}')
     content=task.body or 'Time for this week’s task.'
     result=[]
     for index,ping in enumerate(groups):
         header=f'**{task.title}**\n{ping}\n'
-        capacity=1950-len(header)-len(footer)
+        capacity=1850-len(header)-len(footer)
         chunk=content[:capacity] if index==0 else ''
         if index==0:
             content=content[capacity:]
         result.append(header+chunk+footer)
     while content:
         header=f'**{task.title}** (continued)\n'
-        capacity=1950-len(header)-len(footer)
+        capacity=1850-len(header)-len(footer)
         result.append(header+content[:capacity]+footer)
         content=content[capacity:]
     return result
 
 
-async def send_task_dms(client,delivery,task,message,users,week):
+async def send_task_dms(client,delivery,task,message,users,week,*,ping_url=None):
+    # Only DM after a confirmed server ping, so every DM can link to it.
+    if not ping_url:
+        return
     # One DM per task/person/week, even if they volunteer in multiple NHs.
     for user_id in users:
         contents=[content.replace(f'\n<@{user_id}>\n','\n',1)
-                  for content in payloads(task,message,0,[user_id])]
+                  for content in payloads(task,message,0,[user_id],signup_url=ping_url,link_label="Reminder")]
         for part,content in enumerate(contents):
             key=(message.id,user_id,week,part)
             if not delivery.claim_dm(key):
@@ -217,6 +235,9 @@ class HKReminders:
             guild=client.get_guild(GUILD_ID)
             if guild is None:
                 return
+            delivery=DeliveryLog(self.path)
+            from .hk_completion import completion_followups
+            await completion_followups(guild,delivery,NEIGHBORHOODS,now)
             channel=await guild.fetch_channel(SIGNUP_CHANNEL)
             if self.refreshed is None or now-self.refreshed>=timedelta(minutes=5):
                 # Publish cache only after a complete scan; failed scans retry next minute.
@@ -261,9 +282,11 @@ class HKReminders:
                         target=await guild.fetch_channel(target_id)
                         if delivery is None:
                             delivery=DeliveryLog(self.path)
-                        users=await assignees(guild,delivery,emoji_id,target_id,message.id,task.emoji,local)
-                        await send_task_dms(client,delivery,task,message,users,week)
-                        for part,content in enumerate(payloads(task,message,role_id,users)):
+                        users,signup_url=await assignees(guild,delivery,emoji_id,target_id,message.id,task.emoji,local,with_signup=True)
+                        posted_ping=None
+                        for part,content in enumerate(payloads(task,message,role_id,users,signup_url=signup_url)):
+                            if part==0:
+                                content+='\n\nPlease react with ✅ when you’ve completed this task.'
                             key=(message.id,emoji_id,week,part)
                             if not delivery.claim(key):
                                 continue
@@ -279,7 +302,18 @@ class HKReminders:
                                 # rather than automatically pinging the Council twice.
                                 log.exception('HK delivery uncertain; review delivery row %r',key)
                                 break
-                            delivery.finish(key,sent.id)
+                            delivery.finish(key,sent.id,sent_at=now.timestamp())
+                            if part==0:
+                                posted_ping=sent
+                        ping_id=delivery.first_ping(message.id,emoji_id,week)
+                        if ping_id:
+                            try:
+                                posted_ping=posted_ping or await target.fetch_message(ping_id)
+                                await posted_ping.add_reaction('✅')
+                            except discord.HTTPException:
+                                log.exception('Could not add completion reaction to HK ping %s',ping_id)
+                            ping_url=f'https://discord.com/channels/{GUILD_ID}/{target_id}/{ping_id}'
+                            await send_task_dms(client,delivery,task,message,users,week,ping_url=ping_url)
                     except discord.HTTPException:
                         log.exception('HK reminder failed for signup %s, emoji %s',message.id,emoji_id)
 

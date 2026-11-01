@@ -6,6 +6,7 @@ import re
 
 import discord
 
+GUILD_ID = 647883751853916162
 log = logging.getLogger(__name__)
 INSTRUCTIONS = "**Good morning and happy weekend! Please react to the tasks you're responsible for *next week*, or would otherwise like to be pinged for.**"
 
@@ -122,7 +123,7 @@ async def publish(guild,delivery,neighborhoods,tasks,local,*,week=None):
                     log.exception('Cannot seed HK task reaction %s on %s',value,message.id)
 
 
-async def assignees(guild,delivery,nh,channel_id,task_id,task_emoji,local):
+async def assignees(guild,delivery,nh,channel_id,task_id,task_emoji,local,*,with_signup=False):
     initialize(delivery)
     with delivery.connection() as db:
         rows=db.execute('SELECT message_id,tasks FROM assignment_post WHERE nh=? AND week=? ORDER BY part',
@@ -137,7 +138,11 @@ async def assignees(guild,delivery,nh,channel_id,task_id,task_emoji,local):
             message=await channel.fetch_message(message_id)
         except discord.NotFound:
             continue
+        users=[]
         for reaction in message.reactions:
             if emoji_key(reaction.emoji)==emoji_key(value):
-                return sorted({user.id async for user in reaction.users() if not user.bot})
-    return []
+                users=sorted({user.id async for user in reaction.users() if not user.bot})
+                break
+        link=f'https://discord.com/channels/{GUILD_ID}/{channel_id}/{message_id}'
+        return (users,link) if with_signup else users
+    return ([],None) if with_signup else []

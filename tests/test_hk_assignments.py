@@ -107,11 +107,17 @@ class AssignmentTests(unittest.IsolatedAsyncioTestCase):
             return self.target if cid==self.config[self.nh][0] else signup
         self.guild.fetch_channel=AsyncMock(side_effect=fetch)
         self.target.send.reset_mock()
-        await HKReminders(self.path).run(NS(get_guild=lambda gid:self.guild,get_user=lambda uid:NS(send=AsyncMock(return_value=NS(id=12345)))),now=datetime(2026,10,27,12,tzinfo=timezone.utc))
+        dm=NS(send=AsyncMock(return_value=NS(id=12345)))
+        await HKReminders(self.path).run(NS(get_guild=lambda gid:self.guild,get_user=lambda uid:dm),now=datetime(2026,10,27,12,tzinfo=timezone.utc))
+        ping=self.posts[max(self.posts)]
+        self.assertIn(f'Reminder: https://discord.com/channels/647883751853916162/{self.config[self.nh][0]}/{ping.id}',dm.send.call_args.args[0])
         sent=self.target.send.call_args
         self.assertTrue(sent.args[0].startswith('**New Joins**'))
         self.assertIn('<@123>',sent.args[0])
+        self.assertIn('Please react with ✅',sent.args[0])
+        self.posts[max(self.posts)].add_reaction.assert_awaited_with('✅')
         self.assertEqual(sent.kwargs['allowed_mentions'].roles,[])
+        self.assertIn(f'Signup: https://discord.com/channels/647883751853916162/{self.config[self.nh][0]}/{post.id}',sent.args[0])
         self.assertEqual([u.id for u in sent.kwargs['allowed_mentions'].users],[123])
 
     def test_parser_and_long_payloads(self):

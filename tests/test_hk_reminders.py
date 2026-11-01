@@ -47,10 +47,10 @@ class DispatchTests(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(kwargs['limit'])
             yield self.message
         self.signup=NS(history=history,fetch_message=AsyncMock(return_value=self.message))
-        self.targets={value[0]:NS(send=AsyncMock(return_value=NS(id=999))) for value in NEIGHBORHOODS.values()}
+        self.targets={value[0]:NS(send=AsyncMock(return_value=NS(id=999,add_reaction=AsyncMock(),reactions=[],content="**Task**")),fetch_message=AsyncMock(return_value=NS(id=999,add_reaction=AsyncMock(),reactions=[],content="**Task**"))) for value in NEIGHBORHOODS.values()}
         async def fetch(cid):
             return self.targets[cid] if cid in self.targets else self.signup
-        self.guild=NS(fetch_channel=AsyncMock(side_effect=fetch))
+        self.guild=NS(id=647883751853916162,fetch_channel=AsyncMock(side_effect=fetch))
         self.client=NS(get_guild=lambda gid:self.guild)
 
     async def test_dispatch_destinations_scoped_mentions_restart_no_duplicate(self):
@@ -84,7 +84,7 @@ class DispatchTests(unittest.IsolatedAsyncioTestCase):
         runner=HKReminders(self.path)
         await runner.run(self.client,now=self.now)
         await runner.run(self.client,now=self.now+dt.timedelta(days=7))
-        self.assertTrue(all(self.targets[NEIGHBORHOODS[x][0]].send.await_count==2 for x in self.logos))
+        self.assertTrue(all(self.targets[NEIGHBORHOODS[x][0]].send.await_count==3 for x in self.logos))
 
     async def test_uncertain_delivery_does_not_reping_on_restart(self):
         target=self.targets[NEIGHBORHOODS[self.logos[0]][0]]
