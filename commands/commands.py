@@ -2684,7 +2684,7 @@ async def requirement(activator: Neighbor, context: Context):
     other_derby = min(level * 35, 3200)
     
     await context.send(
-    f"🌾 **FFJ Derby Requirement fo Level {level}**\n"
+    f"🌾 **FFJ Derby Requirement for Level {level}**\n"
     f"• **Normal Derby:** {normal_derby} points\n"
     f"• Power Derby: {power_derby}p\n"
     f"• \"400p Derbies\" (Blossom/Mystery/Etc): {other_derby}p\n"
@@ -11169,3 +11169,10 @@ async def birthdays(activator: Neighbor, context: Context):
     target=await general.send("$celebrate")
     await celebrate(Neighbor(691338084444274728, 1008089618090049678), Context(target))
     await context.message.add_reaction("✅")
+
+
+@command_handler.Scheduled(time="16:00", timezone="UTC",
+                           desc="November 1–9 Farmmas season countdown at noon ST")
+async def farmmas_season_countdown(client):
+    from commands.farmmas_season import announce
+    await announce(client)
