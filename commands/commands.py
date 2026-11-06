@@ -11101,3 +11101,11 @@ def is_within_dates(start_date, end_date=None):
         return start_date <= current_date <= end_date
     else:
         return current_date >= start_date
+
+
+# Register Rolodex on startup and refresh it when $sync reloads command_handler.
+if "_rolodex_commands" in globals():
+    from importlib import reload as _reload_rolodex
+    _rolodex_commands = _reload_rolodex(_rolodex_commands)
+else:
+    from . import rolodex as _rolodex_commands
