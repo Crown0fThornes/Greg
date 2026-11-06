@@ -341,3 +341,29 @@ of the same confirmed account-link group. Suggestions are ranked by evidence and
 limited to five accounts; no account link, identity resolution or group merge is
 performed by viewing them. Newly confirmed people automatically become evidence
 for subsequent suggestions; original records remain unchanged.
+
+### Simplified menu workflow
+
+The main menu is grouped into Review, Profiles, Notes, Account Links, Import and
+Other Tools (plus Close). Less common operations stay in submenus rather than
+appearing on every screen. Identity review cards show human-readable status,
+clickable `<@ID>` account mentions and a short event summary. AllowedMentions.none
+continues to prevent those mentions from notifying anyone.
+
+When there is a single suggested account, ✅ explicitly confirms that displayed
+match and immediately advances the unresolved queue. Multiple candidates appear
+in a short account picker. Council no longer types a reason for a match: the
+identity audit automatically records the acting Council ID, timestamp and menu
+confirmation. Choosing another account requires only its mention/ID, and that
+selection immediately saves it. Unknown-account confirmation and merges likewise
+record automatic audit descriptions. Substantive record corrections still retain
+their explicit reason prompts.
+
+Guided prompts accept an ordinary message in the same channel from the menu owner
+or a direct reply to the current prompt. Replies to another prompt and command
+messages are ignored. Opening another Rolodex menu in the same channel retires
+that owner's previous Rolodex session, preventing overlapping text prompts.
+Successful identity decisions return directly to review, not the main menu.
+Evidence, individual reports, unknown-account actions, merges and filters remain
+available under More options / match evidence. No existing identity data is
+changed merely by displaying the simplified menu.

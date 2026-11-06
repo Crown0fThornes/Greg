@@ -11,10 +11,13 @@ from persistence.rolodex import FF_GUILD
 from persistence.rolodex_records import FIELDS, records
 
 TIMEOUT=600
-HOME={'🧪':'Trial import (up to 50 recent messages)','⏬':'Start / resume historical import','🕒':'Import progress','⏹️':'Stop import','🔎':'View a profile','📋':'Review historical reports','📝':'Add a Council note',
-      '🔗':'Connect accounts','🔓':'Disconnect accounts','✏️':'Correct a record',
-      '➕':'Add a missing event','🗒️':'Edit / restore a note','↩️':'Reset a correction','🗑️':'Delete a note',
-      '📜':'Audit history','ℹ️':'Command help','❌':'Close'}
+HOME={'📋':'Review people','🔎':'View a profile','📝':'Council notes','🔗':'Account links','📥':'Import history','⚙️':'Other tools','❌':'Close'}
+SECTIONS={
+    '📝':('Council notes',{'📝':'Add note','🗒️':'Edit / restore note','🗑️':'Delete note','🏠':'Back','❌':'Close'}),
+    '🔗':('Account links',{'🔗':'Connect old and new accounts','🔓':'Disconnect accounts','🏠':'Back','❌':'Close'}),
+    '📥':('Historical import',{'🧪':'Try 50 recent messages','⏬':'Start / resume import','🕒':'Progress','⏹️':'Stop import','🏠':'Back','❌':'Close'}),
+    '⚙️':('Other tools',{'✏️':'Correct a record','➕':'Add missing event','↩️':'Reset a correction','📜':'Audit history','ℹ️':'Command help','🏠':'Back','❌':'Close'}),
+}
 FLOWS={
     '🔎':('profile',['Person: reply with a user mention or Discord ID.']),
     '📝':('note',['Person: reply with a user mention or Discord ID.','What should the Council note say?']),
@@ -45,8 +48,9 @@ def clear_requests(state):
 async def render(state,body,choices):
     clear_requests(state)
     message=state.get('message')
+    state['choices']=choices
     content='**Rolodex Council menu**\n'+body+'\n\n'+ '\n'.join(f'{emoji} {label}' for emoji,label in choices.items())
-    content+='\n\nOnly the Council member who opened this menu can use it. Expires after 10 minutes of inactivity.'
+    content+='\n\nReact below to choose • Your session expires after 10 minutes.'
     if message is not None:
         try:
             await message.clear_reactions()
@@ -69,12 +73,12 @@ async def render(state,body,choices):
 async def prompt(state):
     clear_requests(state)
     question=state['questions'][len(state['answers'])]
-    message=await state['context'].channel.send('**Rolodex — '+question+'**\nReply to this message with your answer. React ❌ to cancel.',
+    message=await state['context'].channel.send('**Rolodex — '+question+'**\nSend your answer here (or reply to this prompt). ❌ cancels.',
                                                 allowed_mentions=discord.AllowedMentions.none())
     def key(context):
         reference=getattr(context.message,'reference',None)
-        return (authorized(context,context.author,state['owner']) and reference is not None
-                and reference.message_id==message.id)
+        return (authorized(context,context.author,state['owner']) and (reference is None or reference.message_id==message.id)
+                and not context.content.lstrip().startswith('$'))
     ResponseRequest(on_answer,'rolodex_answer','MESSAGE',state['context'],Context(message),
                     key=key,timeout=TIMEOUT,menu_session=state)
     def cancel_key(context):
@@ -101,16 +105,31 @@ async def review(state):
             return
         group=queue[state.get('index',0)%len(queue)]
         state['record']={'identity_group':group}
-        candidates=safe(str(group['candidates']))[:200]
-        variants=safe(', '.join(group['variants']))[:250]
-        examples='\n'.join(f"{safe(r['subject'])[:60]}: {r['action']} {safe(r['label'])} — {r['occurred_at'][:10]}" for r in group['events'][:3])
-        related='\n'.join(f"#{other['id']} {safe(other['label'])[:60]} ({score:.0%} similar; {len(other['events'])} events)" for score,other in similar_groups(group,all_groups)) or 'None'
-        body=(f"**Historical person #{group['id']} — {len(group['events'])} events**\n"
-              f"Variants: {variants}\nDiscord ID: {group['user_id'] or 'unknown'}; confirmed: {group['confirmed']}\n"
-              f"Suggested accounts (unconfirmed): {candidates}\n{examples}\n**Possible matching groups**\n{related}")
-        await render(state,body,{'💡':'Explain account suggestions','🔍':'Browse this person’s individual reports','🔗':'Link ALL reports to a Discord account',
-                               '❔':'Confirm same person; Discord ID unknown','🔀':'Merge with another historical person',
-                               '↩️':'Reopen for review',**choices})
+        from persistence.rolodex_identities import richer_suggestions
+        with connect(state['store'].path) as db:
+            suggestions=richer_suggestions(db,group,all_groups)
+        candidate_ids=list(dict.fromkeys([item['user_id'] for item in suggestions]+group['candidates']))
+        state['candidate_ids']=candidate_ids
+        state['suggestions']=suggestions
+        state['related']=similar_groups(group,all_groups)
+        name=safe(group['label'])[:100]
+        linked=f"<@{group['user_id']}>" if group['user_id'] else 'Account not linked'
+        examples='\n'.join(f"• {'Joined' if r['action']=='join' else 'Left'} {safe('FFM' if r['label']=='FF' else r['label'])} · {r['occurred_at'][5:10].replace('-','/')}" for r in group['events'][:3])
+        body=f"**{name}** · {len(group['events'])} records · Person #{group['id']}\n{examples}"
+        choices={}
+        if len(candidate_ids)==1:
+            body+=f"\n\n**Is this <@{candidate_ids[0]}>?**\n✅ confirms the match and opens the next person."
+            choices['✅']='Yes, this is the suggested person'
+        elif candidate_ids:
+            body+='\n\nPossible accounts: '+', '.join(f'<@{uid}>' for uid in candidate_ids[:5])
+            body+='\nChoose an account to confirm, or skip for now.'
+        else:
+            body+=f'\n\n{linked}. Choose an account, or skip for now.'
+        choices.update({'🔗':'Choose a different account' if len(candidate_ids)==1 else 'Choose an account',
+                        '▶️':'Skip for now','💡':'See match evidence','⚙️':'More options','🏠':'Main menu'})
+        if state.pop('notice',None):
+            body='✅ Previous decision saved.\n\n'+body
+        await render(state,body,choices)
         return
     elif mode==3:
         rows=[r for r in rows if r.get('identity_id')==state.get('group_filter')]
@@ -140,8 +159,8 @@ async def review(state):
         await render(state,body,{'➕':'Record an event from this source',**choices})
         return
     body=(f"**Historical report {index+1}/{len(rows)}**\n{safe(row['subject'])[:200]}: {row['action']} {safe(row['label'])}\n"
-          f"Date: {safe(row['occurred_at'])}\nLinked user ID: {row['user_id'] or 'unresolved'}\n"
-          f"Suggested IDs (unconfirmed): {safe(row['candidates'])[:200]}\n"
+          f"Date: {safe(row['occurred_at'])}\nLinked account: {f'<@{row["user_id"]}>' if row['user_id'] else 'Not linked'}\n"
+          f"Suggested IDs (unconfirmed): {', '.join(f'<@{int(value)}>' for value in json.loads(row['candidates'])[:5]) or 'None'}\n"
           f"https://discord.com/channels/{FF_GUILD}/{row['channel_id']}/{row['message_id']}")
     choices={'🔍':'Inspect original evidence','🔗':'Link / correct person','✏️':'Correct a field',
              '🚫':'Hide mistaken report','✂️':'Split this event into a separate person',**choices}
@@ -150,6 +169,7 @@ async def review(state):
 
 async def begin_flow(state,action,questions,*,prefix=None):
     state.pop('source_link',None)
+    state.pop('auto_reason',None)
     state.update(screen='form',action=action,questions=questions,answers=[],prefix=prefix or [])
     await prompt(state)
 
@@ -170,6 +190,14 @@ async def on_reaction(neighbor,activation,response):
     elif state['screen']=='confirm':
         if choice=='✅':
             await execute(state)
+    elif state['screen']=='section':
+        if choice in FLOWS:
+            action,questions=FLOWS[choice]
+            await begin_flow(state,action,questions)
+        else:
+            await home_action(state,choice)
+    elif state['screen'] in ('identity_tools','identity_details','account_pick','review_views'):
+        await identity_choice(state,choice)
     elif state['screen']=='review':
         row=state.get('record')
         if choice in ('◀️','▶️','📚'):
@@ -181,21 +209,7 @@ async def on_reaction(neighbor,activation,response):
             await review(state)
         elif row:
             if row.get('identity_group'):
-                group=row['identity_group']
-                if choice=='💡':
-                    await invoke(state,['suggest',str(group['id'])])
-                    await review(state)
-                elif choice=='🔍':
-                    state.update(review_mode=3,group_filter=group['id'],index=0)
-                    await review(state)
-                elif choice=='🔗':
-                    await begin_flow(state,'identity',['Discord account mention or ID?','Reason confirming these reports belong to this account?'],prefix=['link',str(group['id'])])
-                elif choice=='❔':
-                    await begin_flow(state,'identity',['Reason confirming these reports belong to one person (Discord ID remains unknown)?'],prefix=['unknown',str(group['id'])])
-                elif choice=='🔀':
-                    await begin_flow(state,'identity',['Other historical identity number? See possible matches above.','Why are these the same person?'],prefix=['merge',str(group['id'])])
-                elif choice=='↩️':
-                    await begin_flow(state,'identity',['Why should this person be reviewed again?'],prefix=['reopen',str(group['id'])])
+                await identity_choice(state,choice)
                 return
             if choice=='✂️':
                 await begin_flow(state,'identity',['Why should this event belong to a separate person?'],prefix=['split',row['record_key']])
@@ -208,7 +222,8 @@ async def on_reaction(neighbor,activation,response):
                 await invoke(state,['inspect','event',row['record_key']])
                 await review(state)
             elif choice=='🔗':
-                await begin_flow(state,'edit',['Who does this report describe? Mention or user ID.','Reason / evidence confirming this identity?'],prefix=['event',row['record_key'],'user_id'])
+                await begin_flow(state,'edit',['Mention the correct person (or send their Discord ID).'],prefix=['event',row['record_key'],'user_id'])
+                state['auto_reason']='Council confirmed individual report identity in review menu'
             elif choice=='🚫':
                 await begin_flow(state,'edit',['Why should this report be hidden?'],prefix=['event',row['record_key'],'excluded','true'])
             elif choice=='✏️':
@@ -219,6 +234,8 @@ async def on_reaction(neighbor,activation,response):
         field=state['field_choices'].get(choice)
         if field:
             await begin_flow(state,'edit',[f'New {field}?','Reason for this correction?'],prefix=['event',state['record']['record_key'],field])
+    elif state['screen']=='home' and choice in SECTIONS:
+        await section(state,choice)
     elif choice in ('⏬','🧪'):
         state.update(screen='confirm',action='import',prefix=['test'] if choice=='🧪' else [],answers=[])
         await render(state,'Import up to 25 newest messages per channel for review? Full-import checkpoints stay unchanged.' if choice=='🧪' else 'Start / resume the paced historical import? Progress updates will appear in this channel.',{'✅':'Start import','🏠':'Main menu','❌':'Cancel'})
@@ -250,6 +267,8 @@ async def on_answer(neighbor,activation,response):
     state['answers'].append(answer)
     if len(state['answers'])<len(state['questions']):
         await prompt(state)
+    elif state['action'] in ('identity','edit') and state.get('auto_reason'):
+        await execute(state)
     else:
         state['screen']='confirm'
         preview='\n'.join(f'{safe(question)}\n{safe(value)}' for question,value in zip(state['questions'],state['answers']))
@@ -269,6 +288,11 @@ async def execute(state):
     args=state['prefix']+state['answers']
     action=state['action']
     try:
+        if state.get('auto_reason'):
+            args.append(state.pop('auto_reason'))
+        if action=='identity':
+            await save_identity(state,args)
+            return
         if action in ('profile','note','add'):
             args[0]=str(uid(args[0]))
         elif action in ('link','unlink'):
@@ -295,8 +319,101 @@ async def execute(state):
 
 
 async def open_menu(context,store,*,review_mode=False):
+    for request in list(ResponseRequest.active_requests):
+        previous=request.values.get('menu_session')
+        if previous and previous['owner']==context.author_id and previous['context'].channel.id==context.channel.id:
+            clear_requests(previous)
     state={'context':context,'store':store,'owner':context.author_id,'screen':'review' if review_mode else 'home'}
     if review_mode:
         await review(state)
     else:
         await render(state,'Choose what you’d like to do.',HOME)
+
+
+async def section(state,choice):
+    title,choices=SECTIONS[choice]
+    state['screen']='section'
+    await render(state,'**'+title+'**\nChoose an action.',choices)
+
+
+async def home_action(state,choice):
+    # Reuse the existing command dispatcher for import/status/help actions.
+    state['screen']='home'
+    response=type('MenuAction',(),{'content':choice,'values':{'menu_session':state}})()
+    await on_reaction(None,state['context'],response)
+
+
+async def save_identity(state,args):
+    from .rolodex import uid
+    from persistence.rolodex_identities import change_identity
+    operation,key=args[:2]
+    value=None
+    if operation in ('link','merge'):
+        value=uid(args[2]) if operation=='link' else int(args[2])
+        reason=' '.join(args[3:])
+    else:
+        reason=' '.join(args[2:])
+    change_identity(state['store'],operation,key,value,state['owner'],reason)
+    state.update(screen='review',review_mode=0,notice=True)
+    await review(state)
+
+
+async def identity_choice(state,choice):
+    from .rolodex import uid
+    group=state['record']['identity_group']
+    key=str(group['id'])
+    if choice=='🔙':
+        state['screen']='review'
+        await review(state)
+        return
+    if state['screen']=='account_pick':
+        if choice in state.get('account_choices',{}):
+            selected=state['account_choices'][choice]
+            await save_identity(state,['link',key,str(selected),'Council confirmed selected account in reaction menu'])
+        elif choice=='➕':
+            await begin_flow(state,'identity',['Mention the correct person (or send their Discord ID).'],prefix=['link',key])
+            state['auto_reason']='Council manually matched the historical person in Rolodex'
+        return
+    if state['screen']=='review_views':
+        modes={'1️⃣':0,'2️⃣':1,'3️⃣':2}
+        if choice in modes:
+            state.update(screen='review',review_mode=modes[choice],index=0)
+            await review(state)
+        elif choice=='◀️':
+            state.update(screen='review',index=state.get('index',0)-1)
+            await review(state)
+        return
+    if choice=='✅' and len(state.get('candidate_ids',[]))==1:
+        await save_identity(state,['link',key,str(state['candidate_ids'][0]),'Council confirmed suggested account in reaction menu'])
+    elif choice=='🔗':
+        candidates=state.get('candidate_ids',[])[:3]
+        state['account_choices']=dict(zip(('1️⃣','2️⃣','3️⃣'),candidates))
+        choices={emoji:f'Confirm <@{account}>' for emoji,account in state['account_choices'].items()}
+        choices.update({'➕':'Someone else','🔙':'Back','❌':'Close'})
+        state['screen']='account_pick'
+        await render(state,'**Choose the correct person**\nSelecting an account saves the match and moves to the next person.',choices)
+    elif choice=='💡':
+        lines=[]
+        for suggestion in state.get('suggestions',[])[:2]:
+            lines.append(f"**<@{suggestion['user_id']}>**")
+            lines.extend('• '+safe(reason)[:200] for reason in suggestion['reasons'][:2])
+            lines.extend('⚠ '+safe(reason)[:160] for reason in suggestion['conflicts'][:1])
+        state['screen']='identity_details'
+        await render(state,'**Why Greg suggested this match**\n'+('\n'.join(lines)[:1050] or 'No account evidence yet.'),{'✅':'Confirm suggested person','🔗':'Choose account','🔙':'Back','❌':'Close'} if len(state.get('candidate_ids',[]))==1 else {'🔗':'Choose account','🔙':'Back','❌':'Close'})
+    elif choice=='⚙️':
+        state['screen']='identity_tools'
+        await render(state,'**More options for '+safe(group['label'])[:80]+'**',{'🔍':'Individual reports','❔':'Confirm person, account unknown','🔀':'Merge another name group','↩️':'Reopen this identity','📚':'Review filters / previous person','🔙':'Back','❌':'Close'})
+    elif choice=='❔':
+        await save_identity(state,['unknown',key,'Council confirmed one historical person; Discord account unknown'])
+    elif choice=='🔀':
+        related='\n'.join(f"#{other['id']}: {safe(other['label'])[:60]}" for _,other in state.get('related',[])[:3])
+        await begin_flow(state,'identity',['Which other historical person number? '+related],prefix=['merge',key])
+        state['auto_reason']='Council confirmed same person across name groups'
+    elif choice=='↩️':
+        await save_identity(state,['reopen',key,'Council reopened identity in review menu'])
+    elif choice=='🔍':
+        state.update(screen='review',review_mode=3,group_filter=group['id'],index=0)
+        await review(state)
+    elif choice=='📚':
+        state['screen']='review_views'
+        await render(state,'**Choose what to review**',{'1️⃣':'People needing review','2️⃣':'All historical people','3️⃣':'Unparsed reports','◀️':'Previous person','🔙':'Back','❌':'Close'})

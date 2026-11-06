@@ -128,7 +128,7 @@ async def rolodex(activator, context):
                 suggestions=richer_suggestions(db,group,all_groups)
             lines=[]
             for suggestion in suggestions:
-                lines += [f"**Account {suggestion['user_id']} — {suggestion['label']}**"]
+                lines += [f"**<@{suggestion['user_id']}> — {suggestion['label']}**"]
                 lines += [text(reason) for reason in suggestion['reasons']]
                 lines += ['⚠ '+text(reason) for reason in suggestion['conflicts']]
                 lines += suggestion['sources'][:2]
@@ -203,8 +203,8 @@ async def rolodex(activator, context):
             all_records = records(db)
             if action == 'audit':
                 edits = [dict(r) for r in db.execute('SELECT * FROM rolodex_edit ORDER BY id DESC')]
-                lines = [f"#{r['id']} {day(r['recorded_at'])} · actor {r['actor_id']} · {r['operation']} {r['record_type']} {r['record_key']} {r['field']}: {text(r['old_value'])} → {text(r['new_value'])} · {text(r['reason'])}" for r in edits]
-                lines += [f"Added manual {r['id']} · actor {r['actor_id']} · {text(r['reason'])}" for r in all_records['manual']]
+                lines = [f"#{r['id']} {day(r['recorded_at'])} · actor <@{r['actor_id']}> · {r['operation']} {r['record_type']} {r['record_key']} {r['field']}: {text(r['old_value'])} → {text(r['new_value'])} · {text(r['reason'])}" for r in edits]
+                lines += [f"Added manual {r['id']} · actor <@{r['actor_id']}> · {text(r['reason'])}" for r in all_records['manual']]
                 for table in ('rolodex_note_revision','rolodex_account_link','historical_identity_revision','historical_identity_merge','historical_identity_split'):
                     lines += [text(json.dumps(dict(r), ensure_ascii=False)) for r in db.execute(f'SELECT * FROM {table} ORDER BY id DESC')]
                 title, page = 'Rolodex audit', int(args[1]) if len(args)>1 else 1
@@ -212,8 +212,8 @@ async def rolodex(activator, context):
                 if len(args) != 2:
                     raise ValueError('Use $rolodex accounts @user')
                 accounts = linked_accounts(db, uid(args[1]))
-                lines = ['Connected Discord IDs: '+', '.join(str(x) for x in sorted(accounts))]
-                lines += [f"{r['old_user_id']} → {r['new_user_id']} [linked by {text(r['actor_name'])}: {text(r['reason'])}]" for r in account_groups(db) if r['old_user_id'] in accounts]
+                lines = ['Connected accounts: '+', '.join(f'<@{x}>' for x in sorted(accounts))]
+                lines += [f"<@{r['old_user_id']}> → <@{r['new_user_id']}> [linked by {text(r['actor_name'])}: {text(r['reason'])}]" for r in account_groups(db) if r['old_user_id'] in accounts]
                 title, page = 'Rolodex accounts', 1
             elif action == 'inspect':
                 if len(args) != 3:
@@ -249,7 +249,7 @@ async def rolodex(activator, context):
                 page = int(args[index]) if len(args)>index else 1
                 accounts = linked_accounts(db, target)
                 if raw:
-                    lines = [f'Account {account}: {line}' for account in sorted(accounts)
+                    lines = [f'Account <@{account}>: {line}' for account in sorted(accounts)
                              for line in profile_lines(all_records, account, raw=True)]
                 else:
                     lines = compact_profile(all_records, accounts, notes(db,accounts))

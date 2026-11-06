@@ -56,6 +56,7 @@ class MenuTests(unittest.IsolatedAsyncioTestCase):
         await menu.open_menu(self.context,self.store)
         self.assertIn('📝', [call.args[0] for call in self.messages[0].add_reaction.await_args_list])
         await self.react('📝')
+        await self.react('📝')
         await self.reply('<@456>')
         with patch.object(menu,'invoke',new=AsyncMock()) as invoke:
             await self.reply('Helped with derby')
@@ -74,6 +75,7 @@ class MenuTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_reply_to_wrong_prompt_is_not_consumed_and_cancel_clears_requests(self):
         await menu.open_menu(self.context,self.store)
+        await self.react('🔗')
         await self.react('🔗')
         request=next(r for r in ResponseRequest.active_requests if r.type=='MESSAGE')
         await self.reply('456',reference_id=123456)
@@ -96,17 +98,48 @@ class MenuTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(ResponseRequest.active_requests),1)
 
 
-    async def test_review_link_wizard_carries_record_key_and_audited_reason(self):
+    async def test_review_match_is_one_click_without_reason_and_advances(self):
         from datetime import datetime,timezone
         from persistence.import_membership_history import HistoryImporter,JOINLIST
+        from persistence.sqlite_db import connect
+        from persistence.rolodex_records import records
+        source=NS(id=456,guild=self.guild,channel=NS(id=JOINLIST),author=self.owner,
+                  content='Fancy has joined ffc',created_at=datetime(2026,10,25,tzinfo=timezone.utc))
+        importer=HistoryImporter(self.store,999)
+        importer.add_member(NS(id=456789,name='Fancy',global_name=None,nick=None,display_name='Fancy'))
+        importer.ingest(source)
+        await menu.open_menu(self.context,self.store,review_mode=True)
+        self.assertIn('<@456789>',self.messages[0].content)
+        request=ResponseRequest.active_requests[0]
+        self.assertLessEqual(len(request.values['menu_session']['choices']),6)
+        await self.react('✅')
+        with connect(self.store.path) as db:
+            self.assertEqual(records(db)['event'][0]['user_id'],456789)
+            self.assertEqual(db.execute('SELECT actor_id FROM historical_identity_revision').fetchone()[0],123)
+        self.assertFalse(any(r.type=='MESSAGE' for r in ResponseRequest.active_requests))
+        self.messages[0].edit.assert_awaited()
+        self.assertIn('No identities',self.messages[0].edit.call_args.kwargs['content'])
+
+    async def test_manual_match_accepts_normal_message_without_reason_prompt(self):
+        from datetime import datetime,timezone
+        from persistence.import_membership_history import HistoryImporter,JOINLIST
+        from persistence.sqlite_db import connect
+        from persistence.rolodex_records import records
         source=NS(id=456,guild=self.guild,channel=NS(id=JOINLIST),author=self.owner,
                   content='Fancy has joined ffc',created_at=datetime(2026,10,25,tzinfo=timezone.utc))
         HistoryImporter(self.store,999).ingest(source)
         await menu.open_menu(self.context,self.store,review_mode=True)
-        self.assertIn('Fancy',self.messages[0].content)
         await self.react('🔗')
-        await self.reply('<@456789>')
-        await self.reply('Confirmed by Council')
-        with patch.object(menu,'invoke',new=AsyncMock()) as invoke:
-            await self.react('✅')
-            self.assertEqual(invoke.call_args.args[1],['identity','link','1','456789','Confirmed by Council'])
+        await self.react('➕')
+        ctx=self.context_for(self.owner,'<@456789>',900)
+        await ResponseRequest.fulfill_message_requests(ctx.message,ctx,None)
+        with connect(self.store.path) as db:
+            self.assertEqual(records(db)['event'][0]['user_id'],456789)
+
+    async def test_main_menu_uses_small_submenus(self):
+        await menu.open_menu(self.context,self.store)
+        state=ResponseRequest.active_requests[0].values['menu_session']
+        self.assertLessEqual(len(state['choices']),7)
+        await self.react('📥')
+        self.assertEqual(state['screen'],'section')
+        self.assertLessEqual(len(state['choices']),6)
