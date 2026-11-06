@@ -7,55 +7,52 @@ fPolls_name = "data/polls.txt";
 fOffers_name = "data/offers.txt";
 
 from datetime import timedelta
+from functools import wraps
+from pathlib import Path
+from persistence.neighbor_store import get_store
 import time
 import difflib
 
+_PROJECT_ROOT = Path(__file__).resolve().parent
+fNeighbors_names = [str(_PROJECT_ROOT / filename) for filename in fNeighbors_names]
+_DEFAULT_GUILD_ID = 647883751853916162
+
+
+def _guild_id(value):
+    value = _DEFAULT_GUILD_ID if value is None or value in (0, "0") else int(value)
+    if value <= 0:
+        raise ValueError("A Neighbor needs a positive Discord server ID")
+    return value
+
+
+def _text_identity(line):
+    try:
+        fields = line.split(":", 2)
+        return int(fields[0]), _guild_id(fields[1])
+    except (ValueError, IndexError):
+        return None
+
 class Neighbor:
+    """Player record with rolling SQLite migration and legacy text mirrors.
+
+    Linked construction/access enrolls only this user/server pair. SQL is the
+    source of truth thereafter. Every successful write also updates the original
+    text shard for rollback. Detached objects and text decoding stay in memory;
+    bulk reads prefer enrolled SQL rows without importing everybody else.
     """
-    This new version of the Neighbor class allows for compatiability with the old format with relatively few issues,
-    while also providing more secure updates to the neighbors.txt data files.
-    The secure_sync wrapper pulls a Neighbor's most recent data, runs the wrapped function,
-    and pushes the updated Neighbor back to the text file. This ensures that we don't have to worry
-    about pulling or pushing a Neighbor when updating it outside of this class.
-    
-    A Neighbor object, perhaps instantiated with `neighbor = Neighbor(691338084444274728)`, essentially
-    acts as a link between a discord member and their information stored in the neighbors text files.
-    Functions can then be run on this Neighbor, `neighbor.increment_XP()`, and the necessary file updates are
-    automatically made for us. Notably, this method means that most-recent data is not stored "on-site" of a Neighbor object;
-    getters must be used. If this must be avoided, i.e. to directly set a Neighbor's xp, use the method below.
-    
-    
-    When updating or accessing several Neighbors at once, it can be useful to use 
-    read_all_neighbors() and write_all_neighbors() in conjunction with one another. 
-    First, use read_all_neighbors() to obtain a list of all neighbors and their information. 
-    After any/all edits to these objects that need to be saved, use write_all_neighbors() and pass it a list of all of the 
-    Neighbor objects. The Neighbor objects returned by read_all_neighbors() will not automatically have edits saved to the data files.
-    The advantages of this method include: fewer data-file updates when editing many Neighbors at once, and the ability to alter 
-    the order in which the Neighbors appear in the file. 
-    Another use of read_all_neighbors(), is to get a list of all Neighbor IDs that can be used to instantiate a list of "regular" Neighbor
-    objects. In this case it would be unnecessary (apart from unhelpful and potentially unsafe) to use write_all_neighbors().
-    As an example:
-    neighbor_ids = [neighbor.ID for neighbor in Neighbor.read_all_neighbors()]
-    for id in neighbor_id:
-        cur = Neighbor(id);
-        #act on cur object
-    #no need to write all here
-    """
-    def __init__(self, id: int = 0, family: int = None, link = True):
-        """
-        A Neighbor is constructed with an ID. The Neighbor class deals with the rest.
-        A Neighbor initated with an ID of 0 is understood to be a "dud" that doesn't get saved
-        
-        When the `link` parameter is False, secure_sync() will not attempt to update the neighbors text files with
-        recent changes. Proceed with caution.
-        """
-        
-        self.ID = id;
-        self.family = family;
-        self.XP = None;
-        self.legacyXP = None;
-        self.inventory = None;
-        self.secure = link;
+    def __init__(self, id: int = 0, family: int = None, link=True):
+        self.ID = int(id)
+        if self.ID < 0:
+            raise ValueError("A Neighbor needs a nonnegative Discord user ID")
+        self.family = _guild_id(family)
+        self.XP = 0
+        self.legacyXP = 0
+        self.inventory = []
+        self.secure = link
+        self._sync_depth = 0
+        if link and self.ID != 0:
+            self.pull()
+
     
     def __str__(self):
         """
@@ -98,17 +95,20 @@ class Neighbor:
                 res = res + item.encode() + ":";
         return res;
         
+    @staticmethod
     def decode(data: str):
-        """
-        Decodes a Neighbor object from String format.
-        """
-        fields = data.split(":");
-        res = Neighbor(int(fields[0]));
-        res.family = int(fields[1]);
-        res.XP = int(fields[2]);
-        res.legacyXP = int(fields[3]);
-        res.inventory = [Item.decode(data) for data in fields[4:]];
-        return res;
+        """Decode a detached text snapshot; parsing must never migrate a player."""
+        fields = data.rstrip("\r\n").split(":")
+        while fields and fields[-1] == "":
+            fields.pop()
+        if len(fields) < 4:
+            raise ValueError("Incomplete Neighbor text record")
+        result = Neighbor(int(fields[0]), _guild_id(fields[1]), link=False)
+        result.XP = int(fields[2])
+        result.legacyXP = int(fields[3])
+        result.inventory = [Item.decode(value) for value in fields[4:]]
+        return result
+
 
     def appropriate_file(self):
         """
@@ -119,75 +119,155 @@ class Neighbor:
         """
         return fNeighbors_names[self.ID % 10];
 
+    def _record(self):
+        return dict(user_id=self.ID, guild_id=_guild_id(self.family),
+                    xp=0 if self.XP is None else self.XP,
+                    legacy_xp=0 if self.legacyXP is None else self.legacyXP,
+                    items=[dict(item_id=getattr(item, "_sqlite_item_id", None), name=item.name,
+                                type=item.type, expiration=item.expiration, values=dict(item.values))
+                           for item in (self.inventory or [])])
+
+    def _apply_record(self, record):
+        self.family = record["guild_id"]
+        self.XP = record["xp"]
+        self.legacyXP = record["legacy_xp"]
+        self.inventory = []
+        for saved in record["items"]:
+            item = Item(saved["name"], saved["type"], saved["expiration"], **saved["values"])
+            if "awarded_at" not in saved["values"]:
+                item.values.pop("awarded_at", None)
+            item._sqlite_item_id = saved.get("item_id")
+            self.inventory.append(item)
+
+    def _read_text(self):
+        path = Path(self.appropriate_file())
+        if not path.exists():
+            return None
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if not line.strip():
+                continue
+            if _text_identity(line) != (self.ID, self.family):
+                # An unparseable server ID for this user is not an empty record.
+                if line.split(":", 1)[0] == str(self.ID) and _text_identity(line) is None:
+                    raise ValueError(f"Invalid Neighbor record in {path.name}, line {number}")
+                continue
+            try:
+                return Neighbor.decode(line)._record()
+            except (ValueError, IndexError, TypeError) as error:
+                raise ValueError(f"Invalid Neighbor record in {path.name}, line {number}") from error
+        return None
+
+    def _validated_text_encoding(self):
+        # The rollback copy must remain readable by the previous implementation.
+        try:
+            decoded = Neighbor.decode(self.encode())._record()
+            original = self._record()
+            for item in decoded["items"]:
+                item.pop("item_id", None)
+            for item in original["items"]:
+                item.pop("item_id", None)
+                item["values"] = {str(key): str(value) for key, value in item["values"].items()}
+            if decoded != original:
+                raise ValueError("Text round trip changed the Neighbor record")
+        except (ValueError, IndexError, TypeError) as error:
+            raise ValueError("Neighbor data cannot be represented safely in the legacy text backup") from error
+        return self.encode()
+
+    def _mirror_text(self, session):
+        encoded = self._validated_text_encoding()
+        path = Path(self.appropriate_file())
+        existing = path.read_text(encoding="utf-8").splitlines(keepends=True) if path.exists() else []
+        other_lines = [line for line in existing if _text_identity(line) != (self.ID, self.family)]
+        contents = encoded + "\n" + "".join(other_lines)
+        session.mirror(path, contents.encode("utf-8"))
+
+    def _pull_in_session(self, session):
+        self.family = _guild_id(self.family)
+        saved = session.load(self.ID, self.family)
+        if saved is None:
+            saved = self._read_text()
+            if saved is None:
+                saved = dict(user_id=self.ID, guild_id=self.family, xp=0, legacy_xp=0, items=[])
+            ids = session.save(saved)
+            for item, item_id in zip(saved["items"], ids):
+                item["item_id"] = item_id
+        self._apply_record(saved)
+        self._mirror_text(session)
+
+    def _push_in_session(self, session):
+        self.family = _guild_id(self.family)
+        ids = session.save(self._record())
+        for item, item_id in zip(self.inventory or [], ids):
+            item._sqlite_item_id = item_id
+        self._mirror_text(session)
+
     def pull(self):
-        """
-        A Neighbor's info is pulled from its respesctive data file by searching for its ID in the file and decoding that line of text.
-        """
-        neighbor = None;
-        with open(self.appropriate_file(), "r") as fNeighbors:
-            lines = fNeighbors.readlines()
-            for line in lines:
-                neighbor = Neighbor.decode(line[:-2]);
-                if neighbor.ID == self.ID:
-                    if neighbor.family == self.family or (neighbor.family == 0 and self.family == 647883751853916162):
-                        self.copy(neighbor);
-                        break;
-        if self.family == "0":
-            raise ValueError("Family can't be 0");
-        if self.family == 0:
-            raise ValueError("Family can't be 0");
-        if neighbor is None or not neighbor.ID == self.ID: 
-            self.XP = 0;
-            self.legacyXP = 0;
-            self.inventory = [];
+        """Load SQL first, importing only this player's text record if absent."""
+        if self.ID == 0:
+            return
+        with get_store().transaction() as session:
+            self._pull_in_session(session)
+
         
     def push(self):
-        """
-        A Neighbor's info is pushed to its respective data file by searching for and replacing its line using encode.
-        """
-        neighbors_to_write = [];
-        neighbors_to_write.append(self);
-        with open(self.appropriate_file(), "r") as fNeighbors:
-            lines = fNeighbors.readlines();
-            for line in lines:
-                neighbor = Neighbor.decode(line[:-2]);
-                if neighbor.ID == self.ID and ((neighbor.family == self.family) or (neighbor.family == 0 and self.family == 647883751853916162)):
-                    continue;
-                else:
-                    neighbors_to_write.append(neighbor);
-        with open(self.appropriate_file(), "w") as fNeighbors:
-            for neighbor in neighbors_to_write:
-                fNeighbors.write(neighbor.encode() + "\n");     
+        """Save SQL and its legacy text mirror together, or text only in rollback mode."""
+        if self.ID == 0:
+            return
+        with get_store().transaction() as session:
+            self._push_in_session(session)
+
+    @staticmethod
     def read_all_neighbors():
-        """
-        Pulls info for all saved Neighbors from every text file and returns a list.
-        This function bypasses the secure_sync wrapper, so it should always be used in conjunction with
-        write_all_neighbors after all edits are done being made, etc."""
-        neighbors = [];
-        for file in fNeighbors_names:
-            with open(file, "r") as fNeighbors_cur:
-                for line in fNeighbors_cur:
-                    cur = Neighbor(int(line.split(":")[0]), int(line.split(":")[1]), False);
-                    if cur.family == 0:
-                        cur.family = 647883751853916162;
-                    elif cur.family == "0":
-                        cur.family = 647883751853916162;
-                    cur.pull();
-                    neighbors.append(cur);
-        return neighbors;
+        """Read detached snapshots, preferring SQL without migrating text-only players."""
+        with get_store().transaction() as session:
+            neighbors = {}
+            sql_records = {}
+            for uid, gid in sorted(session.keys()):
+                record = Neighbor(uid, gid, link=False)
+                record._apply_record(session.load(uid, gid))
+                sql_records[(uid, gid)] = record
+            for filename in fNeighbors_names:
+                path = Path(filename)
+                if not path.exists():
+                    continue
+                for line in path.read_text(encoding="utf-8").splitlines():
+                    if not line.strip():
+                        continue
+                    record = sql_records.get(_text_identity(line))
+                    if record is None:
+                        record = Neighbor.decode(line)
+                    if record.ID:
+                        neighbors.setdefault((record.ID, record.family), record)
+            neighbors.update(sql_records)
+            return list(neighbors.values())
+
         
+    @staticmethod
     def write_all_neighbors(neighbors):
-        """
-        Pushes a list of Neighbors to the 10 text files.
-        This function bypasses the secure_sync wrapper, just like read_all_neighbors.
-        Whenever read_all_neighbors is called, this function should be called after any edits are made
-        if those edits should need to be saved.
-        """
-        for fNeighbors_name in fNeighbors_names:
-            with open(fNeighbors_name, "w") as fNeighbors:
-                 fNeighbors.write("");
+        """Replace bulk snapshots; update/delete enrolled rows without eager enrollment."""
+        neighbors = [neighbor for neighbor in neighbors if neighbor.ID != 0]
+        records = {}
         for neighbor in neighbors:
-            neighbor.push();
+            neighbor.family = _guild_id(neighbor.family)
+            key = (neighbor.ID, neighbor.family)
+            if key in records:
+                raise ValueError(f"Duplicate Neighbor in bulk write: {key}")
+            records[key] = neighbor
+        with get_store().transaction() as session:
+            enrolled = session.keys()
+            for key in enrolled - records.keys():
+                session.delete(*key)
+            for key, neighbor in records.items():
+                if key in enrolled:
+                    ids = session.save(neighbor._record())
+                    for item, item_id in zip(neighbor.inventory or [], ids):
+                        item._sqlite_item_id = item_id
+            shards = {str(Path(path)): [] for path in fNeighbors_names}
+            for neighbor in neighbors:
+                shards[str(Path(neighbor.appropriate_file()))].append(neighbor._validated_text_encoding() + "\n")
+            for filename, contents in shards.items():
+                session.mirror(filename, "".join(contents).encode("utf-8"))
+
 
     def get_XP_for_level(target):
         total = 0;
@@ -204,26 +284,35 @@ class Neighbor:
         return level - 1;
 
     def secure_sync():
-        """
-        The secure_sync() decorator wraps every Neighbor method from here on out.
-        The goal of this decorator is to ensure data consistency and ease of use.
-        With the help of secure_sync(), no data is kept "on site" of a Neighbor object to avoid accessing information
-        that may not be up to date.
-        All Neighbor info is pulled before a method is run, then immediately pushed thereafter. 
-        Exceptions apply.    
-        """
+        """Serialize a linked read/modify/write; nested methods share its snapshot."""
         def wrapper(func):
+            @wraps(func)
             def wrapped_func(self, *args, **kwargs):
-                if self.secure == False:
-                    return func(self, *args, **kwargs);
-                Neighbor.pull(self);
-                # print("Before func: " + str(self.XP));
-                res = func(self, *args, **kwargs);
-                # print("After func: " + str(self.XP));
-                Neighbor.push(self)
-                return res;
+                if not self.secure or self.ID == 0:
+                    return func(self, *args, **kwargs)
+                snapshot = None
+                owns_snapshot = False
+                try:
+                    with get_store().transaction() as session:
+                        if self._sync_depth:
+                            return func(self, *args, **kwargs)
+                        self._pull_in_session(session)
+                        snapshot = self._record()
+                        owns_snapshot = True
+                        self._sync_depth = 1
+                        result = func(self, *args, **kwargs)
+                        self._push_in_session(session)
+                    return result
+                except BaseException:
+                    if snapshot is not None:
+                        self._apply_record(snapshot)
+                    raise
+                finally:
+                    if owns_snapshot:
+                        self._sync_depth = 0
             return wrapped_func
         return wrapper
+
 
     @secure_sync()
     def get_family(self):

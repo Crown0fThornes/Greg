@@ -1,0 +1,40 @@
+{
+  "season": 2026,
+  "families": [
+    {
+      "name": "Bunny",
+      "role_id": 1454591136860471346,
+      "honorary_role_id": 1454593292531531847
+    },
+    {
+      "name": "Cheetah",
+      "role_id": 1454590857591132314,
+      "honorary_role_id": 1454593209073275001
+    },
+    {
+      "name": "Donkey",
+      "role_id": 1454591042278920304,
+      "honorary_role_id": 1454593163464544396
+    },
+    {
+      "name": "Fox",
+      "role_id": 1342333037509214259,
+      "honorary_role_id": 1454593266124325015
+    },
+    {
+      "name": "Giraffe",
+      "role_id": 1454591075757985853,
+      "honorary_role_id": 1454593324391338212
+    },
+    {
+      "name": "Hippo",
+      "role_id": 1454593861643931684,
+      "honorary_role_id": 1454593518357057651
+    },
+    {
+      "name": "Penguin",
+      "role_id": 1454590623532191774,
+      "honorary_role_id": 1454590996699545741
+    }
+  ]
+}

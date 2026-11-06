@@ -1949,7 +1949,7 @@ async def greg_react(context: Context):
         
     if chance(5000):
         if chance(25):
-            await context.send("Hm... I was going to send a gif for y'all to enjoy but I don't feel you've been grateful of my antics recently.\nReflect on that.")
+            await context.send("Hm... I was going to send a great gif for y'all to enjoy but I don't feel you've been grateful of my antics recently.\nReflect on that.")
         else:
             import re
 
@@ -11176,3 +11176,11 @@ async def birthdays(activator: Neighbor, context: Context):
 async def farmmas_season_countdown(client):
     from commands.farmmas_season import announce
     await announce(client)
+
+
+# Register Rolodex on startup and refresh it when $sync reloads command_handler.
+if "_rolodex_commands" in globals():
+    from importlib import reload as _reload_rolodex
+    _rolodex_commands = _reload_rolodex(_rolodex_commands)
+else:
+    from . import rolodex as _rolodex_commands

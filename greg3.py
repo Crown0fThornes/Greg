@@ -15,6 +15,17 @@ from importlib import reload as sync
 from id_bundle import FF
 from phoenix_bundle import PHOENIX
 import time
+from persistence.rolodex import Rolodex
+
+rolodex = None
+
+
+def get_rolodex():
+    global rolodex
+    if rolodex is None:
+        rolodex = Rolodex()
+    return rolodex
+
 
 """
 Greg 3.0!
@@ -91,6 +102,10 @@ else:
 @client.event
 async def on_ready():
     print("All systems go!");
+    # Observe cached members; cache absence alone must not imply a departure.
+    for guild in client.guilds:
+        for member in guild.members:
+            get_rolodex().observe_member(member)
     if not manage_timed_commands.is_running():
         manage_timed_commands.start();
     if not manage_scheduled_commands.is_running():
@@ -293,7 +308,14 @@ async def on_raw_reaction_add(reaction):
     await Uncontested.execute(context);
     
 @client.event
+async def on_user_update(before, after):
+    if not after.bot:
+        get_rolodex().user_updated(before, after)
+
+
+@client.event
 async def on_member_update(before, after):
+    get_rolodex().member_updated(before, after)
     if after.bot:
         return 0;
     
@@ -322,13 +344,13 @@ async def on_member_update(before, after):
 
         before_nh_roles = set(before_role_ids) & set(NH_roles.keys())
         after_nh_roles = set(after_role_ids) & set(NH_roles.keys())
-        if len(after_nh_roles - before_nh_roles) > 0:
-            NH = NH_roles[(set(after_role_ids) - set(before_role_ids)).pop()];
-            await joinlist.send(after.display_name + " has joined " + NH)
+        for role_id in sorted(after_nh_roles - before_nh_roles):
+            NH = NH_roles[role_id];
+            await joinlist.send(f"{after.display_name} ({after.mention}) has joined {NH}")
             
-        if len(before_nh_roles - after_nh_roles) > 0:
-            NH = NH_roles[(set(before_role_ids) - set(after_role_ids)).pop()];
-            await leavelist.send(after.display_name + " has left " + NH)
+        for role_id in sorted(before_nh_roles - after_nh_roles):
+            NH = NH_roles[role_id];
+            await leavelist.send(f"{after.display_name} ({after.mention}) has left {NH}")
             
         if len(after_nh_roles) > 0:
             await after.add_roles(after.guild.get_role(1181330910747054211));
@@ -374,6 +396,7 @@ async def on_member_update(before, after):
     
 @client.event
 async def on_member_join(member, NH = None):
+    get_rolodex().observe_member(member, source="gateway")
     if (member.guild.id != 647883751853916162):
         return 0;
     
@@ -388,6 +411,7 @@ async def on_member_join(member, NH = None):
    
 @client.event
 async def on_member_remove(member):
+    get_rolodex().member_left(member)
     if (member.guild.id != 647883751853916162):
         return 0;
     
