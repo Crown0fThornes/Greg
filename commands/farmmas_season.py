@@ -14,13 +14,14 @@ def season_messages(today,logo):
     if today.month!=11 or not 1<=today.day<=9:
         return []
     if today.day==9:
-        return ["Farmmas season has arrived!!\n\n"
+        return ["# Farmmas season has arrived!!\n\n"
                 "May the festivities begin! Let's hang the lights, switch to Farmmas colors, and get into the giving spirit!\n\n"
-                +INFO, ' '.join([str(logo)]*3)]
+                "**We've only got 1 month to wait before the best FF holiday begins!**\n\n"
+                +INFO+"\n\n@everyone", ' '.join([str(logo)]*3)]
     days=9-today.day
     return [f"# Farmmas season arrives in {days} {"day" if days==1 else "days"}!!\n\n"
             "Farmmas is FF's annual winter holiday taking place from December 9th to 20th. The festivities begin soon!\n\n"
-            +INFO]
+            +INFO+"\n\n@everyone"]
 
 
 async def announce(client,*,now=None):
@@ -34,4 +35,5 @@ async def announce(client,*,now=None):
         return
     channel=await guild.fetch_channel(GENERAL_CHANNEL)
     for content in messages:
-        await channel.send(content,allowed_mentions=discord.AllowedMentions.none())
+        await channel.send(content,allowed_mentions=discord.AllowedMentions(
+            everyone='@everyone' in content,users=False,roles=False,replied_user=False))

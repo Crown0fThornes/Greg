@@ -3336,7 +3336,7 @@ async def open_barn_sale(client):
     )
 
     await barn_sale_channel.send(
-        "You are encouraged to host a barn sale whenever you like! But today I'm "
+        "**It's an FF tradition to host as many barn sales on the first of each month as possible**. You are encouraged to host a barn sale whenever you like! But today I'm "
         "challenging as many people as possible to all host one & help us start the "
         "new month off right."
     )
@@ -3344,9 +3344,9 @@ async def open_barn_sale(client):
     await barn_sale_channel.send("# Instructions")
 
     await barn_sale_channel.send(
-        "1. **For my challenge, put up as many barn items in your RSS as your farm level!** "
+        "1. **For my challenge, put up as many barn items (not silo!) in your RSS as your farm level!** "
         "For example, a level 20 player should sell at least 20 items; a level 100 player "
-        "should sell at least 100. Max price is fine."
+        "should sell at least 100. Max price is fine. Don't just sell a bunch of rustic bouquets either!"
     )
 
     await barn_sale_channel.send(
@@ -3360,7 +3360,7 @@ async def open_barn_sale(client):
     )
 
     await barn_sale_channel.send(
-        "4. **Post your screenshots below!** A lucky poster will win 20 BEMs tomorrow!"
+        "4. **Post your screenshots below! Let's see how many we can get!** For a little participation prize, a lucky poster will win 20 BEMs tomorrow!"
     )
 
     remember("barn_sale_channel_id", barn_sale_channel.id)

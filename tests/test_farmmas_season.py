@@ -14,11 +14,15 @@ class SeasonTests(unittest.TestCase):
             messages=season_messages(date(2026,11,day),'logo')
             self.assertEqual(len(messages),1)
             self.assertIn('December 9th to 20th',messages[0])
+            self.assertTrue(messages[0].endswith('@everyone'))
             self.assertIn('Use `$info farmmas` in <#784150346397253682>',messages[0])
 
     def test_arrival_and_no_posts_outside_window(self):
         messages=season_messages(date(2026,11,9),'<:farmmas_ff_logo:1170071779037945907>')
-        self.assertTrue(messages[0].startswith('Farmmas season has arrived!!'))
+        self.assertTrue(messages[0].startswith('# Farmmas season has arrived!!'))
+        self.assertIn("**We've only got 1 month to wait before the best FF holiday begins!**",messages[0])
+        self.assertTrue(messages[0].endswith('@everyone'))
+        self.assertNotIn('@everyone',messages[1])
         self.assertEqual(messages[1].count(str(LOGO_ID)),3)
         for today in [date(2026,10,31),date(2026,11,10),date(2026,12,9)]:
             self.assertEqual(season_messages(today,'logo'),[])
@@ -31,4 +35,6 @@ class DeliveryTests(unittest.IsolatedAsyncioTestCase):
         client=NS(get_guild=lambda uid:guild,get_emoji=lambda uid:None)
         await announce(client,now=datetime(2026,11,9,16,tzinfo=timezone.utc))
         self.assertEqual(channel.send.await_count,2)
+        self.assertTrue(channel.send.call_args_list[0].kwargs['allowed_mentions'].everyone)
+        self.assertFalse(channel.send.call_args_list[1].kwargs['allowed_mentions'].everyone)
         self.assertEqual(channel.send.call_args_list[1].args[0], ' '.join(['<:farmmas_ff_logo:1170071779037945907>']*3))
