@@ -129,7 +129,7 @@ async def review(state):
             body+='\nChoose an account to confirm, or skip for now.'
         else:
             body+=f'\n\n{linked}. Choose an account, or skip for now.'
-        choices['❔']='Unknown account — confirm this person'
+        choices['❔']='Unknown account but confirm this neighbor'
         choices.update({'🔗':'Choose a different account' if len(candidate_ids)==1 else 'Choose an account',
                         '▶️':'Skip for now','💡':'See match evidence','⚙️':'More options','🏠':'Main menu'})
         if state.pop('notice',None):
@@ -450,7 +450,7 @@ async def identity_choice(state,choice):
         await render(state,'**Why Greg suggested this match**\n'+('\n'.join(lines)[:1050] or 'No account evidence yet.'),{'✅':'Confirm suggested person','🔗':'Choose account','🔙':'Back','❌':'Close'} if len(state.get('candidate_ids',[]))==1 else {'🔗':'Choose account','🔙':'Back','❌':'Close'})
     elif choice=='⚙️':
         state['screen']='identity_tools'
-        await render(state,'**More options for '+safe(group['label'])[:80]+'**',{'🔍':'Individual reports','❔':'Confirm person, account unknown','🔀':'Merge another name group','↩️':'Reopen this identity','📚':'Review filters / previous person','🔙':'Back','❌':'Close'})
+        await render(state,'**More options for '+safe(group['label'])[:80]+'**',{'🔍':'Individual reports','❔':'Unknown account but confirm this neighbor','🔀':'Merge another name group','↩️':'Reopen this identity','📚':'Review filters / previous person','🔙':'Back','❌':'Close'})
     elif choice=='❔':
         await save_identity(state,['unknown',key,'Council confirmed one historical person; Discord account unknown'])
     elif choice=='🔀':
