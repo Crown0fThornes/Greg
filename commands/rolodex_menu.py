@@ -1,6 +1,8 @@
 """Owner-bound Council menus using ResponseRequest reactions and reply prompts."""
 import copy
 import json
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import discord
 from command_handler import Context
@@ -9,6 +11,7 @@ from responses import ResponseRequest
 from persistence.sqlite_db import connect
 from persistence.rolodex import FF_GUILD
 from persistence.rolodex_records import FIELDS, records
+from .rolodex_mentions import prepare_mentions
 
 TIMEOUT=600
 HOME={'📋':'Review people','🔎':'View a profile','📝':'Council notes','🔗':'Account links','📥':'Import history','⚙️':'Other tools','❌':'Close'}
@@ -16,7 +19,7 @@ SECTIONS={
     '📝':('Council notes',{'📝':'Add note','🗒️':'Edit / restore note','🗑️':'Delete note','🏠':'Back','❌':'Close'}),
     '🔗':('Account links',{'🔗':'Connect old and new accounts','🔓':'Disconnect accounts','🏠':'Back','❌':'Close'}),
     '📥':('Historical import',{'🧪':'Try 50 recent messages','⏬':'Start / resume import','🕒':'Progress','⏹️':'Stop import','🏠':'Back','❌':'Close'}),
-    '⚙️':('Other tools',{'✏️':'Correct a record','➕':'Add missing event','↩️':'Reset a correction','📜':'Audit history','ℹ️':'Command help','🏠':'Back','❌':'Close'}),
+    '⚙️':('Other tools',{'✏️':'Correct a record','➕':'Add missing event','↩️':'Reset a correction','🏆':'Review leaderboard','📜':'Audit history','ℹ️':'Command help','🏠':'Back','❌':'Close'}),
 }
 FLOWS={
     '🔎':('profile',['Person: reply with a user mention or Discord ID.']),
@@ -51,6 +54,7 @@ async def render(state,body,choices):
     state['choices']=choices
     content='**Rolodex Council menu**\n'+body+'\n\n'+ '\n'.join(f'{emoji} {label}' for emoji,label in choices.items())
     content+='\n\nReact below to choose • Your session expires after 10 minutes.'
+    content=await prepare_mentions(state['context'].guild,content)
     if message is not None:
         try:
             await message.clear_reactions()
@@ -114,7 +118,7 @@ async def review(state):
         state['related']=similar_groups(group,all_groups)
         name=safe(group['label'])[:100]
         linked=f"<@{group['user_id']}>" if group['user_id'] else 'Account not linked'
-        examples='\n'.join(f"• {'Joined' if r['action']=='join' else 'Left'} {safe('FFM' if r['label']=='FF' else r['label'])} · {r['occurred_at'][5:10].replace('-','/')}" for r in group['events'][:3])
+        examples='\n'.join(f"{safe(r['subject'])[:80]}: {r['action']} {safe(r['label'])} — {r['occurred_at'][:10]}" for r in group['events'][:3])
         body=f"**{name}** · {len(group['events'])} records · Person #{group['id']}\n{examples}"
         choices={}
         if len(candidate_ids)==1:
@@ -125,6 +129,7 @@ async def review(state):
             body+='\nChoose an account to confirm, or skip for now.'
         else:
             body+=f'\n\n{linked}. Choose an account, or skip for now.'
+        choices['❔']='Unknown account — confirm this person'
         choices.update({'🔗':'Choose a different account' if len(candidate_ids)==1 else 'Choose an account',
                         '▶️':'Skip for now','💡':'See match evidence','⚙️':'More options','🏠':'Main menu'})
         if state.pop('notice',None):
@@ -158,13 +163,33 @@ async def review(state):
         body=f"**Unparsed report {index+1}/{len(rows)}**\n{safe(row['subject'])[:700]}\n{link}"
         await render(state,body,{'➕':'Record an event from this source',**choices})
         return
-    body=(f"**Historical report {index+1}/{len(rows)}**\n{safe(row['subject'])[:200]}: {row['action']} {safe(row['label'])}\n"
-          f"Date: {safe(row['occurred_at'])}\nLinked account: {f'<@{row["user_id"]}>' if row['user_id'] else 'Not linked'}\n"
-          f"Suggested IDs (unconfirmed): {', '.join(f'<@{int(value)}>' for value in json.loads(row['candidates'])[:5]) or 'None'}\n"
-          f"https://discord.com/channels/{FF_GUILD}/{row['channel_id']}/{row['message_id']}")
-    choices={'🔍':'Inspect original evidence','🔗':'Link / correct person','✏️':'Correct a field',
-             '🚫':'Hide mistaken report','✂️':'Split this event into a separate person',**choices}
+    body=report_card(row,index,len(rows))
+    candidates=json.loads(row['candidates'])
+    choices={}
+    if row['user_id'] is None and len(candidates)==1:
+        choices['✅']='Confirm suggested person'
+    choices.update({'🔗':'Choose person','◀️':'Previous','▶️':'Next','⚙️':'More options','🔙':'Back to people'})
     await render(state,body,choices)
+
+
+def report_card(row,index,total):
+    names={'FF':'Main (FFM)','FFM':'Main (FFM)','FFP':'Pro (FFP)','FFJ':'Junior (FFJ)',
+           'FFJ2':'Junior 2 (FFJ2)','FFG':'Garden (FFG)','FFC':'Carnival (FFC)','FFR':'Resort (FFR)'}
+    where='the server' if row['kind']=='server' else names.get(row['label'],row['label'])
+    when=datetime.fromisoformat(row['occurred_at']).astimezone(ZoneInfo('America/New_York'))
+    date=f"{when.strftime('%b')} {when.day}, {when.year}"
+    verb='Joined' if row['action']=='join' else 'Left'
+    body=f"**{safe(row['subject'])[:150]}** · Report {index+1} of {total}\n\n**{verb} {safe(where)}**\n{date}\n"
+    if row['user_id']:
+        body+=f"\nLinked to <@{row['user_id']}>\n"
+    else:
+        candidates=json.loads(row['candidates'])
+        if len(candidates)==1:
+            body+=f"\nIs this <@{candidates[0]}>? React ✅ to confirm.\n"
+        elif candidates:
+            body+='\nPossible people: '+', '.join(f'<@{uid}>' for uid in candidates[:3])+'\n'
+    body+=f"\n[View original report](https://discord.com/channels/{FF_GUILD}/{row['channel_id']}/{row['message_id']})"
+    return body
 
 
 async def begin_flow(state,action,questions,*,prefix=None):
@@ -196,6 +221,13 @@ async def on_reaction(neighbor,activation,response):
             await begin_flow(state,action,questions)
         else:
             await home_action(state,choice)
+    elif state['screen']=='report_tools':
+        if choice=='🔙':
+            state['screen']='review'
+            await review(state)
+        else:
+            state['screen']='review'
+            await on_reaction(neighbor,activation,response)
     elif state['screen'] in ('identity_tools','identity_details','account_pick','review_views'):
         await identity_choice(state,choice)
     elif state['screen']=='review':
@@ -208,6 +240,22 @@ async def on_reaction(neighbor,activation,response):
                 state['index']=state.get('index',0)+(1 if choice=='▶️' else -1)
             await review(state)
         elif row:
+            if not row.get('identity_group') and choice=='🔙':
+                state.update(screen='review',review_mode=0,index=0)
+                await review(state)
+                return
+            if not row.get('identity_group') and choice=='⚙️':
+                state['screen']='report_tools'
+                await render(state,'**Report tools**',{'🔍':'Inspect full evidence','✏️':'Correct a detail','🚫':'Hide this report','✂️':'Separate into another person','🔙':'Back','❌':'Close'})
+                return
+            if not row.get('identity_group') and choice=='✅':
+                candidates=json.loads(row['candidates'])
+                if row['user_id'] is None and len(candidates)==1:
+                    from persistence.rolodex_records import edit_record
+                    edit_record(state['store'],'event',row['record_key'],'user_id',candidates[0],state['owner'],'Council confirmed suggested person in report menu')
+                    state['index']=state.get('index',0)+1
+                    await review(state)
+                return
             if row.get('identity_group'):
                 await identity_choice(state,choice)
                 return
@@ -248,8 +296,8 @@ async def on_reaction(neighbor,activation,response):
     elif choice in FLOWS:
         action,questions=FLOWS[choice]
         await begin_flow(state,action,questions)
-    elif choice in ('📜','ℹ️'):
-        await invoke(state,['audit' if choice=='📜' else 'help'])
+    elif choice in ('📜','ℹ️','🏆'):
+        await invoke(state,['leaderboard' if choice=='🏆' else 'audit' if choice=='📜' else 'help'])
         await render(state,'Use the page number shown in the response for additional pages, or choose another action.',HOME)
 
 

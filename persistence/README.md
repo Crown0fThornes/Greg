@@ -367,3 +367,33 @@ Successful identity decisions return directly to review, not the main menu.
 Evidence, individual reports, unknown-account actions, merges and filters remain
 available under More options / match evidence. No existing identity data is
 changed merely by displaying the simplified menu.
+
+### First-level unknown accounts, member lookup and Council points
+
+❔ **Unknown account** is available directly on each person-review card. It
+confirms the historical person without inventing a Discord ID and advances the
+queue. Cards once again show original evidence lines such as
+`[H] Cam: leave FF — 2026-11-03`.
+
+Before a menu message is posted/edited, each mentioned member is fetched once
+for that message. Mentions display as `<@ID> (ID)`; the visible numeric fallback
+survives missing/stale Discord mention names or a departed member. Failed lookups
+do not block review. Mentions remain non-notifying. Paginated command replies
+use the same lookup/formatting helper before computing page sizes.
+
+`$rolodex leaderboard` displays Council review standings. One individual
+historical event cleared from review earns one point: a two-record identity
+confirmation earns two points. Confirming an unknown-ID person counts. Merging
+unresolved groups earns no points until they are resolved; merging pending
+records into an already-confirmed person credits only those newly cleared
+records. Individual account corrections and exclusion of mistaken reports also
+count when they remove previously pending records.
+
+Schema version 6 adds `rolodex_review_point`, keyed by stable source message,
+line and event number, retaining the first Council reviewer, action and time.
+Point awards occur in the same transaction as the decision. Reopening, splitting,
+reconfirming, resetting or reimporting an already-credited record cannot award a
+second point or transfer the original credit. Automated imports do not award
+points, and unresolved merges alone do not count as completed work. Points are
+separate from Neighbor XP/inventory. Scoring begins when this version is deployed;
+previous reviews are not backfilled. The leaderboard is also in Other tools.

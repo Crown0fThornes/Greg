@@ -131,6 +131,8 @@ def change_identity(store,action,key,value,actor_id,reason):
         raise ValueError('Include a reason (1–1000 characters).')
     with connect(store.path) as db:
         db.execute('BEGIN IMMEDIATE')
+        from .rolodex_scoring import queued_records,award_cleared
+        before=queued_records(db)
         root,revisions,assignments=identity_state(db)
         if action=='split':
             try:
@@ -166,6 +168,7 @@ def change_identity(store,action,key,value,actor_id,reason):
                 key,target=target,key
             db.execute('INSERT INTO historical_identity_merge(source_id,target_id,actor_id,reason,recorded_at) VALUES (?,?,?,?,?)',
                        (key,target,actor_id,reason,timestamp()))
+            award_cleared(db,before,actor_id,'identity merge')
             return target
         if action not in ('link','unknown','reopen'):
             raise ValueError('Use identity link, unknown, merge, split, or reopen.')
@@ -176,6 +179,7 @@ def change_identity(store,action,key,value,actor_id,reason):
             db.execute('INSERT OR IGNORE INTO person(user_id) VALUES (?)',(user_id,))
         db.execute('INSERT INTO historical_identity_revision(identity_id,user_id,confirmed,actor_id,reason,recorded_at) VALUES (?,?,?,?,?,?)',
                    (key,user_id,int(action!='reopen'),actor_id,reason,timestamp()))
+        award_cleared(db,before,actor_id,'identity '+action)
         return key
 
 

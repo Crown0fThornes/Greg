@@ -76,7 +76,7 @@ class MembershipHistoryTests(unittest.TestCase):
         Rolodex(self.store.path)
         self.assertEqual(len(self.events()), 1)
         with connect(self.store.path) as db:
-            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], 5)
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], 6)
 
 
 if __name__ == '__main__':

@@ -151,3 +151,14 @@ CREATE TABLE IF NOT EXISTS rolodex_import_cursor (
     channel_id INTEGER PRIMARY KEY,
     message_id INTEGER NOT NULL
 );
+-- One point per historical event, credited only on its first Council clearance.
+CREATE TABLE IF NOT EXISTS rolodex_review_point (
+    message_id INTEGER NOT NULL,
+    line_number INTEGER NOT NULL,
+    event_number INTEGER NOT NULL,
+    actor_id INTEGER NOT NULL,
+    action TEXT NOT NULL,
+    awarded_at TEXT NOT NULL,
+    PRIMARY KEY(message_id,line_number,event_number)
+);
+CREATE INDEX IF NOT EXISTS rolodex_points_by_actor ON rolodex_review_point(actor_id);

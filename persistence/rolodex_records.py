@@ -103,6 +103,8 @@ def edit_record(store, kind, key, field, value, actor_id, reason, *, reset=False
         raise ValueError('Include a reason (1–1000 characters).')
     with connect(store.path) as db:
         db.execute('BEGIN IMMEDIATE')
+        from .rolodex_scoring import queued_records,award_cleared
+        before=queued_records(db) if kind=='event' else set()
         row = next((r for r in records(db).get(kind, []) if r['record_key'] == key), None)
         if row is None:
             raise ValueError('Record not found in FF. Use $rolodex review or raw to get its key.')
@@ -120,6 +122,8 @@ def edit_record(store, kind, key, field, value, actor_id, reason, *, reset=False
                            'VALUES (?,?,?,?,?,?,?,?,?)',
                            (kind, key, field, 'reset' if reset else 'set', json.dumps(row.get(field)),
                             json.dumps(value), actor_id, reason.strip(), timestamp()))
+        if kind=='event':
+            award_cleared(db,before,actor_id,'event '+field)
         return cursor.lastrowid
 
 

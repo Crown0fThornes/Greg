@@ -23,7 +23,7 @@ class MenuTests(unittest.IsolatedAsyncioTestCase):
         ResponseRequest.active_requests=[]
         self.owner=NS(id=123,roles=[NS(id=FF.leaders_role)],display_name='Council',bot=False)
         self.bot=NS(id=999,roles=[],display_name='Greg',bot=True)
-        self.guild=NS(id=FF_GUILD,get_member=lambda uid:self.owner if uid==123 else None)
+        self.guild=NS(id=FF_GUILD,get_member=lambda uid:self.owner if uid==123 else None,fetch_member=AsyncMock(return_value=self.owner))
         self.messages=[]
         self.channel=NS(id=77,send=AsyncMock(side_effect=self.send))
         self.context=self.context_for(self.owner,'$rolodex',1)
@@ -111,7 +111,8 @@ class MenuTests(unittest.IsolatedAsyncioTestCase):
         await menu.open_menu(self.context,self.store,review_mode=True)
         self.assertIn('<@456789>',self.messages[0].content)
         request=ResponseRequest.active_requests[0]
-        self.assertLessEqual(len(request.values['menu_session']['choices']),6)
+        self.assertLessEqual(len(request.values['menu_session']['choices']),7)
+        self.assertIn('❔',request.values['menu_session']['choices'])
         await self.react('✅')
         with connect(self.store.path) as db:
             self.assertEqual(records(db)['event'][0]['user_id'],456789)
@@ -143,3 +144,28 @@ class MenuTests(unittest.IsolatedAsyncioTestCase):
         await self.react('📥')
         self.assertEqual(state['screen'],'section')
         self.assertLessEqual(len(state['choices']),6)
+
+    async def test_individual_report_is_compact_with_readable_date_and_tools(self):
+        from datetime import datetime,timezone
+        from persistence.import_membership_history import HistoryImporter,JOINLIST
+        source=NS(id=456,guild=self.guild,channel=NS(id=JOINLIST),author=self.owner,
+                  content='[D] OTSO has joined ff',created_at=datetime(2026,11,2,15,30,tzinfo=timezone.utc))
+        importer=HistoryImporter(self.store,999)
+        importer.add_member(NS(id=456789,name='OTSO',global_name=None,nick=None,display_name='OTSO'))
+        importer.ingest(source)
+        await menu.open_menu(self.context,self.store,review_mode=True)
+        await self.react('⚙️')
+        await self.react('🔍')
+        state=ResponseRequest.active_requests[0].values['menu_session']
+        self.assertLessEqual(len(state['choices']),6)
+        body=self.messages[0].edit.call_args.kwargs['content']
+        self.assertIn('Joined Main (FFM)',body)
+        self.assertIn('Nov 2, 2026',body)
+        self.assertIn('<@456789>',body)
+        self.assertNotIn('15:30',body)
+        self.assertNotIn('Correct a field',body)
+        await self.react('⚙️')
+        self.assertEqual(state['screen'],'report_tools')
+        self.assertLessEqual(len(state['choices']),6)
+        await self.react('🔙')
+        self.assertEqual(state['screen'],'review')

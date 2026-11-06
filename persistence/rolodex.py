@@ -31,10 +31,10 @@ class Rolodex:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with connect(self.path) as db:
             version = db.execute('PRAGMA user_version').fetchone()[0]
-            if version not in (0, 1, 2, 3, 4, 5):
+            if version not in (0, 1, 2, 3, 4, 5, 6):
                 raise ValueError(f'Unsupported Rolodex schema version: {version}')
             db.executescript('BEGIN IMMEDIATE;\n' + Path(__file__).with_name(
-                'rolodex_schema.sql').read_text() + '\nPRAGMA user_version=5;\nCOMMIT;')
+                'rolodex_schema.sql').read_text() + '\nPRAGMA user_version=6;\nCOMMIT;')
         from .rolodex_identities import backfill
         with connect(self.path) as db:
             columns={r[1] for r in db.execute('PRAGMA table_info(historical_identity_revision)')}

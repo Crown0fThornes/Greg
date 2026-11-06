@@ -13,7 +13,8 @@ from persistence.rolodex_records import FIELDS, TABLES, add_event, edit_record, 
 from persistence.rolodex_people import linked_accounts, link_accounts, notes, save_note, account_groups
 from .rolodex_display import compact_profile, find_introduction
 
-HELP = '''`$rolodex` / `$rolodex menu` — reaction menus with guided replies
+HELP = '''`$rolodex leaderboard` — Council standings (one point per historical record cleared)
+`$rolodex` / `$rolodex menu` — reaction menus with guided replies
 `$rolodex review` — interactive historical report review (use review 1 for plain text)
 **Council Rolodex** — use a user mention or numeric ID, including departed users.
 `$rolodex import test` / `import full` / `import` / `import status` / `import stop` — paced background import
@@ -75,6 +76,9 @@ def profile_lines(all_records, user_id, *, raw=False):
 
 
 async def send_page(context, title, lines, page=1, *, profile=False):
+    # Fetch/render mentions before pagination so IDs cannot push a page over limit.
+    from .rolodex_mentions import prepare_mentions
+    lines=(await prepare_mentions(context.guild,'\n'.join(lines))).split('\n')
     # Bound each page by characters, including arbitrary imported text.
     pages, current = [], ''
     for line in lines:
@@ -112,6 +116,20 @@ async def rolodex(activator, context):
             await send_page(context, 'Rolodex help', HELP.splitlines(), int(args[1]) if len(args) > 1 else 1)
             return
         action = args[0].lower()
+        if action=='leaderboard':
+            from persistence.rolodex_scoring import leaderboard
+            with connect(store.path) as db:
+                standings=leaderboard(db)
+            lines=[]
+            previous=None
+            rank=0
+            for index,row in enumerate(standings,1):
+                if row['points']!=previous:
+                    rank=index
+                    previous=row['points']
+                lines.append(f"**{rank}.** <@{row['actor_id']}> — **{row['points']}** point{'s' if row['points']!=1 else ''}")
+            await send_page(context,'Rolodex Council leaderboard',lines or ['No review points yet. Each historical record cleared earns one point.'],int(args[1]) if len(args)>1 else 1)
+            return
         if action=='import':
             from .rolodex_import_job import control
             await control(context,store,args[1:])
