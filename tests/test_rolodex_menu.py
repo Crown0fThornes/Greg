@@ -110,6 +110,9 @@ class MenuTests(unittest.IsolatedAsyncioTestCase):
         importer.ingest(source)
         await menu.open_menu(self.context,self.store,review_mode=True)
         self.assertIn('<@456789>',self.messages[0].content)
+        self.assertIn('Name in records: Fancy',self.messages[0].content)
+        self.assertIn('Suggested Discord account:',self.messages[0].content)
+        self.assertIn('Do these records belong to this account?',self.messages[0].content)
         request=ResponseRequest.active_requests[0]
         self.assertLessEqual(len(request.values['menu_session']['choices']),7)
         self.assertIn('❔',request.values['menu_session']['choices'])

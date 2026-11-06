@@ -119,13 +119,13 @@ async def review(state):
         name=safe(group['label'])[:100]
         linked=f"<@{group['user_id']}>" if group['user_id'] else 'Account not linked'
         examples='\n'.join(f"{safe(r['subject'])[:80]}: {r['action']} {safe(r['label'])} — {r['occurred_at'][:10]}" for r in group['events'][:3])
-        body=f"**{name}** · {len(group['events'])} records · Person #{group['id']}\n{examples}"
+        body=f"**Name in records: {name}**\n{len(group['events'])} records · Person #{group['id']}\n{examples}"
         choices={}
         if len(candidate_ids)==1:
-            body+=f"\n\n**Is this <@{candidate_ids[0]}>?**\n✅ confirms the match and opens the next person."
+            body+=f"\n\n**Suggested Discord account:**\n<@{candidate_ids[0]}>\n\n**Do these records belong to this account?**\n✅ confirms the match and opens the next person."
             choices['✅']='Yes, this is the suggested person'
         elif candidate_ids:
-            body+='\n\nPossible accounts: '+', '.join(f'<@{uid}>' for uid in candidate_ids[:5])
+            body+='\n\nSuggested Discord accounts: '+', '.join(f'<@{uid}>' for uid in candidate_ids[:5])
             body+='\nChoose an account to confirm, or skip for now.'
         else:
             body+=f'\n\n{linked}. Choose an account, or skip for now.'
