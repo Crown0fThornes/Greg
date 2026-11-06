@@ -93,7 +93,7 @@ async def send_page(context, title, lines, page=1, *, profile=False):
         raise ValueError(f'Page must be between 1 and {len(pages)}.')
     heading = f'# {title}' if profile else f'**{title}**'
     paging = f' — page {page}/{len(pages)}' if len(pages)>1 else ''
-    await context.channel.send(content=f'{heading}{paging}\n{pages[page-1]}',
+    return await context.channel.send(content=f'{heading}{paging}\n{pages[page-1]}',
                                allowed_mentions=discord.AllowedMentions.none())
 
 
@@ -201,6 +201,7 @@ async def rolodex(activator, context):
             await send_page(context, 'Rolodex accounts updated', [f'Account change #{key} saved. XP and inventory are unchanged.'])
             return
         is_profile = False
+        provisional_choices={}
         if action in ('edit', 'reset'):
             reset = action == 'reset'
             if len(args) < (5 if reset else 6):
@@ -271,6 +272,12 @@ async def rolodex(activator, context):
                              for line in profile_lines(all_records, account, raw=True)]
                 else:
                     lines = compact_profile(all_records, accounts, notes(db,accounts))
+                    from .rolodex_provisional import profile_matches,suggestion_lines
+                    cached=context.guild.get_member(target)
+                    current_names=[getattr(cached,'display_name',None),getattr(cached,'name',None)] if cached else []
+                    additions,provisional_choices=suggestion_lines(profile_matches(db,all_records,accounts,current_names))
+                    position=next((i for i,line in enumerate(lines) if line.startswith('**Name History:')),len(lines))
+                    lines[position:position]=additions+([''] if additions else [])
                     is_profile = True
                 member = context.guild.get_member(target)
                 saved_names = sorted((r for r in all_records['name'] if r['user_id'] in accounts and r['value'] and not r['excluded']), key=lambda r:(r['observed_at'],r['id']))
@@ -279,6 +286,12 @@ async def rolodex(activator, context):
         if is_profile:
             introduction = await find_introduction(context.guild, accounts)
             lines = [line.replace('{introduction}',introduction) if line.startswith('**Link to introduction:**') else line for line in lines]
-        await send_page(context, title, lines or ['No records to review.'], page, profile=is_profile)
+        sent=await send_page(context, title, lines or ['No records to review.'], page, profile=is_profile)
+        if is_profile and provisional_choices:
+            from .rolodex_provisional import bind
+            visible=bind(context,store,sent,provisional_choices,target)
+            if visible:
+                for reaction in visible:
+                    await sent.add_reaction(reaction)
     except (ValueError, TypeError) as error:
         await send_page(context, 'Rolodex', [text(error), 'Use $rolodex help for instructions.'])

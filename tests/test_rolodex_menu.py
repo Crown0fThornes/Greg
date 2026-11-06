@@ -172,3 +172,19 @@ class MenuTests(unittest.IsolatedAsyncioTestCase):
         self.assertLessEqual(len(state['choices']),6)
         await self.react('🔙')
         self.assertEqual(state['screen'],'review')
+
+    async def test_profile_suggestion_reaction_confirms_and_awards_points(self):
+        from datetime import datetime,timezone
+        from persistence.import_membership_history import HistoryImporter,JOINLIST
+        from commands.rolodex_provisional import bind
+        from persistence.sqlite_db import connect
+        source=NS(id=456,guild=self.guild,channel=NS(id=JOINLIST),author=self.owner,
+                  content='Fancy has joined ffc',created_at=datetime(2026,10,25,tzinfo=timezone.utc))
+        HistoryImporter(self.store,999).ingest(source)
+        message=await self.send('**1️⃣ Fancy** — 1 record\nNeeds Council confirmation')
+        self.assertEqual(bind(self.context,self.store,message,{'1️⃣':1},456789),{'1️⃣':1})
+        await self.react('1️⃣')
+        self.assertIn('✅ Confirmed',message.content)
+        with connect(self.store.path) as db:
+            self.assertEqual(db.execute('SELECT user_id FROM historical_identity_revision').fetchone()[0],456789)
+            self.assertEqual(db.execute('SELECT actor_id FROM rolodex_review_point').fetchone()[0],123)

@@ -397,3 +397,23 @@ second point or transfer the original credit. Automated imports do not award
 points, and unresolved merges alone do not count as completed work. Points are
 separate from Neighbor XP/inventory. Scoring begins when this version is deployed;
 previous reviews are not backfilled. The leaderboard is also in Other tools.
+
+### Provisional history on a person's profile
+
+A `$rolodex @user` lookup now includes a separate **Possible historical records —
+needs Council confirmation** section. It suggests unresolved groups using recorded
+name evidence, confirmed aliases and near matches to the account's known/current
+names. Suggestions across confirmed linked accounts are considered together.
+Already-confirmed identities and individually linked/excluded reports are omitted.
+Competing candidates are explicitly flagged. No provisional record is added to
+confirmed neighborhood history, account links or scoring merely by viewing it.
+
+Up to three suggested groups are displayed with numbered reactions. The initiating
+Council member can confirm each group directly using `ResponseRequest`; the match
+uses the same audited identity-resolution function and per-record points as the
+review queue. Permissions are checked when reacting and before saving. A group
+already reviewed by somebody else is not overwritten. Only the groups visible on
+the current profile page get confirmation reactions; other pages use the usual
+`$rolodex @user PAGE` syntax. Confirming updates the suggestion label immediately;
+reopening the profile renders its records in confirmed history. No reason entry
+is required. Mention notifications remain disabled.
