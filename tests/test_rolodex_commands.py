@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 
 import command_handler
 from persistence.import_membership_history import HistoryImporter, JOINLIST
-from persistence.neighbor_db import connect
+from persistence.sqlite_db import connect
 from persistence.rolodex import FF_GUILD, Rolodex
 from persistence.rolodex_records import add_event, edit_record, records
 from datetime import datetime, timezone

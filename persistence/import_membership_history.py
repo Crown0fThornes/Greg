@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 import unicodedata
 
-from persistence.neighbor_db import connect
+from persistence.sqlite_db import connect
 from persistence.rolodex import DEFAULT_DB_PATH, FF_GUILD, ROOT, Rolodex, timestamp
 
 JOINLIST = 943263445724311572

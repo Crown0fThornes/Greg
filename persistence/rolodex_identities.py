@@ -6,7 +6,7 @@ import unicodedata
 import uuid
 
 import emoji
-from persistence.neighbor_db import connect
+from persistence.sqlite_db import connect
 
 
 def stripped_name(value):

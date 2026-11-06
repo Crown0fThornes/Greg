@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock,patch
 
 from commands import rolodex_import_job as background
 from persistence.import_membership_history import JOINLIST,LEAVELIST
-from persistence.neighbor_db import connect
+from persistence.sqlite_db import connect
 from persistence.rolodex import FF_GUILD,Rolodex
 
 

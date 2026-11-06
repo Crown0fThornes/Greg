@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 
 from persistence.rolodex import Rolodex, FF_GUILD
 from persistence.rolodex_records import add_event, records
-from persistence.neighbor_db import connect
+from persistence.sqlite_db import connect
 from persistence.rolodex_people import linked_accounts, link_accounts, notes, save_note
 from commands.rolodex_display import name_history, neighborhood_history, compact_profile, find_introduction, pretty_date
 

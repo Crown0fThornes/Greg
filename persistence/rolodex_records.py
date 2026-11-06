@@ -2,7 +2,7 @@
 from datetime import datetime
 import json
 
-from persistence.neighbor_db import connect
+from persistence.sqlite_db import connect
 from persistence.rolodex import FF_GUILD, NEIGHBORHOODS, timestamp
 
 TABLES = {'membership': 'membership', 'name': 'name_history',

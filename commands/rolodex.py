@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 import discord
 from discord.utils import escape_markdown, escape_mentions
 import command_handler
-from persistence.neighbor_db import connect
+from persistence.sqlite_db import connect
 from persistence.rolodex import FF_GUILD, Rolodex
 from persistence.rolodex_records import FIELDS, TABLES, add_event, edit_record, records
 from persistence.rolodex_people import linked_accounts, link_accounts, notes, save_note, account_groups

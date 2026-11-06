@@ -6,7 +6,7 @@ import discord
 from command_handler import Context
 from id_bundle import FF
 from responses import ResponseRequest
-from persistence.neighbor_db import connect
+from persistence.sqlite_db import connect
 from persistence.rolodex import FF_GUILD
 from persistence.rolodex_records import FIELDS, records
 

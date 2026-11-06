@@ -5,7 +5,7 @@ from types import SimpleNamespace as NS
 import unittest
 
 from persistence.import_membership_history import HistoryImporter,JOINLIST
-from persistence.neighbor_db import connect
+from persistence.sqlite_db import connect
 from persistence.rolodex import Rolodex,FF_GUILD
 from persistence.rolodex_identities import groups,change_identity,similar_groups,stripped_name
 from persistence.rolodex_records import records,edit_record

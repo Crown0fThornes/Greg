@@ -1,5 +1,5 @@
 """Reversible account associations and versioned Council notes; no XP transfers."""
-from persistence.neighbor_db import connect
+from persistence.sqlite_db import connect
 from persistence.rolodex import timestamp
 
 

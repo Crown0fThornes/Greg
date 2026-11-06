@@ -4,7 +4,7 @@ import time
 
 import discord
 from persistence.import_membership_history import HistoryImporter,JOINLIST,LEAVELIST
-from persistence.neighbor_db import connect
+from persistence.sqlite_db import connect
 
 jobs={}
 

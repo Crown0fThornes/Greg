@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 
-from persistence.neighbor_db import connect
+from persistence.sqlite_db import connect
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DB_PATH = ROOT / 'data' / 'rolodex.sqlite3'
