@@ -10282,7 +10282,7 @@ async def set_nick(user, guild, was_changed = False):
             new_nick = "🦖" + new_nick
 
         if 1492436522228781106 in user_role_ids:
-            new_nick = "🂡" + new_nick
+            new_nick = "♠️" + new_nick
 
         tag_items = neighbor.get_items_of_type("tag");
 
@@ -10533,10 +10533,11 @@ def _carnival_inactivity_messages(members, latest_images, now):
     groups = {tier: [] for tier in labels}
     unknown = []
     for member in members:
+        name=discord.utils.escape_mentions(discord.utils.escape_markdown(member.display_name.replace('\n',' ')[:100]))
         last_image = latest_images.get(member.id)
         reference = last_image if last_image is not None else member.joined_at
         if reference is None:
-            unknown.append(f"- <@{member.id}> — no submission found; join date unavailable, review manually")
+            unknown.append(f"- {name} (<@{member.id}>) — no submission found; join date unavailable, review manually")
             continue
         if reference.tzinfo is None:
             reference = reference.replace(tzinfo=datetime.timezone.utc)
@@ -10546,7 +10547,7 @@ def _carnival_inactivity_messages(members, latest_images, now):
         tier = min(4, days // 7)
         detail = (f"last image {days} days ago" if last_image is not None
                   else f"no submission found; joined {days} days ago")
-        groups[tier].append((days, member.id, f"- <@{member.id}> — {detail}"))
+        groups[tier].append((days, member.id, f"- {name} (<@{member.id}>) — {detail}"))
 
     title = "# Weekly carnival submission review"
     lines = [title, f"<@&{_CARNIVAL_REVIEW_ROLE_ID}>",
@@ -10605,7 +10606,7 @@ async def carnival_inactivity_review(client):
     now = datetime.datetime.now(datetime.timezone.utc)
     for report in _carnival_inactivity_messages(members, latest_images, now):
         await review_channel.send(report, allowed_mentions=discord.AllowedMentions(
-            everyone=False, users=False,
+            everyone=False, users=[discord.Object(id=member.id) for member in members if f'<@{member.id}>' in report],
             roles=[discord.Object(id=_CARNIVAL_REVIEW_ROLE_ID)], replied_user=False))
 
 
@@ -11184,3 +11185,61 @@ if "_rolodex_commands" in globals():
     _rolodex_commands = _reload_rolodex(_rolodex_commands)
 else:
     from . import rolodex as _rolodex_commands
+
+
+def _carnival_retention_messages(members, latest_images, now):
+    # Target the upcoming Monday's review, so retention can happen beforehand.
+    utc=now.astimezone(datetime.timezone.utc)
+    review=(utc+datetime.timedelta(days=(0-utc.weekday())%7)).replace(hour=8,minute=0,second=0,microsecond=0)
+    if review<=utc:
+        review+=datetime.timedelta(days=7)
+    recipients=[]
+    for member in members:
+        image=latest_images.get(member.id)
+        reference=image if image is not None else member.joined_at
+        if reference is None:
+            continue
+        if reference.tzinfo is None:
+            reference=reference.replace(tzinfo=datetime.timezone.utc)
+        days=(review-reference).days
+        if days<14:
+            continue
+        weeks=days//7
+        name=discord.utils.escape_mentions(discord.utils.escape_markdown(member.display_name.replace('\n',' ')[:100]))
+        detail=f"going on {weeks} weeks since last image" if image is not None else f"no image found; going on {weeks} weeks since joining"
+        recipients.append((days,member.id,f"{name} (<@{member.id}>) ({detail})"))
+    heading="**Potential Retention Recipients**"
+    pages=[]
+    content=heading+"\n\n"
+    for _,_,line in sorted(recipients,key=lambda row:(-row[0],row[1])):
+        if len(content)+len(line)+1>1900:
+            pages.append(content.rstrip())
+            content=heading+" (continued)\n\n"
+        content+=line+"\n"
+    if not recipients:
+        content+="No Carnies are approaching demotion-level inactivity for Monday’s review."
+    pages.append(content.rstrip())
+    return pages
+
+
+@command_handler.Scheduled(time="20:00",day_of_week=4,timezone="UTC",
+                           desc="Friday Carnival potential retention recipients")
+async def carnival_retention_recipients(client):
+    guild=client.get_guild(FF.guild)
+    if guild is None:
+        return
+    members=[member async for member in guild.fetch_members(limit=None)
+             if not member.bot and any(role.id==_CARNIVAL_MEMBER_ROLE_ID for role in member.roles)]
+    latest_images={}
+    ids={member.id for member in members}
+    if ids:
+        image_channel=await guild.fetch_channel(_CARNIVAL_IMAGE_CHANNEL_ID)
+        async for message in image_channel.history(limit=None,oldest_first=False):
+            if message.author.id in ids and message.author.id not in latest_images and _ab_race_has_image(message):
+                latest_images[message.author.id]=message.created_at
+                if len(latest_images)==len(ids):
+                    break
+    channel=await guild.fetch_channel(_CARNIVAL_REVIEW_CHANNEL_ID)
+    for content in _carnival_retention_messages(members,latest_images,datetime.datetime.now(datetime.timezone.utc)):
+        await channel.send(content,allowed_mentions=discord.AllowedMentions(
+            everyone=False,users=[discord.Object(id=member.id) for member in members if f'<@{member.id}>' in content],roles=False,replied_user=False))
