@@ -3312,7 +3312,7 @@ async def long_time_members(client):
         #         continue;
         
         
-@command_handler.Scheduled("08:00", day_of_month=1)
+@command_handler.Scheduled("08:00", day_of_month=1, timezone="Etc/GMT+4")
 async def open_barn_sale(client):
     guild = client.get_guild(647883751853916162)
     if guild is None:
@@ -3373,7 +3373,7 @@ async def open_barn_sale(client):
     )
 
 
-@command_handler.Scheduled("20:00", day_of_month=2)
+@command_handler.Scheduled("14:00", day_of_month=2, timezone="Etc/GMT+4")
 async def choose_barn_sale_winner(client):
     guild = client.get_guild(647883751853916162)
     if guild is None:
@@ -3436,10 +3436,11 @@ async def choose_barn_sale_winner(client):
     )
     
     gc = await guild.fetch_channel(648223397205114910)
-    await gc.send(f"Barn sale day is over. This month we had {len(participants)} participants! Let's go!! <#{barn_sale_channel.id}")
+    await gc.send(f"Barn sale day is over. This month we had {len(participants)} participants! Let's go!! "
+                  f"Congratulations to <@{winner}>, who won **20 BEMs**! <#{barn_sale_channel.id}>")
 
 
-@command_handler.Scheduled("20:00", day_of_month=3)
+@command_handler.Scheduled("20:00", day_of_month=3, timezone="Etc/GMT+4")
 async def close_barn_sale(client):
     guild = client.get_guild(647883751853916162)
     if guild is None:
@@ -11243,3 +11244,10 @@ async def carnival_retention_recipients(client):
     for content in _carnival_retention_messages(members,latest_images,datetime.datetime.now(datetime.timezone.utc)):
         await channel.send(content,allowed_mentions=discord.AllowedMentions(
             everyone=False,users=[discord.Object(id=member.id) for member in members if f'<@{member.id}>' in content],roles=False,replied_user=False))
+
+
+@command_handler.Scheduled("14:00",day_of_month=2,timezone="Etc/GMT+4",
+                           desc="Monthly giveaway-host and Town Park image prizes")
+async def monthly_community_prizes(client):
+    from commands.monthly_community_prizes import announce
+    await announce(client)
