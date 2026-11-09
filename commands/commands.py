@@ -2542,92 +2542,7 @@ async def open_ticket(emoji, user, guild):
     from ticket_manager import open_ticket 
 
     return await open_ticket(emoji, user, guild, FF);
-    
-    return; 
-    
-    target = user.id;
-    name = user.display_name;
-    name = name.replace(" ", "-")
 
-    support_channel = await guild.fetch_channel(FF.support_request_channel);
-    message = await support_channel.fetch_message(1033540464441303200);
-    open_tickets_cat = await guild.fetch_channel(FF.open_tickets_category);
-    closed_tickets_cat = await guild.fetch_channel(FF.closed_ticket_category);
-    closed_tickets_cat_2 = await guild.fetch_channel(1183992886820343869);
-    closed_tickets_cat_3 = await guild.fetch_channel(1201914070027219016);
-    closed_tickets_cat_4 = await guild.fetch_channel(1224193594353516605);
-    open_tickets = open_tickets_cat.channels;
-    closed_tickets = closed_tickets_cat.channels;
-    closed_tickets_2 = closed_tickets_cat_2.channels;
-    closed_tickets_3 = closed_tickets_cat_3.channels;
-    closed_tickets_4 = closed_tickets_cat_4.channels;
-    mission_control = await guild.fetch_channel(FF.mission_control_channel);
-    cm = guild.get_role(FF.leaders_role);
-    rank1 = guild.get_role(1205232195703144488);
-
-    if not emoji is None:
-        await message.remove_reaction(emoji, user);
-
-    for ticket in open_tickets:
-        if ticket.topic == str(target):
-            await ticket.edit(name = name);
-            await ticket.send(f"Thank you for reaching out to the Council again. Your private ticket channel is located here <@{user.id}>. Drop a message letting us know what we can help you with!");
-            return 0;
-
-    for ticket in closed_tickets:
-        if ticket.topic == str(target):
-            await ticket.edit(name = name, category = open_tickets_cat);
-
-            await ticket.set_permissions(guild.default_role, read_messages = False);
-            await ticket.set_permissions(user, read_messages = True);
-            await ticket.set_permissions(rank1, read_messages = True, send_messages = False);
-
-            await ticket.send(f"Thank you for reaching out to the Council. Your private ticket channel has been unarchived for you and is located here <@{user.id}>. Drop a message letting us know what we can help you with!");
-            await mission_control.send(f"<@&{FF.leaders_role}> **be advised**: <@{user.id}> has reopened a support ticket at <#{ticket.id}>");
-            return 0;
-
-    for ticket in closed_tickets_2:
-        if ticket.topic == str(target):
-            await ticket.edit(name = name, category = open_tickets_cat);
-
-            await ticket.set_permissions(guild.default_role, read_messages = False);
-            await ticket.set_permissions(user, read_messages = True);
-            await ticket.set_permissions(rank1, read_messages = True, send_messages = False);
-
-            await ticket.send(f"Thank you for reaching out to the Council. Your private ticket channel has been unarchived for you and is located here <@{user.id}>. Drop a message letting us know what we can help you with!");
-            await mission_control.send(f"<@&{FF.leaders_role}> **be advised**: <@{user.id}> has reopened a support ticket at <#{ticket.id}>");
-            return 0;
-
-    for ticket in closed_tickets_3:
-        if ticket.topic == str(target):
-            await ticket.edit(name = name, category = open_tickets_cat);
-
-            await ticket.set_permissions(guild.default_role, read_messages = False);
-            await ticket.set_permissions(user, read_messages = True);
-            await ticket.set_permissions(rank1, read_messages = True, send_messages = False);
-
-            await ticket.send(f"Thank you for reaching out to the Council. Your private ticket channel has been unarchived for you and is located here <@{user.id}>. Drop a message letting us know what we can help you with!" );
-            await mission_control.send(f"<@&{FF.leaders_role}> **be advised**: <@{user.id}> has reopened a support ticket at <#{ticket.id}>");
-            return 0;
-
-    for ticket in closed_tickets_4:
-        if ticket.topic == str(target):
-            await ticket.edit(name = name, category = open_tickets_cat);
-
-            await ticket.set_permissions(guild.default_role, read_messages = False);
-            await ticket.set_permissions(user, read_messages = True);
-            await ticket.set_permissions(rank1, read_messages = True, send_messages = False);
-
-            await ticket.send(f"Thank you for reaching out to the Council. Your private ticket channel has been unarchived for you and is located here <@{user.id}>. Drop a message letting us know what we can help you with!" );
-            await mission_control.send(f"<@&{FF.leaders_role}> **be advised**: <@{user.id}> has reopened a support ticket at <#{ticket.id}>");
-            return 0;
-
-    ticket = await message.guild.create_text_channel(name = name, category = open_tickets_cat, topic = target);
-    await ticket.set_permissions(guild.default_role, read_messages = False);
-    await ticket.set_permissions(user, read_messages = True);
-    await ticket.set_permissions(rank1, read_messages = True, send_messages = False);
-    await ticket.send(f"Thank you for reaching out to the Council via Greg for the first time! Your private ticket channel is located here <@{user.id}>. Drop a message letting us know what we can help you with!");
-    await mission_control.send(f"<@&{FF.leaders_role}> **be advised**: <@{user.id}> has opened a new support ticket at <#{ticket.id}>");
 
 @command_handler.Uncontested(type = "MESSAGE", desc = "If a Neighbor has the Hype Man item, which can be purchased in the rss, then Greg will react to the Neighbor's messages with an emoji.", priority = 2)
 async def hype_man_responses(context: Context):
@@ -5604,49 +5519,18 @@ async def theft(client):
 
 @command_handler.Loop(hours = 10, desc = "Transcriptifies old support tickets") 
 async def transcript_support(client):
-    guild = client.get_guild(647883751853916162);
+    from ticket_manager import get_all_closed_tickets,cleanup_ticket_categories
+    guild=client.get_guild(FF.guild)
+    if guild is None:
+        return
+    for channel in await get_all_closed_tickets(guild):
+        last=[message async for message in channel.history(limit=1)]
+        if last and last[0].created_at.timestamp()+15770000<time.time():
+            await transcript(channel.id,guild)
+            await channel.delete()
+    await cleanup_ticket_categories(guild)
 
-    closed_tickets_cat_id = FF.closed_ticket_category
-    closed_tickets_cat_2_id = (1183992886820343869);
-    closed_tickets_cat_3_id = (1201914070027219016);
-    closed_tickets_cat_4_id = (1224193594353516605);
 
-    guild = client.get_guild(FF.guild);
-
-    category = discord.utils.get(guild.categories, id=closed_tickets_cat_id);
-    category1 = discord.utils.get(guild.categories, id=closed_tickets_cat_2_id);
-    category2 = discord.utils.get(guild.categories, id=closed_tickets_cat_3_id);
-    category3 = discord.utils.get(guild.categories, id=closed_tickets_cat_4_id);
-    
-    for channel in category.channels:
-        if isinstance(channel, discord.TextChannel):
-            last = [message async for message in channel.history(limit=1)][0];
-            if last.created_at.timestamp() + 15770000 < time.time():
-                await transcript(channel.id, guild)
-                await channel.delete();
-                
-    for channel in category1.channels:
-        if isinstance(channel, discord.TextChannel):
-            last = [message async for message in channel.history(limit=1)][0];
-            if last.created_at.timestamp() + 15770000 < time.time():
-                await transcript(channel.id, guild)
-                await channel.delete();
-                
-    for channel in category2.channels:
-        if isinstance(channel, discord.TextChannel):
-            last = [message async for message in channel.history(limit=1)][0];
-            if last.created_at.timestamp() + 15770000 < time.time():
-                await transcript(channel.id, guild)
-                await channel.delete();
-
-    for channel in category3.channels:
-        if isinstance(channel, discord.TextChannel):
-            last = [message async for message in channel.history(limit=1)][0];
-            if last.created_at.timestamp() + 15770000 < time.time():
-                await transcript(channel.id, guild)
-                await channel.delete();
-            
-    
 async def transcript(channel_id, guild):
     origin_channel = await guild.fetch_channel(channel_id)
 
@@ -6150,92 +6034,42 @@ async def reminders_mgmt(client):
 @command_handler.Loop(hours = 6, desc = "Archive unused support channels") 
 async def archive_support_tickets(client):
 
-    category_id = FF.closed_ticket_category
-
-    guild = client.get_guild(FF.guild);
-
-    open_tickets_cat = await guild.fetch_channel(FF.open_tickets_category);
-    closed_tickets_cat = await guild.fetch_channel(FF.closed_ticket_category);
-    closed_tickets_cat_2 = await guild.fetch_channel(1183992886820343869);
-    closed_tickets_cat_3 = await guild.fetch_channel(1201914070027219016);
-    closed_tickets_cat_4 = await guild.fetch_channel(1224193594353516605);
-    
-    for category in [open_tickets_cat, closed_tickets_cat, closed_tickets_cat_2, closed_tickets_cat_3, closed_tickets_cat_4]:
-        for channel in category.channels:
-            if isinstance(channel, discord.TextChannel):
-                try:
-                    user_id = int(channel.topic)
-                except:
-                    continue;
-                try:
-                    await guild.fetch_member(user_id)
-                except:
-                    print(f'User not found for channel {channel.name}, deleting...')
-                    await transcript(channel.id, guild)
-                    await channel.delete()
-    else:
-        print(f'Category with ID {category_id} not found in the guild.')
-
-
-    support_channel = await guild.fetch_channel(FF.support_request_channel);
-    message = await support_channel.fetch_message(1033540464441303200);
-    open_tickets_cat = await guild.fetch_channel(FF.open_tickets_category);
-    closed_tickets_cat = await guild.fetch_channel(FF.closed_ticket_category);
-    closed_tickets_cat_2 = await guild.fetch_channel(1183992886820343869);
-    closed_tickets_cat_3 = await guild.fetch_channel(1201914070027219016);
-    closed_tickets_cat_4 = await guild.fetch_channel(1224193594353516605);
-    open_tickets = open_tickets_cat.channels;
-    closed_tickets = closed_tickets_cat.channels;
-    if len(closed_tickets) > 49:
-        closed_tickets = closed_tickets_cat_2.channels;
-        closed_tickets_cat = closed_tickets_cat;
-    mission_control = await guild.fetch_channel(FF.mission_control_channel);
-    cm = guild.get_role(FF.leaders_role);
-
-    for ticket in open_tickets:
-        if ticket.id == 1033544493728809000:
-            continue;
+    from ticket_manager import category_snapshot,get_all_closed_tickets,archive_ticket,cleanup_ticket_categories
+    guild=client.get_guild(FF.guild)
+    if guild is None:
+        return
+    categories,channels=await category_snapshot(guild,"open")
+    open_ids={category.id for category in categories}
+    opened=[c for c in channels if isinstance(c,discord.TextChannel) and c.category_id in open_ids]
+    closed=await get_all_closed_tickets(guild)
+    for ticket in opened+closed:
+        if ticket.id==1033544493728809000:
+            continue
         try:
-            user = await guild.fetch_member(int(ticket.topic));
-        except:
-            try:
-                await ticket.edit(category=closed_tickets_cat);
-            except:
-                try:
-                    await ticket.edit(category=closed_tickets_cat_2);
-                except:
-                    try:
-                        await ticket.edit(category=closed_tickets_cat_3);
-                    except:
-                        await ticket.edit(category=closed_tickets_cat_4);
-            await ticket.set_permissions(user, read_messages = False);
-        last = [message async for message in ticket.history(limit=1)][0];
-        if last.content.lower() == "keep":
-            continue;
-        
-        # Finish
-        # async for message in mission_control.history(oldest_first=False, limit=None):
-        #     if 
-        
-        if last.created_at.timestamp() + (2*86400) < time.time():
-            try:
-                await ticket.edit(category=closed_tickets_cat);
-            except:
-                try:
-                    await ticket.edit(category=closed_tickets_cat_2);
-                except:
-                    try:
-                        await ticket.edit(category=closed_tickets_cat_3);
-                    except:
-                        await ticket.edit(category=closed_tickets_cat_4);
-            await ticket.set_permissions(user, read_messages = False);
-            rank1 = guild.get_role(1205232195703144488);
-            await ticket.set_permissions(rank1, read_messages = False);
-            await ticket.send("This ticket has been archived. Neighbor will not see messages sent here until it is unarchived.\nThis ticket will be transcribed & deleted after 6 months of inactivity or upon the Neighbor leaving the server.");
-            guild = client.get_guild(FF.guild)  # Replace with your guild/server ID
-            mission_control = await guild.fetch_channel(1033544493728809000);
-            await mission_control.send(f"A ticket from <@{user.id}> has been auto-archived: <#{ticket.id}>");
-            
+            user_id=int(ticket.topic)
+        except (ValueError,TypeError):
+            continue
+        try:
+            user=await guild.fetch_member(user_id)
+        except discord.NotFound:
+            await transcript(ticket.id,guild)
+            await ticket.delete()
+            continue
+        if ticket not in opened:
+            continue
+        last=[message async for message in ticket.history(limit=1)]
+        if not last or last[0].content.lower()=="keep":
+            continue
+        if last[0].created_at.timestamp()+2*86400<time.time():
+            await archive_ticket(guild,ticket)
+            await ticket.set_permissions(user,read_messages=False)
+            rank1=guild.get_role(1205232195703144488)
+            if rank1:
+                await ticket.set_permissions(rank1,read_messages=False)
+            await ticket.send("This ticket has been archived. Neighbor will not see messages sent here until it is unarchived.\nThis ticket will be transcribed & deleted after 6 months of inactivity or upon the Neighbor leaving the server.")
+            mission_control=await guild.fetch_channel(1033544493728809000)
+            await mission_control.send(f"A ticket from <@{user.id}> has been auto-archived: <#{ticket.id}>")
+    await cleanup_ticket_categories(guild)
 
 
 # @command_handler.Loop(days = 1, desc = "From the second through fourth of each month, rss items are on sale. Also the 25th through the 28th")
