@@ -11102,3 +11102,29 @@ async def carnival_retention_recipients(client):
 async def monthly_community_prizes(client):
     from commands.monthly_community_prizes import announce
     await announce(client)
+
+
+@command_handler.Command(AccessType.PRIVILEGED, desc="Manage private two-seat STV Council elections: $election help")
+async def election(activator: Neighbor, context: Context):
+    from commands.council_election import control
+    try:
+        await control(context, context.message._state._get_client())
+    except ValueError as error:
+        raise CommandArgsError(str(error)) from None
+
+
+@command_handler.Command(AccessType.PUBLIC, desc="Receive a private ranked Council ballot: $vote election-ID")
+async def vote(activator: Neighbor, context: Context):
+    from commands.council_election import open_ballot
+    if len(context.args)!=1 or not context.args[0].isdigit():
+        raise CommandArgsError('Use $vote election-ID in the server to receive a private ballot.')
+    try:
+        await open_ballot(context,int(context.args[0]))
+    except ValueError as error:
+        raise CommandArgsError(str(error)) from None
+
+
+@command_handler.Loop(minutes=5, desc="Remind unsubmitted Council voters and close due STV elections")
+async def close_council_elections(client):
+    from commands.council_election import close_due
+    await close_due(client)
