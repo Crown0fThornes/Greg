@@ -11104,7 +11104,7 @@ async def monthly_community_prizes(client):
     await announce(client)
 
 
-@command_handler.Command(AccessType.PRIVILEGED, desc="Manage private two-seat STV Council elections: $election help")
+@command_handler.Command(AccessType.PRIVILEGED, desc="Manage private STV Council elections: $election help")
 async def election(activator: Neighbor, context: Context):
     from commands.council_election import control
     try:

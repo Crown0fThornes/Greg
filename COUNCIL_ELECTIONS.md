@@ -1,22 +1,24 @@
 # Private ranked Council elections
 
-Council can open a two-seat election with two to seven distinct candidates:
+Council can open an election with a configurable number of seats and nominees:
 
 ```
-$election create "November Council election" 11/20/2026 8:00 PM @Alice @Bob @Carol
+$election create "November Council election" 2 11/20/2026 8:00 PM @Alice @Bob @Carol
 ```
 
 Use actual Discord user mentions for candidates. The title must be quoted.
 Role mentions are also accepted, either alone or mixed with user mentions:
 
 ```
-$election create "November Council election" 11/20/2026 8:00 PM @CandidateRole
+$election create "November Council election" 3 11/20/2026 8:00 PM @CandidateRole
 ```
 
 Each role expands to all its current non-bot members, using a fresh server
 member list. Overlapping roles and individually mentioned members are
-deduplicated. The expanded candidate list must contain two to seven people;
-an oversized or undersized list is rejected rather than silently truncated.
+deduplicated. There is no seven-candidate limit. The seat count must be a
+positive integer, and there must be at least as many distinct candidates as
+seats. The old syntax without a seat count still defaults to two seats, and
+existing elections without that setting retain their original two seats.
 Role changes after creation do not alter the candidates for that election.
 
 The deadline uses fixed server time (UTC−4), including during winter.
@@ -32,11 +34,18 @@ Greg immediately sends each eligible Council member a private DM ballot when
 the election opens. If someone needs another menu, they can run `$vote ID` in
 the server; that server request receives a ✅. The menu lets the voter choose candidates
 one at a time in preference order, undo their last choice, and submit after
-ranking at least two. They may rank every candidate they would accept. The
+ranking at least as many candidates as the number of winning seats. For
+example, three seats require three rankings. They may rank every candidate
+they would accept. The
 ballot has no tied or duplicate ranks. A draft does not count until submitted.
+Lists larger than 25 remaining candidates use Previous/Next candidate pages
+to fit Discord's dropdown limit. A Review full ranking button shows the entire
+draft privately; the main menu previews the first ten choices for long ballots.
 
 The submission creates a receipt message in the voter's conversation with
-Greg. Submitting another ballot for that election replaces the stored receipt
+Greg. Receipts too long for a Discord message use a private text attachment
+on that receipt, read and validated by Greg when counting. Submitting another
+ballot for that election replaces the stored receipt
 reference; exactly one submitted ballot per eligible Discord account is read
 at closing. Earlier receipts remain in the DM but do not count. Receipt text
 alone is not confirmation: the menu must also confirm successful submission.
@@ -71,8 +80,8 @@ processes overdue elections after a restart. Council can close early with
 are accepted while counting or after closing. A failed receipt fetch can be
 retried without moving the original cutoff or dropping the ballot.
 
-Counting uses exactly two seats, a fixed Droop quota
-`floor(valid ballots / 3) + 1`, and weighted inclusive Gregory surplus
+Counting uses the configured number of seats, a fixed Droop quota
+`floor(valid ballots / (seats + 1)) + 1`, and weighted inclusive Gregory surplus
 transfers. It uses exact rational arithmetic, rounding only for display.
 Each ballot begins with weight one. At each round it supports its highest
 ranked continuing candidate. A candidate reaching the quota is elected and

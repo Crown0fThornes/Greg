@@ -191,6 +191,52 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
         voter.send.assert_awaited_once()
         voter.send.call_args.kwargs['view'].stop()
 
+    async def test_create_role_with_nine_candidates_and_three_seats(self):
+        people=[NS(id=uid,display_name=f'Candidate {uid}',bot=False,
+                   roles=[NS(id=200)],send=AsyncMock()) for uid in range(1,10)]
+        voter=NS(id=10,bot=False,roles=[NS(id=election.COUNCIL_ROLE)],send=AsyncMock())
+        async def members(**kwargs):
+            for person in people+[voter]:
+                yield person
+        guild=NS(id=election.GUILD_ID,fetch_members=members,get_role=lambda rid:NS(id=rid))
+        context=NS(guild=guild,author=NS(id=10),channel=NS(id=999,send=AsyncMock()))
+        key=await election.create(context,['Election','3','11/20/2026','8:00','PM','<@&200>'],
+                                  store=self.store,now=datetime(2026,11,11,tzinfo=timezone.utc))
+        row=self.store.get(key)
+        self.assertEqual(election.candidates(row),list(range(1,10)))
+        self.assertEqual(row['config']['seats'],3)
+        view=voter.send.call_args.kwargs['view']
+        view.ranking=[1,2]
+        view.refresh()
+        self.assertTrue(next(child for child in view.children if getattr(child,'label','')=='Submit ballot').disabled)
+        view.ranking=[1,2,3]
+        view.refresh()
+        self.assertFalse(next(child for child in view.children if getattr(child,'label','')=='Submit ballot').disabled)
+        view.stop()
+
+    async def test_large_candidate_lists_have_pages_and_bounded_preview(self):
+        key=self.store.create(config(seats=3,candidates=[dict(id=uid,name='Candidate '+str(uid)) for uid in range(1,61)]))
+        view=election.BallotView(self.store.get(key),10,self.store)
+        select=next(child for child in view.children if isinstance(child,discord.ui.Select))
+        self.assertEqual(len(select.options),25)
+        self.assertEqual(select.options[0].value,'1')
+        view.page=2
+        view.refresh()
+        select=next(child for child in view.children if isinstance(child,discord.ui.Select))
+        self.assertEqual([option.value for option in select.options],list(map(str,range(51,61))))
+        view.ranking=list(range(1,61))
+        view.refresh()
+        self.assertLess(len(view.text()),1900)
+        self.assertIn('50 more',view.text())
+        view.stop()
+
+    async def test_long_receipts_are_read_from_private_attachment(self):
+        row=self.store.get(self.key)
+        text=election.receipt_content(row,[3,1])
+        attachment=NS(filename=f'ballot-{self.key}.txt',read=AsyncMock(return_value=text.encode('utf-8')))
+        message=NS(author=NS(id=99),content=f'BALLOT-FILE-V1:{self.key}',attachments=[attachment])
+        self.assertEqual(await election.load_receipt(message,row,99),[3,1])
+
     async def test_reminders_are_daily_and_stop_after_submission(self):
         people={uid:NS(id=uid,send=AsyncMock()) for uid in (10,11,12)}
         guild=NS(fetch_member=AsyncMock(side_effect=lambda uid:people[uid]))

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from fractions import Fraction
 import logging
 import re
+import io
 
 import discord
 
@@ -16,9 +17,9 @@ ST=timezone(timedelta(hours=-4))
 lock=asyncio.Lock()
 log=logging.getLogger(__name__)
 HELP='''**Council elections**
-`$election create "Election name" month/day/year hour:minute AM/PM @candidate-or-role ...`
-Opens a two-seat election with 2–7 candidates. Times use ST (UTC−4).
-Role mentions add their non-bot members as candidates (2–7 distinct candidates total).
+`$election create "Election name" seats month/day/year hour:minute AM/PM @candidate-or-role ...`
+Choose any positive number of seats, with at least that many candidates. Times use ST (UTC−4).
+Role mentions add all their non-bot members as candidates. Omitting seats defaults to 2.
 Current Council members receive DM ballots immediately and reminders every 24 hours until submitted.
 `$vote ID` — receive a private ballot; submit again to replace your vote before closing.
 `$election list` / `$election status ID` — elections and turnout, without interim tallies.
@@ -34,6 +35,10 @@ def safe(text):
 
 def candidates(row):
     return [candidate['id'] for candidate in row['config']['candidates']]
+
+
+def seat_count(row):
+    return row['config'].get('seats',2)
 
 
 def name(row,uid):
@@ -63,7 +68,22 @@ def read_receipt(message,row,bot_id):
     match=re.search(rf"^BALLOT-V1:{row['id']}:(\d+(?:,\d+)*)$",message.content,re.M)
     if not match:
         raise ValueError('A saved ballot receipt is unreadable; counting stopped.')
-    return validate_ranking([int(uid) for uid in match[1].split(',')],candidates(row))
+    return validate_ranking([int(uid) for uid in match[1].split(',')],candidates(row),seat_count(row))
+
+
+async def load_receipt(message,row,bot_id):
+    if message.content.endswith(f"BALLOT-FILE-V1:{row['id']}"):
+        if message.author.id!=bot_id:
+            raise ValueError('A ballot receipt was not authored by Greg.')
+        attachment=next((attachment for attachment in message.attachments
+                         if attachment.filename==f"ballot-{row['id']}.txt"),None)
+        if attachment is None:
+            raise ValueError('A saved ballot attachment is missing; counting stopped.')
+        text=(await attachment.read()).decode('utf-8')
+        # Use the same validation for a long ballot's attached receipt.
+        from types import SimpleNamespace
+        return read_receipt(SimpleNamespace(author=message.author,content=text),row,bot_id)
+    return read_receipt(message,row,bot_id)
 
 
 def election_summary(row,store):
@@ -73,7 +93,7 @@ def election_summary(row,store):
     invitations=store.invitations(row['id'])
     blocked=[uid for uid in missing if invitations.get(uid,{}).get('status') in ('blocked','failed')]
     return (f"**Election #{row['id']}: {safe(config['title'])} — {row['status']}**\n"
-            f"Two seats · {len(config['candidates'])} candidates · {len(config['voters'])} eligible Council voters\n"
+            f"{seat_count(row)} seats · {len(config['candidates'])} candidates · {len(config['voters'])} eligible Council voters\n"
             f"Ballots submitted: {len(submitted)}\n"
             'Awaiting ballots: '+(', '.join(f'<@{uid}>' for uid in missing) or 'Nobody')+'\n'
             +('DM delivery needs attention: '+', '.join(f'<@{uid}>' for uid in blocked)+'\n' if blocked else '')+
@@ -92,7 +112,7 @@ def results_text(row):
     if not result:
         return 'Results are not available yet. No interim candidate tallies are displayed.'
     lines=[f"**Election #{row['id']}: {safe(row['config']['title'])} — Results**",
-           f"Valid ballots: {result['ballots']} · Seats: 2 · Quota: {result['quota']}"]
+           f"Valid ballots: {result['ballots']} · Seats: {seat_count(row)} · Quota: {result['quota']}"]
     for index,uid in enumerate(result['winners'],1):
         lines.append(f"**Elected: {name(row,uid)}** (<@{uid}>)")
     if result['tied']:
@@ -103,7 +123,7 @@ def results_text(row):
         else:
             lines.append('The remaining candidates are tied. No winner was chosen for the remaining seat(s).')
     elif not result['ballots']:
-        lines.append('No ballots were submitted. Neither seat was filled.')
+        lines.append('No ballots were submitted. No seats were filled.')
     lines.append(f"Council can see the count with `$election rounds {row['id']}`.")
     return '\n'.join(lines)
 
@@ -126,9 +146,29 @@ def round_text(row):
     return lines
 
 
+async def post_result(channel,row):
+    content=results_text(row)
+    if len(content)<=1900:
+        return await channel.send(content,allowed_mentions=discord.AllowedMentions.none())
+    file=discord.File(io.BytesIO(content.encode('utf-8')),filename=f"election-{row['id']}-results.txt")
+    try:
+        return await channel.send(f"**Election #{row['id']}: {safe(row['config']['title'])} — Results**\n"
+            f"Elected: {len(row['result']['winners'])} · Unfilled seats: {row['result']['unfilled']}\n"
+            'Full results are attached.'+(' A Senior Member vote is required for unresolved seats.' if row['result']['tied'] else ''),
+            file=file,allowed_mentions=discord.AllowedMentions.none())
+    finally:
+        file.close()
+
+
 async def send_lines(channel,lines):
     page=''
     for line in lines:
+        while len(line)>1900:
+            if page:
+                await channel.send(page,allowed_mentions=discord.AllowedMentions.none())
+                page=''
+            await channel.send(line[:1900],allowed_mentions=discord.AllowedMentions.none())
+            line=line[1900:]
         if len(page)+len(line)+1>1900:
             await channel.send(page,allowed_mentions=discord.AllowedMentions.none())
             page=''
@@ -144,14 +184,21 @@ class BallotView(discord.ui.View):
         self.uid=uid
         self.store=store
         self.ranking=[]
+        self.page=0
         self.refresh()
 
     def text(self):
         lines=[f"**Private ballot — Election #{self.row['id']}: {safe(self.row['config']['title'])}**",
-               'Choose candidates in preference order: first choice first. Rank at least 2; '
+               f'Choose candidates in preference order: first choice first. Rank at least {seat_count(self.row)} '
+               f'for the {seat_count(self.row)} available seats; '
                'you may rank every candidate you would accept. Unranked candidates receive no further transfers.',
                '', '**Your draft ranking:**']
-        lines.extend(f'{index}. {name(self.row,uid)}' for index,uid in enumerate(self.ranking,1))
+        lines.extend(f'{index}. {name(self.row,uid)}' for index,uid in enumerate(self.ranking[:10],1))
+        if len(self.ranking)>10:
+            lines.append(f'…and {len(self.ranking)-10} more. Press **Review full ranking** to see every choice.')
+        remaining=len(candidates(self.row))-len(self.ranking)
+        if remaining>25:
+            lines.append(f'Candidate page {self.page+1}/{(remaining+24)//25}; use the page buttons to browse.')
         if not self.ranking:
             lines.append('No choices yet. Select your first choice below.')
         lines += ['', 'Press **Submit ballot** to save this ranking. A draft is not a vote. '
@@ -168,26 +215,46 @@ class BallotView(discord.ui.View):
     def refresh(self):
         self.clear_items()
         remaining=[candidate for candidate in self.row['config']['candidates'] if candidate['id'] not in self.ranking]
+        self.page=min(self.page,max(0,(len(remaining)-1)//25))
         if remaining:
             select=discord.ui.Select(placeholder=f'Choose preference #{len(self.ranking)+1}',
-                options=[discord.SelectOption(label=candidate['name'][:100],value=str(candidate['id'])) for candidate in remaining])
+                options=[discord.SelectOption(label=candidate['name'][:100],value=str(candidate['id']))
+                         for candidate in remaining[self.page*25:(self.page+1)*25]])
             async def choose(interaction):
                 uid=int(select.values[0])
                 if uid not in self.ranking:
                     self.ranking.append(uid)
+                self.page=0
                 self.refresh()
                 await interaction.response.edit_message(content=self.text(),view=self)
             select.callback=choose
             self.add_item(select)
+        if len(remaining)>25:
+            for delta,label in ((-1,'Previous candidates'),(1,'Next candidates')):
+                button=discord.ui.Button(label=label,disabled=not 0<=self.page+delta<(len(remaining)+24)//25)
+                async def move(interaction,delta=delta):
+                    self.page+=delta
+                    self.refresh()
+                    await interaction.response.edit_message(content=self.text(),view=self)
+                button.callback=move
+                self.add_item(button)
         undo=discord.ui.Button(label='Undo last choice',disabled=not self.ranking)
         async def undo_choice(interaction):
             if self.ranking:
                 self.ranking.pop()
+            self.page=0
             self.refresh()
             await interaction.response.edit_message(content=self.text(),view=self)
         undo.callback=undo_choice
         self.add_item(undo)
-        submit=discord.ui.Button(label='Submit ballot',style=discord.ButtonStyle.success,disabled=len(self.ranking)<2)
+        review=discord.ui.Button(label='Review full ranking',disabled=not self.ranking)
+        async def review_ranking(interaction):
+            await interaction.response.defer()
+            await send_lines(interaction.channel,['**Your current draft ranking (not yet submitted):**']+
+                             [f'{index}. {name(self.row,uid)}' for index,uid in enumerate(self.ranking,1)])
+        review.callback=review_ranking
+        self.add_item(review)
+        submit=discord.ui.Button(label='Submit ballot',style=discord.ButtonStyle.success,disabled=len(self.ranking)<seat_count(self.row))
         submit.callback=self.submit
         self.add_item(submit)
 
@@ -197,8 +264,18 @@ class BallotView(discord.ui.View):
             async with lock:
                 row=self.store.get(self.row['id'])
                 open_for(row,self.uid,datetime.now(timezone.utc).timestamp())
-                ranking=validate_ranking(self.ranking,candidates(row))
-                receipt=await interaction.channel.send(receipt_content(row,ranking),allowed_mentions=discord.AllowedMentions.none())
+                ranking=validate_ranking(self.ranking,candidates(row),seat_count(row))
+                content=receipt_content(row,ranking)
+                if len(content)<=1900:
+                    receipt=await interaction.channel.send(content,allowed_mentions=discord.AllowedMentions.none())
+                else:
+                    file=discord.File(io.BytesIO(content.encode('utf-8')),filename=f"ballot-{row['id']}.txt")
+                    try:
+                        receipt=await interaction.channel.send('**Private ballot receipt attached.** '
+                            'It counts only after Greg confirms submission.\n'+f"BALLOT-FILE-V1:{row['id']}",
+                            file=file,allowed_mentions=discord.AllowedMentions.none())
+                    finally:
+                        file.close()
                 when=datetime.now(timezone.utc).timestamp()
                 open_for(row,self.uid,when)
                 self.store.submit(row['id'],self.uid,interaction.channel.id,receipt.id,when)
@@ -246,13 +323,13 @@ async def close_election(client,key,*,store=None,now=None):
                 if channel.recipient.id!=voter['user_id']:
                     raise ValueError('A saved receipt belongs to a different DM; counting stopped.')
                 message=await channel.fetch_message(voter['receipt_id'])
-                ballots.append(read_receipt(message,row,client.user.id))
-            store.finish(key,count_stv(candidates(row),ballots))
+                ballots.append(await load_receipt(message,row,client.user.id))
+            store.finish(key,count_stv(candidates(row),ballots,seats=seat_count(row)))
             row=store.get(key)
         if store.claim_delivery(key):
             try:
                 channel=await client.fetch_channel(row['config']['channel_id'])
-                posted=await channel.send(results_text(row),allowed_mentions=discord.AllowedMentions.none())
+                posted=await post_result(channel,row)
             except (discord.Forbidden,discord.NotFound):
                 store.delivery(key,'waiting')
                 raise
@@ -263,8 +340,14 @@ async def close_election(client,key,*,store=None,now=None):
 
 async def create(context,args,*,store=None,now=None):
     store=store or ElectionStore()
+    args=list(args)
+    seats=2
+    if len(args)>1 and re.fullmatch(r'-?\d+',args[1]):
+        seats=int(args.pop(1))
+    if seats<1:
+        raise ValueError('The number of winning seats must be positive.')
     if len(args)<5:
-        raise ValueError('Use $election create "Election name" month/day/year hour:minute AM/PM @candidate-or-role ...')
+        raise ValueError('Use $election create "Election name" seats month/day/year hour:minute AM/PM @candidate-or-role ...')
     title=args[0]
     if not 1<=len(title)<=80:
         raise ValueError('Election names must be 1–80 characters.')
@@ -291,8 +374,8 @@ async def create(context,args,*,store=None,now=None):
         else:
             raise ValueError('List candidates as user or role mentions after the closing date.')
     ids=list(dict.fromkeys(ids))
-    if not 2<=len(ids)<=7:
-        raise ValueError(f'The mentions expand to {len(ids)} distinct candidates. Choose 2–7 for the two seats.')
+    if len(ids)<seats:
+        raise ValueError(f'The mentions expand to {len(ids)} distinct candidates, but {seats} winning seats require at least {seats} candidates.')
     choices=[]
     for uid in ids:
         member=member_map.get(uid) or await context.guild.fetch_member(uid)
@@ -305,7 +388,7 @@ async def create(context,args,*,store=None,now=None):
         raise ValueError('No eligible Council voters were found; the election was not opened.')
     key=store.create(dict(title=title,deadline=deadline.timestamp(),guild_id=context.guild.id,
         channel_id=context.channel.id,creator_id=context.author.id,created_at=timestamp,
-        candidates=choices,voters=sorted(set(voters))))
+        candidates=choices,voters=sorted(set(voters)),seats=seats))
     await send_lines(context.channel,election_summary(store.get(key),store).splitlines())
     await invite_voters(context.guild,store.get(key),store=store,members=member_map,now=timestamp)
     invitations=store.invitations(key)

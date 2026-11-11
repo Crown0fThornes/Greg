@@ -57,6 +57,25 @@ class CountTests(unittest.TestCase):
                 validate_ranking(ballot,[1,2,3])
         self.assertEqual(validate_ranking([3,1],[1,2,3]),[3,1])
 
+    def test_variable_seats_and_more_than_seven_candidates(self):
+        candidates=list(range(1,10))
+        ballots=[[1,2,3]]*7+[[2,3,1]]*7+[[3,2,1]]*6
+        result=count_stv(candidates,ballots,seats=3)
+        self.assertEqual(result['quota'],6)
+        self.assertEqual(set(result['winners']),{1,2,3})
+        self.assertEqual(result['unfilled'],0)
+        self.assertEqual(result['seats'],3)
+        with self.assertRaises(ValueError):
+            count_stv(candidates,[[1,2]],seats=3)
+
+    def test_single_seat_and_invalid_seat_counts(self):
+        result=count_stv([1,2,3],[[1]]*3+[[2]]*2,seats=1)
+        self.assertEqual(result['winners'],[1])
+        self.assertEqual(result['quota'],3)
+        for seats in (0,-1,4):
+            with self.assertRaises(ValueError):
+                count_stv([1,2,3],[],seats=seats)
+
     def test_ballot_order_never_changes_result_or_rounds(self):
         ballots=[[1,2,3],[1,3,2],[2,3,1],[3,2,1]]
         expected=count_stv([1,2,3],ballots)

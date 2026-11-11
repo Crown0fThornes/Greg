@@ -1,22 +1,22 @@
-"""Exact two-seat STV: Droop quota and weighted inclusive Gregory transfers."""
+"""Exact STV: Droop quota and weighted inclusive Gregory transfers."""
 from fractions import Fraction
 
 
-def validate_ranking(ranking, candidates):
-    if not 2 <= len(ranking) <= len(candidates):
-        raise ValueError('Rank at least 2 candidates, up to all candidates.')
+def validate_ranking(ranking, candidates, minimum=2):
+    if not minimum <= len(ranking) <= len(candidates):
+        raise ValueError(f'Rank at least {minimum} candidates, up to all candidates.')
     if len(set(ranking)) != len(ranking) or not set(ranking) <= set(candidates):
         raise ValueError('Rank each candidate at most once, using only this election’s candidates.')
     return list(ranking)
 
 
 def count_stv(candidates, ballots, seats=2):
-    if seats != 2 or not 2 <= len(candidates) <= 7 or len(set(candidates)) != len(candidates):
-        raise ValueError('This election requires 2 seats and 2–7 distinct candidates.')
-    ballots = [validate_ranking(ballot, candidates) for ballot in ballots]
+    if not isinstance(seats,int) or seats<1 or len(candidates)<seats or len(set(candidates)) != len(candidates):
+        raise ValueError('Choose a positive number of seats and at least that many distinct candidates.')
+    ballots = [validate_ranking(ballot, candidates, seats) for ballot in ballots]
     quota = len(ballots)//(seats+1)+1
     result = dict(method='Droop quota; weighted inclusive Gregory STV',
-                  ballots=len(ballots), quota=quota, winners=[], rounds=[], tied=[], unfilled=seats)
+                  ballots=len(ballots), seats=seats, quota=quota, winners=[], rounds=[], tied=[], unfilled=seats)
     if not ballots:
         return result
     active = set(candidates)
