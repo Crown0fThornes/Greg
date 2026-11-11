@@ -255,30 +255,6 @@ async def force_reopen_ticket(context: Context):
     from ticket_manager import open_ticket 
 
     return await open_ticket(None, user, context.guild, FF);
-    
-    
-
-@command_handler.Loop(hours = 1)
-async def publish_heart_react_msg(client):
-    
-    if remember("message_done"):
-        return
-    
-    guild = client.get_guild(FF.guild)
-    channel = await guild.fetch_channel(1218041302998974584)
-    target_context = Context(await channel.send("# Valentine's Day Tag Surprise\nTo celebrate Valentine's day, react to this message to add one of any of the available LTO heart emojis to your server nickname <:pink_red_hearts:856202296823250964> <@&1181330910747054211>"))
-
-    remember("heart_message_id", target_context.message.id);
-    
-    HEARTS = {"🩷","❤️","🧡","💛","💚","🩵","💙","💜","🖤","🩶","🤍","🤎"}
-    
-    for heart in HEARTS:
-        try:
-            await target_context.react(heart)
-        except:
-            pass
-        
-    remember("message_done", True)
 
 _ab_race_lock = asyncio.Lock()
 _AB_RACE_CHANNEL_ID = 1203772906497380472
@@ -578,31 +554,45 @@ async def update_xc_scoring(context: Context):
         await announcement_channel.send(ct)
     
 @command_handler.Uncontested(type="REACTION", desc="Add heart LTO emoji to nickname")
-async def add_hearts(context: Context):
-    if not context.message.id == int(remember("heart_message_id")):
+async def add_farmmas_emojis(context: Context):
+    message_id = 1569805095821115413
+    
+    if not context.message.id == message_id:
         return
     
-    HEARTS = {"🩷","❤️","🧡","💛","💚","🩵","💙","💜","🖤","🩶","🤍","🤎"}
-    if str(context.emoji) not in HEARTS:
+    EMOJIS = {"❄️","☃️","🎄","✨","🎀"}
+    if str(context.emoji) not in EMOJIS:
         return
 
     now = datetime.datetime.now()
+    
+    # If it's already past 2026, skip
+    if now.year > 2026:
+        return
 
-    end_of_feb21 = now.replace(month=2, day=21, hour=23, minute=59, second=59, microsecond=0)
+    end_of_jan9 = now.replace(year=2027, month=1, day=9, hour=23, minute=59, second=59, microsecond=0)
 
-    # If it's already past Feb 21 this year, use next year
-    if now > end_of_feb21:
-        end_of_feb21 = end_of_feb21.replace(year=now.year + 1)
-
-    seconds_left = int((end_of_feb21 - now).total_seconds())
+    seconds_left = int((end_of_jan9 - now).total_seconds())
     
     neighbor = Neighbor(context.user.id, FF.guild)
-    
-    while item := neighbor.get_item_of_name("Valentine's Heart"):
-        neighbor.vacate_item(item);
         
-    item = Item("Valentine's Heart", "event_emoji", time.time() + seconds_left, emoji=str(context.emoji), display="True")
-    neighbor.bestow_item(item)
+    if not neighbor.get_item_of_name(f"Farmmas emoji {context.emoji}"):   
+        item = Item(f"Farmmas emoji {context.emoji}", "event_emoji", time.time() + seconds_left, emoji=str(context.emoji), display="True")
+        neighbor.bestow_item(item)
+    
+    await set_nick(context.user,context.guild)
+
+@command_handler.Loop(hours=24, desc="Sync Farmmas nickname emojis with signup reactions")
+async def sync_farmmas_emojis(client):
+    from commands.farmmas_emojis import CHANNEL_ID, MESSAGE_ID, reconcile
+    if datetime.datetime.now() >= datetime.datetime(2027, 1, 9, 23, 59, 59):
+        return
+    guild = client.get_guild(FF.guild)
+    if guild is None:
+        return
+    channel = await guild.fetch_channel(CHANNEL_ID)
+    message = await channel.fetch_message(MESSAGE_ID)
+    await reconcile(message, set_nick)
 
 # @command_handler.Loop(hours=1)
 async def free_money(client):
@@ -5758,6 +5748,8 @@ async def xp_reset(client):
         await bc.send(f"{5-i}...");
         time.sleep(5);
     neighbors = Neighbor.read_all_neighbors();
+    from commands.monthly_community_prizes import snapshot_xp_leaderboard
+    snapshot_xp_leaderboard(guild, neighbors)
     for readNeighbor in neighbors:
         neighbor = Neighbor(readNeighbor.ID, readNeighbor.family);
         cur_level = neighbor.get_level();
@@ -11081,7 +11073,7 @@ async def carnival_retention_recipients(client):
 
 
 @command_handler.Scheduled("14:00",day_of_month=2,timezone="Etc/GMT+4",
-                           desc="Monthly giveaway-host and Town Park image prizes")
+                           desc="Monthly giveaway-host, Town Park image, and top 10 XP prizes")
 async def monthly_community_prizes(client):
     from commands.monthly_community_prizes import announce
     await announce(client)

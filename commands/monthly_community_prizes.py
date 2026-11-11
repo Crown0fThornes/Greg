@@ -85,9 +85,44 @@ async def draw(guild,start,end):
     return dict(host=host,giveaway=giveaway,image=winner)
 
 
+def snapshot_xp_leaderboard(guild,neighbors,*,now=None,path=PATH):
+    """Freeze the official top ten before reckoning; retries never replace it."""
+    start,_=previous_month(now or datetime.now(timezone.utc))
+    ranked=sorted(neighbors,key=lambda neighbor:neighbor.XP)[::-1]
+    entries=[]
+    for neighbor in ranked:
+        member=guild.get_member(neighbor.ID)
+        if int(neighbor.get_family())==guild.id and member is not None and not member.bot:
+            entries.append(dict(user_id=neighbor.ID,xp=neighbor.XP))
+            if len(entries)==10:
+                break
+    with connect(path) as db:
+        db.execute('INSERT OR IGNORE INTO xp_snapshot VALUES (?,?)',
+                   (start.strftime('%Y-%m'),json.dumps(entries)))
+
+
+def draw_xp_winner(key,path):
+    with connect(path) as db:
+        saved=db.execute('SELECT entries FROM xp_snapshot WHERE month=?',(key,)).fetchone()
+    entries=json.loads(saved[0]) if saved else []
+    return random.choice(entries)['user_id'] if entries else None
+
+
+def xp_placement(key,user_id,path):
+    with connect(path) as db:
+        saved=db.execute('SELECT entries FROM xp_snapshot WHERE month=?',(key,)).fetchone()
+    entries=json.loads(saved[0]) if saved else []
+    return next((rank for rank,entry in enumerate(entries,1) if entry['user_id']==user_id),None)
+
+
+def ordinal(number):
+    suffix='th' if 10<=number%100<=20 else {1:'st',2:'nd',3:'rd'}.get(number%10,'th')
+    return f'{number}{suffix}'
+
+
 def announcement(result):
     lines=["**Happy New-month all! I have prizes to announce!**",
-           "Let's start the new month on a positive note by granting two Neighbors a special prize for their contributions to the community last month.",
+           "Let's start the new month on a positive note by awarding three special prizes for contributions to the community last month.",
            '', '1️⃣ Hosting giveaways in <#697450038359621693> is a great way to help out your fellow Neighbors with goods. One random giveaway host from last month is winning 20 BEMs!!','']
     if result['host']:
         prize=discord.utils.escape_mentions(discord.utils.escape_markdown(result['giveaway']['prize'])).replace('\n',' ')
@@ -101,6 +136,13 @@ def announcement(result):
                   f"Who posted the attached image here: https://discord.com/channels/{GUILD_ID}/{image['channel_id']}/{image['message_id']}"]
     else:
         lines += ['No eligible images from another Neighbor were found for last month.']
+    lines += ['', '3️⃣ Staying active keeps our community thriving! One random Neighbor from the top 10 XP leaderboard at the reckoning is winning 20 BEMs!!','']
+    if result.get('xp'):
+        lines += [f"**That winner is... Drum roll please... <@{result['xp']}>!**"]
+        if result.get('xp_place'):
+            lines += [f"Who was: {ordinal(result['xp_place'])} place on the leaderboard"]
+    else:
+        lines += ['No saved top 10 XP leaderboard was available for this drawing.']
     lines += ['','@everyone']
     return '\n'.join(lines)
 
@@ -113,6 +155,7 @@ def connect(path):
     try:
         with db:
             db.execute('CREATE TABLE IF NOT EXISTS prize (month TEXT PRIMARY KEY,result TEXT NOT NULL,status TEXT NOT NULL,message_id INTEGER)')
+            db.execute('CREATE TABLE IF NOT EXISTS xp_snapshot (month TEXT PRIMARY KEY,entries TEXT NOT NULL)')
             yield db
     finally:
         db.close()
@@ -134,6 +177,13 @@ async def announce(client,*,now=None,path=PATH):
         if saved and saved[1]!='ready':
             return
         result=json.loads(saved[0]) if saved else await draw(guild,start,end)
+        if 'xp' not in result:
+            result['xp']=draw_xp_winner(key,path)
+        if 'xp_place' not in result:
+            result['xp_place']=xp_placement(key,result['xp'],path)
+        if saved:
+            with connect(path) as db:
+                db.execute('UPDATE prize SET result=? WHERE month=? AND status=\'ready\'',(json.dumps(result),key))
         if not saved:
             with connect(path) as db:
                 db.execute("INSERT OR IGNORE INTO prize VALUES (?,?,'ready',NULL)",(key,json.dumps(result)))
@@ -145,7 +195,7 @@ async def announce(client,*,now=None,path=PATH):
             attachment=next(a for a in original.attachments if a.id==image['attachment_id'])
             file=await attachment.to_file()
         target=await guild.fetch_channel(ANNOUNCEMENTS)
-        recipients=[uid for uid in (result['host'],image['user_id'] if image else None) if uid]
+        recipients=[uid for uid in (result['host'],image['user_id'] if image else None,result.get('xp')) if uid]
         with connect(path) as db:
             claimed=db.execute("UPDATE prize SET status='pending' WHERE month=? AND status='ready'",(key,)).rowcount
         if not claimed:
