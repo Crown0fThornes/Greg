@@ -5091,6 +5091,22 @@ async def recruitment_reminders(client, guild, est_time):
     if est_time.hour == 12 and est_time.minute == 0:
         await ad_chat.send(f"<@{to_ping}> I've chosen you at random! If you get a chance, check r/HD #seeking-neighborhood for a couple people to message.\nWhen you do, react to their msg with the fox.\n\nI recommend you introduce yourself, lead with which NH you think they'd be a good fit for and why. Wait til they reply, then send our server link to prevent getting flagged for spam. Maybe ping them in server to check DMs too.")        
 
+@command_handler.Scheduled("08:00", day_of_week=0, timezone="Etc/GMT+4",
+                           desc="Review last week's recruitment joins and recognize scheduled ad posters")
+async def weekly_recruitment_review(client):
+    from commands.recruitment_review import review
+    await review(client)
+
+
+@command_handler.Command(AccessType.PRIVILEGED,
+                         desc="Import 12 months of recruitment join counts: $recruitmentbaseline [status|stop]")
+async def recruitmentbaseline(activator: Neighbor, context: Context):
+    if len(context.args)>1 or (context.args and context.args[0].lower() not in ('status','stop')):
+        raise CommandArgsError('Use $recruitmentbaseline, $recruitmentbaseline status, or $recruitmentbaseline stop.')
+    from commands.recruitment_baseline import control
+    await control(context, context.args[0].lower() if context.args else '')
+
+
 async def personalized_recruitment_reminder(client, guild, est_time):
     ad_chat_id = 792497521259315200
     ad_chat = await guild.fetch_channel(ad_chat_id)
