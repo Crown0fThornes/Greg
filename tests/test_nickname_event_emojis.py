@@ -104,7 +104,25 @@ class NicknameTests(unittest.IsolatedAsyncioTestCase):
         for emoji in ("🎂", "🌷", "🎁", "🐇"):
             self.reward(emoji)
         nick = await self.render()
-        self.assertEqual(nick, "[P] Lincoln 🎁🌷🎂")
+        self.assertEqual(nick, "[P] Lincoln 🐇🎁🌷")
+
+    async def test_event_emojis_use_award_time_instead_of_expiration(self):
+        now = int(time.time())
+        for emoji, awarded_at, expires_in in (
+            ("🎂", now - 30, 100),
+            ("🌷", now - 10, 300),
+            ("🎁", now - 40, 50),
+            ("🐇", now - 20, 200),
+        ):
+            self.reward(emoji, expiration=now + expires_in)
+            self.items[-1].values["awarded_at"] = str(awarded_at)
+        self.assertEqual(await self.render(), "[P] Lincoln 🌷🐇🎂")
+
+    async def test_legacy_undated_emojis_follow_dated_awards(self):
+        self.reward("🎂")
+        self.reward("🌷")
+        self.items[-1].values.pop("awarded_at")
+        self.assertEqual(await self.render(), "[P] Lincoln 🎂🌷")
 
     async def test_expiration_happens_before_any_inventory_read(self):
         self.reward("🎂", expiration=int(time.time()) - 1)

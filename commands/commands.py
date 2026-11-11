@@ -10221,14 +10221,23 @@ async def set_nick(user, guild, was_changed = False):
                 ls_already.append(emoji)
                 to_add.append(item);
                 
-        to_add.sort(key=lambda x: x.expiration, reverse=False);
+        def award_time(item):
+            try:
+                return float(item.values.get("awarded_at") or 0)
+            except (TypeError, ValueError):
+                return 0
+
+        # Later inventory entries break ties for awards in the same second.
+        # Legacy items with no award timestamp sort behind dated awards.
+        to_add.reverse()
+        to_add.sort(key=award_time, reverse=True)
                 
         for item in to_add:
             if counter < 3:
                 counter += 1;
                 emoji = item.get_value("emoji");
                 print(f"found this emoji activated!")
-                event_emojis.insert(0, item.get_value("emoji"))
+                event_emojis.append(item.get_value("emoji"))
             
         # donated_channel_id = 1367560282519507004
         # donated_channel = await guild.fetch_channel(donated_channel_id);
