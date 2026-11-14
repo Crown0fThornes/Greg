@@ -26,6 +26,8 @@ Current Council members receive DM ballots immediately and reminders every 24 ho
 `$election list` / `$election status ID` — elections and turnout, without interim tallies.
 `$election close ID` — close early and count; normally closes automatically at its deadline.
 `$election results ID` / `$election rounds ID` — aggregate results and count rounds.
+`$election recount ID` — recount the same closed ballots using the current rules.
+`$election eliminate ID @nominee` — record the Senior Council's choice for a pending elimination tie and resume.
 `$election cancel ID` — cancel an open election.
 Tied seats remain unfilled for a Senior Member vote. No random tie-breaks.'''
 
@@ -103,8 +105,8 @@ def election_summary(row,store):
             'Council voters receive a DM with a **Start / continue voting** button that works until closing.\n'
             'Unsubmitted ballots receive a DM reminder every 24 hours until closing.\n'
             'Counting: STV, Droop quota, fractional surplus transfers. '
-            'Tied final seats go to a Senior Member vote. Earlier elimination ties use prior-round totals; '
-            'if those cannot resolve the tie, counting stops for Senior Member review.\n'
+            'Tied final seats go to a Senior Council vote. Elimination ties use previous-round totals, '
+            'then Borda scores, then a Senior Council decision.\n'
             'Ballot receipts stay in your DMs with Greg; Council sees aggregate results only.')
 
 
@@ -112,7 +114,8 @@ def results_text(row):
     result=row['result']
     if not result:
         return 'Results are not available yet. No interim candidate tallies are displayed.'
-    lines=[f"**Election #{row['id']}: {safe(row['config']['title'])} — Results**",
+    heading='Updated results' if result.get('revision') else 'Results'
+    lines=[f"**Election #{row['id']}: {safe(row['config']['title'])} — {heading}**",
            f"Valid ballots: {result['ballots']} · Seats: {seat_count(row)} · Quota: {result['quota']}"]
     for index,uid in enumerate(result['winners'],1):
         lines.append(f"**Elected: {name(row,uid)}** (<@{uid}>)")
@@ -120,7 +123,9 @@ def results_text(row):
         lines += [f"**{result['unfilled']} seat(s) unresolved — Senior Member vote required.**",
                   'Still-contending candidates: '+', '.join(f'{name(row,uid)} (<@{uid}>)' for uid in result['tied'])]
         if result['rounds'][-1]['action']=='elimination_tie':
-            lines.append('An unresolved elimination tie could affect the outcome; no candidate was eliminated arbitrarily.')
+            lines.append('The Senior Council must choose one of these nominees to eliminate: '+
+                ', '.join(f'{name(row,uid)} (<@{uid}>)' for uid in result['rounds'][-1]['candidates']))
+            lines.append(f'Record their decision with `$election eliminate {row["id"]} @nominee` to continue counting.')
         else:
             lines.append('The remaining candidates are tied. No winner was chosen for the remaining seat(s).')
     elif not result['ballots']:
@@ -144,6 +149,13 @@ def round_text(row):
                   labels[round_['action']]+': '+', '.join(name(row,uid) for uid in round_['candidates'])]
         if 'transfer' in round_:
             lines.append(f"Transferred {float(Fraction(round_['transfer'])):.3f} of each ballot’s current weight supporting that winner.")
+        if 'borda' in round_:
+            lines.append('Borda tie-break scores: '+', '.join(f'{name(row,int(uid))}: {score}' for uid,score in round_['borda'].items()))
+        if 'tiebreak' in round_:
+            labels_={'previous_round_totals':'previous-round totals','borda':'Borda scores','senior_council':'Senior Council decision'}
+            lines.append('Elimination tie resolved by '+labels_[round_['tiebreak']]+'.')
+        if 'recorded_by' in round_:
+            lines.append(f"Senior Council decision recorded by <@{round_['recorded_by']}>.")
     return lines
 
 
@@ -187,12 +199,14 @@ def ballot_introduction(row):
     seats=seat_count(row)
     positions='position' if seats==1 else 'positions'
     nominees='nominee' if seats==1 else 'nominees'
-    return (f"# {safe(row['config']['title'])}\n\n"
-            f"Voting is now open and ends <t:{int(row['config']['deadline'])}:F>.\n\n"
-            'You will choose candidates in order of your preference (First pick = your top choice).\n\n'
-            f'You are voting to fill **{seats} {positions}**.\n'
-            f'You must rank at least **{seats} {nominees}** but are encouraged to rank as many as you approve of.\n\n'
-            'Ranking more nominees does not dilute your vote for your top choices.\n\n'
+    return (f"# {safe(row['config']['title'])}\n"
+            f"**Voting is now open and ends <t:{int(row['config']['deadline'])}:F>**\n\n"
+            'You will choose candidates below in order of your preference (First pick = your top choice).\n\n'
+            f'You are voting to fill **{seats} {positions}.**\n'
+            f'**You must rank at least {seats} {nominees} but are encouraged to rank as many as you approve of.**\n\n'
+            'Ranking more nominees does not dilute your votes for your top choices. Instead, ranking more nominees '
+            "helps pick the winner in the case that your top choices don't have enough support or in case of a tie. "
+            '(STV ranked choice voting).\n\n'
             'It is your right to vote. If you have issues or are concerned your vote was not counted, '
             'please contact Lincoln.')
 
@@ -214,7 +228,7 @@ class BallotEntryView(discord.ui.View):
         return (ballot_introduction(self.row)+'\n\n'
                 +('✅ You have submitted a ballot. You may change it before closing.\n\n' if submitted else
                   'Press **Start / continue voting** below to choose your nominees.\n\n')
-                +'**Press Submit ballot when you are satisfied.**')
+                +'**Press submit ballot when you are satisfied.**')
 
     async def interaction_check(self,interaction):
         if interaction.user.id!=self.uid:
@@ -249,15 +263,21 @@ class BallotView(discord.ui.View):
 
     def text(self):
         lines=[ballot_introduction(self.row), '', '**Your choices so far:**']
-        lines.extend(f'{index}. {name(self.row,uid)}' for index,uid in enumerate(self.ranking[:10],1))
-        if len(self.ranking)>10:
-            lines.append(f'…and {len(self.ranking)-10} more. Press **Review full ranking** to see every choice.')
+        shown=0
+        for index,uid in enumerate(self.ranking[:10],1):
+            line=f'{index}. {name(self.row,uid)}'
+            if len('\n'.join(lines))+len(line)>1550:
+                break
+            lines.append(line)
+            shown+=1
+        if len(self.ranking)>shown:
+            lines.append(f'…and {len(self.ranking)-shown} more. Press **Review full ranking** to see every choice.')
         remaining=len(candidates(self.row))-len(self.ranking)
         if remaining>25:
             lines.append(f'Candidate page {self.page+1}/{(remaining+24)//25}; use the page buttons to browse.')
         if not self.ranking:
             lines.append('No choices yet. Select your first choice below.')
-        lines += ['', '**Press Submit ballot when you are satisfied.**']
+        lines += ['', '**Press submit ballot when you are satisfied.**']
         return '\n'.join(lines)
 
     def draft_content(self):
@@ -393,6 +413,32 @@ async def open_ballot(context,key,*,store=None):
     await context.message.add_reaction('✅')
 
 
+async def fetch_ballots(client,row,store):
+    ballots=[]
+    for voter in store.receipts(row['id']):
+        if voter['user_id'] not in row['config']['voters'] or voter['submitted']>row['cutoff']:
+            raise ValueError('A receipt reference failed eligibility or cutoff checks; counting stopped.')
+        channel=client.get_channel(voter['dm_id']) or await client.fetch_channel(voter['dm_id'])
+        if channel.recipient.id!=voter['user_id']:
+            raise ValueError('A saved receipt belongs to a different DM; counting stopped.')
+        message=await channel.fetch_message(voter['receipt_id'])
+        ballots.append(await load_receipt(message,row,client.user.id))
+    return ballots
+
+
+async def publish_result(client,row,store):
+    key=row['id']
+    if store.claim_delivery(key):
+        try:
+            channel=await client.fetch_channel(row['config']['channel_id'])
+            posted=await post_result(channel,row)
+        except (discord.Forbidden,discord.NotFound):
+            store.delivery(key,'waiting')
+            raise
+        else:
+            store.delivery(key,'sent',posted.id)
+
+
 async def close_election(client,key,*,store=None,now=None):
     store=store or ElectionStore()
     async with lock:
@@ -401,26 +447,44 @@ async def close_election(client,key,*,store=None,now=None):
             raise ValueError('This election was cancelled.')
         if row['status']!='closed':
             row=store.freeze(key,now or datetime.now(timezone.utc).timestamp())
-            ballots=[]
-            for voter in store.receipts(key):
-                if voter['user_id'] not in row['config']['voters'] or voter['submitted']>row['cutoff']:
-                    raise ValueError('A receipt reference failed eligibility or cutoff checks; counting stopped.')
-                channel=client.get_channel(voter['dm_id']) or await client.fetch_channel(voter['dm_id'])
-                if channel.recipient.id!=voter['user_id']:
-                    raise ValueError('A saved receipt belongs to a different DM; counting stopped.')
-                message=await channel.fetch_message(voter['receipt_id'])
-                ballots.append(await load_receipt(message,row,client.user.id))
+            ballots=await fetch_ballots(client,row,store)
             store.finish(key,count_stv(candidates(row),ballots,seats=seat_count(row)))
             row=store.get(key)
-        if store.claim_delivery(key):
-            try:
-                channel=await client.fetch_channel(row['config']['channel_id'])
-                posted=await post_result(channel,row)
-            except (discord.Forbidden,discord.NotFound):
-                store.delivery(key,'waiting')
-                raise
-            else:
-                store.delivery(key,'sent',posted.id)
+        await publish_result(client,row,store)
+        return row
+
+
+async def recount_election(client,key,*,store=None,eliminate=None,actor_id=None):
+    store=store or ElectionStore()
+    async with lock:
+        row=store.get(key)
+        if row['status']!='closed' or row['result'] is None:
+            raise ValueError('Close and count the election before recounting or recording an elimination decision.')
+        ballots=await fetch_ballots(client,row,store)
+        decisions=store.decisions(key)
+        choices={decision['round']:decision['candidate_id'] for decision in decisions}
+        result=count_stv(candidates(row),ballots,seats=seat_count(row),elimination_decisions=choices)
+        decision=None
+        if eliminate is not None:
+            last=result['rounds'][-1] if result['rounds'] else {}
+            if last.get('action')!='elimination_tie':
+                raise ValueError('There is no pending elimination tie under the current rules. Use `$election recount '+str(key)+'` to see the updated result. Final-seat ties require a Senior Council winner vote.')
+            if eliminate not in last['candidates']:
+                raise ValueError('Choose one of the nominees still tied for elimination after previous-round and Borda checks.')
+            if actor_id is None:
+                raise ValueError('The person recording the Senior Council decision must be identified.')
+            number=len(result['rounds'])
+            decision=dict(round=number,candidate_id=eliminate,actor_id=actor_id,recorded=datetime.now(timezone.utc).timestamp())
+            choices[number]=eliminate
+            result=count_stv(candidates(row),ballots,seats=seat_count(row),elimination_decisions=choices)
+            decisions.append(decision)
+        for decision_ in decisions:
+            result['rounds'][decision_['round']-1]['recorded_by']=decision_['actor_id']
+            result['rounds'][decision_['round']-1]['recorded_at']=decision_['recorded']
+        result['revision']=row['result'].get('revision',0)+1
+        store.recount(key,result,decision=decision)
+        row=store.get(key)
+        await publish_result(client,row,store)
         return row
 
 
@@ -515,7 +579,9 @@ async def invite_voters(guild,row,*,store=None,members=None,now=None,pause=0.25)
                 member=(members or {}).get(uid) or await guild.fetch_member(uid)
                 content=view.text()
                 if previous:
-                    content+='\n\n**Voting reminder:** We haven’t received your submitted ballot yet.'
+                    content+=('\n\n**Voting reminder:** We haven’t received your submitted ballot yet. '
+                              '**Remember to click Submit ballot when you are satisfied with your choices.** '
+                              'Choosing nominees alone does not submit your vote.')
                 message=await member.send(content,view=view,allowed_mentions=discord.AllowedMentions.none())
                 track_menu(store,current,uid,message,'entry')
             except (discord.Forbidden,discord.NotFound):
@@ -546,7 +612,16 @@ async def control(context,client,*,store=None):
         rows=store.all()
         await send_lines(context.channel,[f"**#{row['id']} {safe(row['config']['title'])}** — {row['status']}" for row in rows] or ['No elections yet.'])
         return
-    if len(args)!=2 or not args[1].isdigit() or action not in ('status','close','results','rounds','cancel'):
+    if action=='eliminate':
+        if len(args)!=3 or not args[1].isdigit():
+            raise ValueError('Use $election eliminate election-ID @nominee to record the Senior Council’s elimination decision.')
+        match=re.fullmatch(r'<@!?(\d+)>|(\d+)',args[2])
+        if not match:
+            raise ValueError('Mention the nominee chosen for elimination, or provide their Discord user ID.')
+        await recount_election(client,int(args[1]),store=store,eliminate=int(match[1] or match[2]),actor_id=context.author.id)
+        await context.send('Senior Council elimination decision recorded; counting resumed and updated results posted.')
+        return
+    if len(args)!=2 or not args[1].isdigit() or action not in ('status','close','results','rounds','cancel','recount'):
         raise ValueError(HELP)
     key=int(args[1])
     row=store.get(key)
@@ -554,6 +629,9 @@ async def control(context,client,*,store=None):
         await context.send('Closing the election and reading private ballot receipts. This may take a moment.')
         await close_election(client,key,store=store)
         await context.send(f'Election #{key} counted. Use `$election results {key}` to view the result.')
+    elif action=='recount':
+        await recount_election(client,key,store=store)
+        await context.send(f'Election #{key} recounted using the original closed ballots. Updated results posted.')
     elif action=='cancel':
         async with lock:
             if store.get(key)['status']!='open':

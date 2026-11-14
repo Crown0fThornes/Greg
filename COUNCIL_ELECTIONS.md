@@ -109,11 +109,34 @@ If all remaining candidates fit into the remaining seats, they are elected
 even below quota. No ballots means no seats filled.
 
 Tied final-seat candidates are reported, with the seat left unfilled for a
-Senior Member vote. Earlier elimination ties compare the tied candidates'
-totals in previous rounds, most recent first. If those also tie, counting
-stops and reports all still-contending candidates and the tied elimination,
-so nobody is eliminated arbitrarily. Zero-vote candidates tied for elimination
-can be removed together. Nonzero tied candidates are not batch-eliminated.
+Senior Council winner vote. Earlier elimination ties use this order:
+
+1. Compare previous-round totals, most recent first. The weaker historical
+   total is eliminated; candidates still exactly tied move to the next step.
+2. Compare Borda-style scores from the original valid ballots at full weight.
+   With N original nominees, first place earns N−1 points, second N−2, down
+   to zero for last place. Unranked nominees get zero. Only the remaining
+   tied elimination candidates are compared; the lowest score is eliminated.
+3. If the lowest Borda scores also tie, stop and request a Senior Council
+   decision. The result lists the precise eligible elimination choices, as
+   well as all still-contending candidates.
+
+Record the Senior Council's selected elimination with
+`$election eliminate ID @nominee` (a numeric Discord user ID is also accepted).
+This is an attestation by the privileged Council member issuing the command;
+Greg does not independently collect or verify the Senior Council's vote.
+Only a nominee in the currently unresolved elimination tie can be selected.
+Greg records the elimination round, selected nominee, recorder's ID, and
+timestamp, rereads the same frozen private receipts, and continues counting.
+If another unresolved elimination tie occurs, another decision can be recorded.
+Previous decisions are reproduced on subsequent recounts and appear in the
+round report. A missing/unreadable receipt or invalid decision stops the
+recount without silently dropping a ballot or committing the new decision.
+
+Zero-vote candidates tied for elimination can still be removed together when
+enough candidates remain to fill all seats. Nonzero tied candidates are not
+batch-eliminated. Final winner ties do not use the Borda elimination rule or
+the elimination command; those remain for a Senior Council winner vote.
 There are no random or alphabetical tie-breaks that determine who wins.
 The Senior Member follow-up election is not started automatically.
 
@@ -125,10 +148,18 @@ The Senior Member follow-up election is not started automatically.
 - `$election close ID` — freeze voting early, count, and post the result.
 - `$election results ID` — retrieve a saved aggregate result.
 - `$election rounds ID` — view candidate totals, actions, transfers, and exhausted
-  vote weights for each counting round.
+  vote weights for each counting round, including tie-break scores and decisions.
+- `$election recount ID` — apply the current counting rules to an already
+  closed election's original ballots. This can apply Borda tie-breaks to an
+  election previously stopped under the older rules.
+- `$election eliminate ID @nominee` — record the Senior Council's chosen
+  elimination and resume a pending elimination tie.
 - `$election cancel ID` — cancel an open election without counting it.
 
 These administrative commands use the existing privileged access checks.
+Recounting and recording decisions never reopen voting or change its cutoff.
+They publish an **Updated results** announcement and increment its revision;
+the saved result retrieved by `$election results ID` is always the latest one.
 Only `$vote` is public, with its own fixed-voter-list check. The result is sent
 to the election's original channel. Messages suppress mentions. No interim
 candidate tallies or individual ballots are shown to Council. If result
@@ -146,7 +177,7 @@ It uses Discord's DM interaction menus; no changes to `custom_types.py`,
 
 `data/council_elections.sqlite3` stores election settings, eligibility, each
 voter's DM/receipt message IDs and submission timestamp, menu message references,
-delivery/repair status, and aggregate results. It does **not** store individual
+delivery/repair status, Senior Council elimination decisions, and aggregate results. It does **not** store individual
 rankings. Submitted ballots and unfinished drafts remain in bot-authored Discord
 DM messages or their attachments, are loaded temporarily into memory, and are not
 written to logs. A voter cannot change their submitted ranking by editing

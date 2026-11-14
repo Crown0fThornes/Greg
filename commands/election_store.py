@@ -26,6 +26,9 @@ class ElectionStore:
                        'user_id INTEGER NOT NULL,dm_id INTEGER NOT NULL,kind TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS menu_repair ('
                        'election_id INTEGER NOT NULL,user_id INTEGER NOT NULL,PRIMARY KEY(election_id,user_id))')
+            db.execute('CREATE TABLE IF NOT EXISTS elimination_decision ('
+                       'election_id INTEGER NOT NULL,round INTEGER NOT NULL,candidate_id INTEGER NOT NULL,'
+                       'actor_id INTEGER NOT NULL,recorded REAL NOT NULL,PRIMARY KEY(election_id,round))')
 
     @contextmanager
     def connect(self):
@@ -124,3 +127,15 @@ class ElectionStore:
     def mark_repaired(self,key,uid):
         with self.connect() as db:
             db.execute('INSERT OR IGNORE INTO menu_repair VALUES (?,?)',(key,uid))
+
+    def decisions(self,key):
+        with self.connect() as db:
+            return [dict(row) for row in db.execute('SELECT * FROM elimination_decision WHERE election_id=? ORDER BY round',(key,))]
+
+    def recount(self,key,result,decision=None):
+        with self.connect() as db:
+            if decision is not None:
+                db.execute('INSERT INTO elimination_decision VALUES (?,?,?,?,?)',
+                           (key,decision['round'],decision['candidate_id'],decision['actor_id'],decision['recorded']))
+            db.execute("UPDATE election SET result=?,delivery='waiting',message_id=NULL WHERE id=? AND status='closed'",
+                       (json.dumps(result),key))

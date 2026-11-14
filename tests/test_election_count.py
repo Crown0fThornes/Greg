@@ -40,6 +40,35 @@ class CountTests(unittest.TestCase):
         self.assertEqual(result['rounds'][-1]['action'],'elimination_tie')
         self.assertEqual(result['tied'],[2,3,4])
 
+    def test_previous_round_totals_take_priority_over_borda(self):
+        result=count_stv([1,2,3,4],[[1,2]]*8+[[2,3]]+[[3,4]]*3+[[4,3]]*4)
+        elimination=result['rounds'][1]
+        self.assertEqual(elimination['candidates'],[2])
+        self.assertEqual(elimination['tiebreak'],'previous_round_totals')
+        self.assertNotIn('borda',elimination)
+
+    def test_borda_breaks_elimination_tie_using_original_rankings(self):
+        result=count_stv([1,2,3,4],[[1,3]]*4+[[2,1]]*3+[[3,1]]*2+[[4,2]]*2)
+        elimination=result['rounds'][1]
+        self.assertEqual(elimination['borda'],{'3':14,'4':6})
+        self.assertEqual(elimination['candidates'],[4])
+        self.assertEqual(elimination['tiebreak'],'borda')
+        self.assertEqual(result['winners'],[1,2])
+
+    def test_senior_decision_resumes_only_the_remaining_elimination_tie(self):
+        ballots=[[1,2]]*4+[[2,1]]*3+[[3,1]]*2+[[4,2]]*2
+        pending=count_stv([1,2,3,4],ballots)
+        self.assertEqual(pending['rounds'][-1]['candidates'],[3,4])
+        number=len(pending['rounds'])
+        result=count_stv([1,2,3,4],ballots,elimination_decisions={number:3})
+        self.assertEqual(result['rounds'][number-1]['tiebreak'],'senior_council')
+        self.assertEqual(result['rounds'][number-1]['candidates'],[3])
+        self.assertEqual(result['winners'],[1,2])
+        with self.assertRaises(ValueError):
+            count_stv([1,2,3,4],ballots,elimination_decisions={number:2})
+        with self.assertRaises(ValueError):
+            count_stv([1,2,3,4],ballots,elimination_decisions={99:3})
+
     def test_truncated_ballots_exhaust_and_remaining_candidate_can_win(self):
         result=count_stv([1,2,3,4],[[1,2]]*6+[[3,4]]*3)
         self.assertEqual(result['winners'],[1,3])

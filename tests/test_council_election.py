@@ -112,6 +112,33 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(row['result']['winners'],[1])
         self.assertEqual(row['result']['tied'],[2,3])
         self.assertIn('Senior Member vote required',target.send.call_args.args[0])
+        with self.assertRaises(ValueError):
+            await election.recount_election(client,key,store=self.store,eliminate=2,actor_id=10)
+
+    async def test_manual_elimination_records_audit_and_recounts_closed_ballots(self):
+        self.key=self.store.create(config(voters=list(range(10,21)),
+            candidates=[dict(id=uid,name=f'Candidate {uid}') for uid in (1,2,3,4)]))
+        ballots=[[1,2]]*4+[[2,1]]*3+[[3,1]]*2+[[4,2]]*2
+        client,target,_=self.client(dict(zip(range(10,21),ballots)))
+        original=await election.close_election(client,self.key,store=self.store,now=100)
+        self.assertEqual(original['result']['rounds'][-1]['action'],'elimination_tie')
+        self.assertIn('$election eliminate',election.results_text(original))
+        with self.assertRaises(ValueError):
+            await election.recount_election(client,self.key,store=self.store,eliminate=1,actor_id=10)
+        self.assertEqual(self.store.decisions(self.key),[])
+        row=await election.recount_election(client,self.key,store=self.store,eliminate=3,actor_id=10)
+        self.assertEqual(row['cutoff'],100)
+        self.assertEqual(row['status'],'closed')
+        self.assertEqual(row['result']['winners'],[1,2])
+        self.assertEqual(row['result']['revision'],1)
+        self.assertEqual(self.store.decisions(self.key)[0]['actor_id'],10)
+        self.assertEqual(row['result']['rounds'][1]['recorded_by'],10)
+        self.assertIn('Senior Council decision', '\n'.join(election.round_text(row)))
+        again=await election.recount_election(client,self.key,store=self.store)
+        self.assertEqual(again['result']['winners'],[1,2])
+        self.assertEqual(len(self.store.decisions(self.key)),1)
+        self.assertEqual(again['result']['revision'],2)
+        self.assertEqual(target.send.await_count,3)
 
     async def test_unreadable_receipt_stops_count_without_excluding_vote(self):
         client,target,channels=self.client({10:[1,2]})
@@ -259,6 +286,7 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
         await election.invite_voters(guild,row,store=self.store,now=86500,pause=0)
         self.assertEqual([person.send.await_count for person in people.values()],[1,2,2])
         self.assertIn('Voting reminder',people[11].send.call_args.args[0])
+        self.assertIn('Remember to click Submit ballot when you are satisfied',people[11].send.call_args.args[0])
         self.store.cancel(self.key)
         await election.invite_voters(guild,self.store.get(self.key),store=self.store,now=172900,pause=0)
         self.assertEqual(people[11].send.await_count,2)
