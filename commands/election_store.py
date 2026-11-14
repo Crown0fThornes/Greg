@@ -137,5 +137,5 @@ class ElectionStore:
             if decision is not None:
                 db.execute('INSERT INTO elimination_decision VALUES (?,?,?,?,?)',
                            (key,decision['round'],decision['candidate_id'],decision['actor_id'],decision['recorded']))
-            db.execute("UPDATE election SET result=?,delivery='waiting',message_id=NULL WHERE id=? AND status='closed'",
+            db.execute("UPDATE election SET result=?,delivery='waiting' WHERE id=? AND status='closed'",
                        (json.dumps(result),key))

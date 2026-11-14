@@ -85,15 +85,14 @@ def count_stv(candidates, ballots, seats=2, elimination_decisions=None):
                         used_decisions.add(round_number)
                         record['tiebreak']='senior_council'
             if len(losers)>1 and not safe_batch:
-                result['tied'] = [candidate for candidate in candidates if candidate in active]
-                record.update(action='elimination_tie',candidates=losers)
-                result['rounds'].append(record)
-                break
+                record['tiebreak']='batch_elimination'
             active.difference_update(losers)
             record.update(action='eliminate',candidates=losers)
         result['rounds'].append(record)
         prior_totals.append(totals)
     result['unfilled'] = seats-len(result['winners'])
+    if result['unfilled'] and not result['tied']:
+        result['unfilled_reason']='Too few nominees remain after batch elimination.'
     if used_decisions!=set(elimination_decisions):
         raise ValueError('A previously recorded Senior Council elimination decision no longer matches the count; counting stopped.')
     return result

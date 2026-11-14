@@ -36,9 +36,10 @@ class CountTests(unittest.TestCase):
 
     def test_ambiguous_elimination_is_not_broken_randomly(self):
         result=count_stv([1,2,3,4],[[1,2]]*4+[[2,1]]*3+[[3,1]]*2+[[4,2]]*2)
-        self.assertEqual(result['winners'],[1])
-        self.assertEqual(result['rounds'][-1]['action'],'elimination_tie')
-        self.assertEqual(result['tied'],[2,3,4])
+        self.assertEqual(result['winners'],[1,2])
+        self.assertEqual(result['rounds'][1]['candidates'],[3,4])
+        self.assertEqual(result['rounds'][1]['tiebreak'],'batch_elimination')
+        self.assertEqual(result['tied'],[])
 
     def test_previous_round_totals_take_priority_over_borda(self):
         result=count_stv([1,2,3,4],[[1,2]]*8+[[2,3]]+[[3,4]]*3+[[4,3]]*4)
@@ -55,11 +56,9 @@ class CountTests(unittest.TestCase):
         self.assertEqual(elimination['tiebreak'],'borda')
         self.assertEqual(result['winners'],[1,2])
 
-    def test_senior_decision_resumes_only_the_remaining_elimination_tie(self):
+    def test_legacy_senior_decision_still_replays_at_its_original_round(self):
         ballots=[[1,2]]*4+[[2,1]]*3+[[3,1]]*2+[[4,2]]*2
-        pending=count_stv([1,2,3,4],ballots)
-        self.assertEqual(pending['rounds'][-1]['candidates'],[3,4])
-        number=len(pending['rounds'])
+        number=2
         result=count_stv([1,2,3,4],ballots,elimination_decisions={number:3})
         self.assertEqual(result['rounds'][number-1]['tiebreak'],'senior_council')
         self.assertEqual(result['rounds'][number-1]['candidates'],[3])
@@ -68,6 +67,15 @@ class CountTests(unittest.TestCase):
             count_stv([1,2,3,4],ballots,elimination_decisions={number:2})
         with self.assertRaises(ValueError):
             count_stv([1,2,3,4],ballots,elimination_decisions={99:3})
+
+    def test_batch_elimination_can_leave_vacancies_without_inventing_winners(self):
+        ballots=[[1,2,3],[1,5,4],[1,4,2],[1,5,3],[2,1,5],[2,3,5],[2,4,1],
+                 [3,5,2],[3,4,1],[4,2,1],[4,3,2],[5,2,1],[5,3,4]]
+        result=count_stv([1,2,3,4,5],ballots,seats=3)
+        self.assertEqual(result['winners'],[1,2])
+        self.assertEqual(result['unfilled'],1)
+        self.assertEqual(result['tied'],[])
+        self.assertIn('batch elimination',result['unfilled_reason'])
 
     def test_truncated_ballots_exhaust_and_remaining_candidate_can_win(self):
         result=count_stv([1,2,3,4],[[1,2]]*6+[[3,4]]*3)

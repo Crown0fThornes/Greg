@@ -68,6 +68,29 @@ class StoreTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 election.read_receipt(NS(author=NS(id=author),content=text),row,99)
 
+    def test_result_layout_lists_each_person_once_and_separates_next_action(self):
+        row=self.store.get(self.key)
+        row['config']['seats']=2
+        row['result']=dict(ballots=11,quota=4,winners=[1],tied=[2,3],unfilled=1,
+                           rounds=[dict(action='elimination_tie',candidates=[2])])
+        text=election.results_text(row)
+        self.assertTrue(text.startswith('# Election results\n**Council seats**'))
+        self.assertIn('## Elected\n- <@1>',text)
+        self.assertIn('## Recount needed',text)
+        self.assertIn('$election recount 1',text)
+        self.assertIn('**Other nominees still in the running:**\n- <@3>',text)
+        for uid in (1,2,3):
+            self.assertEqual(text.count(f'<@{uid}>'),1)
+        self.assertNotIn('Candidate 1',text)
+
+    def test_result_explains_vacancy_after_batch_elimination(self):
+        row=self.store.get(self.key)
+        row['config']['seats']=3
+        row['result']=dict(ballots=13,quota=4,winners=[1,2],tied=[],unfilled=1,rounds=[])
+        text=election.results_text(row)
+        self.assertIn('1 position remains unfilled',text)
+        self.assertNotIn('All positions have been filled',text)
+
 
 class ElectionTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
@@ -84,6 +107,7 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
             channels[uid+1000]=NS(recipient=NS(id=uid),fetch_message=AsyncMock(return_value=receipt))
             self.store.submit(self.key,uid,uid+1000,receipt.id,5)
         target=NS(send=AsyncMock(return_value=NS(id=9999)))
+        target.fetch_message=AsyncMock(return_value=NS(edit=AsyncMock(return_value=NS(id=9999))))
         client=NS(user=NS(id=99),get_channel=lambda key:channels.get(key),fetch_channel=AsyncMock(return_value=target))
         return client,target,channels
 
@@ -101,7 +125,7 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn('voters',result)
         self.assertEqual(result['winners'],[1,3])
         self.assertEqual(result['tied'],[])
-        self.assertIn('Elected: Candidate 3',target.send.call_args.args[0])
+        self.assertIn('## Elected\n- <@1>\n- <@3>',target.send.call_args.args[0])
 
     async def test_final_tie_is_published_without_filling_second_seat(self):
         key=self.store.create(config(voters=list(range(10,24))))
@@ -111,22 +135,23 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
         row=await election.close_election(client,key,store=self.store,now=100)
         self.assertEqual(row['result']['winners'],[1])
         self.assertEqual(row['result']['tied'],[2,3])
-        self.assertIn('Senior Member vote required',target.send.call_args.args[0])
+        self.assertIn('## Senior Council vote needed',target.send.call_args.args[0])
         with self.assertRaises(ValueError):
             await election.recount_election(client,key,store=self.store,eliminate=2,actor_id=10)
 
-    async def test_manual_elimination_records_audit_and_recounts_closed_ballots(self):
+    async def test_legacy_senior_decisions_remain_reproducible_on_recount(self):
         self.key=self.store.create(config(voters=list(range(10,21)),
             candidates=[dict(id=uid,name=f'Candidate {uid}') for uid in (1,2,3,4)]))
         ballots=[[1,2]]*4+[[2,1]]*3+[[3,1]]*2+[[4,2]]*2
         client,target,_=self.client(dict(zip(range(10,21),ballots)))
         original=await election.close_election(client,self.key,store=self.store,now=100)
-        self.assertEqual(original['result']['rounds'][-1]['action'],'elimination_tie')
-        self.assertIn('$election eliminate',election.results_text(original))
+        self.assertEqual(original['result']['winners'],[1,2])
         with self.assertRaises(ValueError):
             await election.recount_election(client,self.key,store=self.store,eliminate=1,actor_id=10)
         self.assertEqual(self.store.decisions(self.key),[])
-        row=await election.recount_election(client,self.key,store=self.store,eliminate=3,actor_id=10)
+        legacy=election.count_stv([1,2,3,4],ballots,elimination_decisions={2:3})
+        self.store.recount(self.key,legacy,decision=dict(round=2,candidate_id=3,actor_id=10,recorded=101))
+        row=await election.recount_election(client,self.key,store=self.store)
         self.assertEqual(row['cutoff'],100)
         self.assertEqual(row['status'],'closed')
         self.assertEqual(row['result']['winners'],[1,2])
@@ -138,7 +163,8 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(again['result']['winners'],[1,2])
         self.assertEqual(len(self.store.decisions(self.key)),1)
         self.assertEqual(again['result']['revision'],2)
-        self.assertEqual(target.send.await_count,3)
+        self.assertEqual(target.send.await_count,1)
+        self.assertEqual(target.fetch_message.return_value.edit.await_count,2)
 
     async def test_unreadable_receipt_stops_count_without_excluding_vote(self):
         client,target,channels=self.client({10:[1,2]})
@@ -158,6 +184,14 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             await election.close_election(client,self.key,store=self.store,now=100)
         self.assertIsNone(self.store.get(self.key)['result'])
+
+    async def test_recount_posts_replacement_if_original_result_was_deleted(self):
+        client,target,_=self.client({10:[1,2],11:[1,2],12:[3,2]})
+        await election.close_election(client,self.key,store=self.store,now=100)
+        target.fetch_message.side_effect=discord.NotFound(NS(status=404,reason='Not Found'),'deleted')
+        await election.recount_election(client,self.key,store=self.store)
+        self.assertEqual(target.send.await_count,2)
+        self.assertEqual(self.store.get(self.key)['delivery'],'sent')
 
     async def test_view_requires_two_choices_and_submits_private_receipt(self):
         view=election.BallotView(self.store.get(self.key),10,self.store)

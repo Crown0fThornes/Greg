@@ -117,26 +117,22 @@ Senior Council winner vote. Earlier elimination ties use this order:
    With N original nominees, first place earns N−1 points, second N−2, down
    to zero for last place. Unranked nominees get zero. Only the remaining
    tied elimination candidates are compared; the lowest score is eliminated.
-3. If the lowest Borda scores also tie, stop and request a Senior Council
-   decision. The result lists the precise eligible elimination choices, as
-   well as all still-contending candidates.
+3. If the lowest Borda scores also tie, eliminate every nominee still tied at
+   that stage together. Their votes transfer directly to surviving nominees;
+   none can receive another eliminated nominee's transfers in that round.
+   The round report labels this as batch elimination.
 
-Record the Senior Council's selected elimination with
-`$election eliminate ID @nominee` (a numeric Discord user ID is also accepted).
-This is an attestation by the privileged Council member issuing the command;
-Greg does not independently collect or verify the Senior Council's vote.
-Only a nominee in the currently unresolved elimination tie can be selected.
-Greg records the elimination round, selected nominee, recorder's ID, and
-timestamp, rereads the same frozen private receipts, and continues counting.
-If another unresolved elimination tie occurs, another decision can be recorded.
-Previous decisions are reproduced on subsequent recounts and appear in the
-round report. A missing/unreadable receipt or invalid decision stops the
-recount without silently dropping a ballot or committing the new decision.
+This batch rule can leave fewer nominees than available seats. Greg elects
+the remaining nominees and reports any vacancies without inventing winners.
+Safe zero-vote groups may still be removed together before additional checks.
+Final winner ties remain for a Senior Council winner vote; they are not
+automatically eliminated by this rule.
 
-Zero-vote candidates tied for elimination can still be removed together when
-enough candidates remain to fill all seats. Nonzero tied candidates are not
-batch-eliminated. Final winner ties do not use the Borda elimination rule or
-the elimination command; those remain for a Senior Council winner vote.
+Use `$election recount ID` to apply the revised automatic tie rules to an older
+closed result. The old `$election eliminate` command no longer records new
+decisions. Previously recorded Senior Council decisions remain auditable and
+are reproduced on recounts rather than silently undone. Missing or unreadable
+receipts still stop recounting without dropping ballots.
 There are no random or alphabetical tie-breaks that determine who wins.
 The Senior Member follow-up election is not started automatically.
 
@@ -150,16 +146,17 @@ The Senior Member follow-up election is not started automatically.
 - `$election rounds ID` — view candidate totals, actions, transfers, and exhausted
   vote weights for each counting round, including tie-break scores and decisions.
 - `$election recount ID` — apply the current counting rules to an already
-  closed election's original ballots. This can apply Borda tie-breaks to an
+  closed election's original ballots. This can apply automatic tie-breaks to an
   election previously stopped under the older rules.
-- `$election eliminate ID @nominee` — record the Senior Council's chosen
-  elimination and resume a pending elimination tie.
 - `$election cancel ID` — cancel an open election without counting it.
 
 These administrative commands use the existing privileged access checks.
-Recounting and recording decisions never reopen voting or change its cutoff.
-They publish an **Updated results** announcement and increment its revision;
-the saved result retrieved by `$election results ID` is always the latest one.
+Recounting never reopens voting or changes its cutoff.
+They update the existing result announcement and increment its revision. If
+that message was deleted, Greg posts a replacement. Results use one nominee
+mention per line, with separate elected, pending elimination, and final winner
+vote sections. The saved result retrieved by `$election results ID` is always
+the latest one; recounts do not add repeated result announcements to the channel.
 Only `$vote` is public, with its own fixed-voter-list check. The result is sent
 to the election's original channel. Messages suppress mentions. No interim
 candidate tallies or individual ballots are shown to Council. If result
