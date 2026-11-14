@@ -21,6 +21,11 @@ class ElectionStore:
             db.execute('CREATE TABLE IF NOT EXISTS invitation ('
                        'election_id INTEGER NOT NULL,user_id INTEGER NOT NULL,last_attempt REAL NOT NULL,'
                        'status TEXT NOT NULL,PRIMARY KEY(election_id,user_id))')
+            db.execute('CREATE TABLE IF NOT EXISTS ballot_menu ('
+                       'message_id INTEGER PRIMARY KEY,election_id INTEGER NOT NULL,'
+                       'user_id INTEGER NOT NULL,dm_id INTEGER NOT NULL,kind TEXT NOT NULL)')
+            db.execute('CREATE TABLE IF NOT EXISTS menu_repair ('
+                       'election_id INTEGER NOT NULL,user_id INTEGER NOT NULL,PRIMARY KEY(election_id,user_id))')
 
     @contextmanager
     def connect(self):
@@ -98,3 +103,24 @@ class ElectionStore:
     def invitation_status(self,key,uid,status):
         with self.connect() as db:
             db.execute('UPDATE invitation SET status=? WHERE election_id=? AND user_id=?',(status,key,uid))
+
+    def menus(self,key):
+        with self.connect() as db:
+            return [dict(row) for row in db.execute('SELECT * FROM ballot_menu WHERE election_id=?',(key,))]
+
+    def menu(self,key,uid,dm_id,message_id,kind):
+        with self.connect() as db:
+            db.execute('INSERT INTO ballot_menu VALUES (?,?,?,?,?) ON CONFLICT(message_id) DO UPDATE SET kind=excluded.kind',
+                       (message_id,key,uid,dm_id,kind))
+
+    def forget_menu(self,message_id):
+        with self.connect() as db:
+            db.execute('DELETE FROM ballot_menu WHERE message_id=?',(message_id,))
+
+    def repaired(self,key,uid):
+        with self.connect() as db:
+            return bool(db.execute('SELECT 1 FROM menu_repair WHERE election_id=? AND user_id=?',(key,uid)).fetchone())
+
+    def mark_repaired(self,key,uid):
+        with self.connect() as db:
+            db.execute('INSERT OR IGNORE INTO menu_repair VALUES (?,?)',(key,uid))

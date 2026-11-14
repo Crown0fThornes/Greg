@@ -84,3 +84,71 @@ class CategoryTests(unittest.IsolatedAsyncioTestCase):
         occupied.delete.assert_not_awaited()
         unrelated.delete.assert_not_awaited()
         self.assertNotIn(empty.id,self.data['archive_categories'])
+
+    def unsupported_type(self,payload):
+        self.guild.fetch_channels.side_effect=discord.InvalidData('Unknown channel type 20')
+        self.guild._state=NS(http=NS(get_all_guild_channels=AsyncMock(return_value=payload)))
+        def factory(kind):
+            if kind==20:
+                return None,20
+            return lambda **kwargs:next(channel for channel in self.channels
+                                        if channel.id==int(kwargs['data']['id'])),kind
+        return patch.object(tickets,'_guild_channel_factory',side_effect=factory)
+
+    async def test_unknown_type_does_not_block_ticket_discovery(self):
+        base=self.category(tickets.BASE_CLOSED,'closed-tickets')
+        ticket=self.channel(7,base)
+        payload=[dict(id=str(base.id),type=4),dict(id='7',type=0),
+                 dict(id='1569594861953486856',type=20,parent_id=None)]
+        with self.unsupported_type(payload):
+            self.assertEqual(await tickets.get_all_closed_tickets(self.guild),[ticket])
+        self.assertEqual(self.data['archive_categories'],[base.id])
+
+    async def test_unknown_child_counts_towards_category_capacity(self):
+        base=self.category(tickets.BASE_CLOSED,'closed-tickets')
+        payload=[dict(id=str(base.id),type=4)]
+        for uid in range(49):
+            self.channel(100+uid,base)
+            payload.append(dict(id=str(100+uid),type=0))
+        payload.append(dict(id='500',type=20,parent_id=str(base.id)))
+        with self.unsupported_type(payload):
+            result=await tickets.ensure_category_capacity(self.guild)
+        self.assertEqual(result.id,999)
+        self.guild.create_category_channel.assert_awaited_once()
+
+    async def test_cleanup_retains_category_with_unknown_child(self):
+        base=self.category(tickets.BASE_CLOSED,'closed-tickets')
+        occupied=self.category(2,'closed-tickets-2')
+        payload=[dict(id=str(base.id),type=4),dict(id='2',type=4),
+                 dict(id='500',type=20,parent_id='2')]
+        with self.unsupported_type(payload):
+            await tickets.cleanup_ticket_categories(self.guild)
+        occupied.delete.assert_not_awaited()
+
+    async def test_cleanup_rechecks_for_new_unknown_child_before_deleting(self):
+        base=self.category(tickets.BASE_CLOSED,'closed-tickets')
+        occupied=self.category(2,'closed-tickets-2')
+        payload=[dict(id=str(base.id),type=4),dict(id='2',type=4),
+                 dict(id='500',type=20,parent_id='2')]
+        with self.unsupported_type(payload):
+            # First response has no child; the fresh pre-delete response has it.
+            self.guild._state.http.get_all_guild_channels.side_effect=[payload[:2],payload,payload,payload,payload]
+            await tickets.cleanup_ticket_categories(self.guild)
+        occupied.delete.assert_not_awaited()
+
+    async def test_http_failure_is_not_treated_as_empty_server(self):
+        self.guild.fetch_channels.side_effect=discord.Forbidden(NS(status=403,reason='Forbidden'),'blocked')
+        with self.assertRaises(discord.Forbidden):
+            await tickets.category_snapshot(self.guild)
+        self.assertEqual(self.data,{})
+
+    async def test_fallback_constructs_real_supported_channels(self):
+        payload=[dict(id=str(tickets.BASE_CLOSED),type=4,name='closed-tickets',position=0),
+                 dict(id='7',type=0,name='ticket',topic='123',position=1,parent_id=str(tickets.BASE_CLOSED)),
+                 dict(id='8',type=20,parent_id=None)]
+        self.guild.fetch_channels.side_effect=discord.InvalidData('Unknown channel type 20')
+        self.guild._state=NS(http=NS(get_all_guild_channels=AsyncMock(return_value=payload)))
+        result=await tickets.get_all_closed_tickets(self.guild)
+        self.assertEqual(len(result),1)
+        self.assertIsInstance(result[0],discord.TextChannel)
+        self.assertEqual(result[0].topic,'123')

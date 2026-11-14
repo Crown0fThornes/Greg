@@ -2527,6 +2527,12 @@ async def support_ticket_reaction(context: Context):
         await open_ticket(context.emoji, context.user, context.guild);
 
 
+@command_handler.Loop(hours=24, desc="Recover unresolved support-ticket reactions on startup and once daily")
+async def recover_support_ticket_requests(client):
+    from ticket_manager import recover_support_requests
+    await recover_support_requests(client,FF)
+
+
 async def open_ticket(emoji, user, guild):
     
     from ticket_manager import open_ticket 

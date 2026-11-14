@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import json
+import itertools
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace as NS
@@ -10,6 +11,15 @@ import discord
 
 from commands import council_election as election
 from commands.election_store import ElectionStore
+
+
+message_ids=itertools.count(10000)
+
+def menu_message():
+    return NS(id=next(message_ids),channel=NS(id=1000))
+
+def dm_send():
+    return AsyncMock(side_effect=lambda *args,**kwargs:menu_message())
 
 
 def config(**overrides):
@@ -130,18 +140,18 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(next(child for child in view.children if getattr(child,'label','')=='Submit ballot').disabled)
         interaction=NS(user=NS(id=10),response=NS(defer=AsyncMock()),
                        channel=NS(id=1000,send=AsyncMock(return_value=NS(id=100))),
-                       edit_original_response=AsyncMock(),followup=NS(send=AsyncMock()))
+                       edit_original_response=AsyncMock(return_value=menu_message()),followup=NS(send=dm_send()))
         await view.submit(interaction)
         self.assertEqual(self.store.receipts(self.key)[0]['receipt_id'],100)
         self.assertIn('3,1',interaction.channel.send.call_args.args[0])
-        self.assertEqual(interaction.edit_original_response.call_args.kwargs['view'],None)
+        self.assertIsInstance(interaction.edit_original_response.call_args.kwargs['view'],election.BallotEntryView)
         self.assertTrue(view.is_finished())
 
     async def test_expired_view_cannot_submit(self):
         key=self.store.create(config(deadline=1))
         view=election.BallotView(self.store.get(key),10,self.store)
         view.ranking=[1,2]
-        interaction=NS(response=NS(defer=AsyncMock()),channel=NS(send=AsyncMock()),followup=NS(send=AsyncMock()))
+        interaction=NS(response=NS(defer=AsyncMock()),channel=NS(send=dm_send()),followup=NS(send=dm_send()))
         await view.submit(interaction)
         interaction.channel.send.assert_not_awaited()
         self.assertEqual(self.store.receipts(key),[])
@@ -149,23 +159,23 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
         view.stop()
 
     async def test_open_ballot_sends_only_dm_and_success_reaction(self):
-        author=NS(id=10,send=AsyncMock())
+        author=NS(id=10,send=dm_send())
         context=NS(guild=NS(id=election.GUILD_ID),author=author,message=NS(add_reaction=AsyncMock()))
         await election.open_ballot(context,self.key,store=self.store)
-        self.assertIn('Private ballot',author.send.call_args.args[0])
-        self.assertIsInstance(author.send.call_args.kwargs['view'],election.BallotView)
+        self.assertTrue(author.send.call_args.args[0].startswith('# Council seats\n'))
+        self.assertIsInstance(author.send.call_args.kwargs['view'],election.BallotEntryView)
         context.message.add_reaction.assert_awaited_once_with('✅')
         author.send.call_args.kwargs['view'].stop()
 
     async def test_create_freezes_current_council_and_date_uses_fixed_st(self):
-        voter=NS(id=10,bot=False,roles=[NS(id=election.COUNCIL_ROLE)],send=AsyncMock())
+        voter=NS(id=10,bot=False,roles=[NS(id=election.COUNCIL_ROLE)],send=dm_send())
         async def members(**kwargs):
             yield voter
             yield NS(id=11,bot=False,roles=[])
             yield NS(id=12,bot=True,roles=[NS(id=election.COUNCIL_ROLE)])
         guild=NS(id=election.GUILD_ID,fetch_members=members,
                  fetch_member=AsyncMock(side_effect=lambda uid:NS(id=uid,display_name=f'Name {uid}',bot=False)))
-        context=NS(guild=guild,author=NS(id=10),channel=NS(id=999,send=AsyncMock()))
+        context=NS(guild=guild,author=NS(id=10),channel=NS(id=999,send=dm_send()))
         key=await election.create(context,['November election','11/20/2026','8:00','PM','<@1>','<@2>','<@3>'],
                                   store=self.store,now=datetime(2026,11,11,tzinfo=timezone.utc))
         row=self.store.get(key)
@@ -173,18 +183,18 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(datetime.fromtimestamp(row['config']['deadline'],timezone.utc).isoformat(),'2026-11-21T00:00:00+00:00')
         self.assertEqual(row['config']['channel_id'],999)
         voter.send.assert_awaited_once()
-        self.assertIn('Council voting is open',voter.send.call_args.args[0])
+        self.assertTrue(voter.send.call_args.args[0].startswith('# November election\n'))
         voter.send.call_args.kwargs['view'].stop()
 
     async def test_role_candidates_expand_deduplicate_and_exclude_bots(self):
         people=[NS(id=uid,display_name=f'Candidate {uid}',bot=uid==4,
-                   roles=[NS(id=200)],send=AsyncMock()) for uid in (1,2,3,4)]
-        voter=NS(id=10,bot=False,roles=[NS(id=election.COUNCIL_ROLE)],send=AsyncMock())
+                   roles=[NS(id=200)],send=dm_send()) for uid in (1,2,3,4)]
+        voter=NS(id=10,bot=False,roles=[NS(id=election.COUNCIL_ROLE)],send=dm_send())
         async def members(**kwargs):
             for person in people+[voter]:
                 yield person
         guild=NS(id=election.GUILD_ID,fetch_members=members,get_role=lambda rid:NS(id=rid))
-        context=NS(guild=guild,author=NS(id=10),channel=NS(id=999,send=AsyncMock()))
+        context=NS(guild=guild,author=NS(id=10),channel=NS(id=999,send=dm_send()))
         key=await election.create(context,['Election','11/20/2026','8:00','PM','<@&200>','<@1>'],
                                   store=self.store,now=datetime(2026,11,11,tzinfo=timezone.utc))
         self.assertEqual(election.candidates(self.store.get(key)),[1,2,3])
@@ -193,19 +203,20 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_create_role_with_nine_candidates_and_three_seats(self):
         people=[NS(id=uid,display_name=f'Candidate {uid}',bot=False,
-                   roles=[NS(id=200)],send=AsyncMock()) for uid in range(1,10)]
-        voter=NS(id=10,bot=False,roles=[NS(id=election.COUNCIL_ROLE)],send=AsyncMock())
+                   roles=[NS(id=200)],send=dm_send()) for uid in range(1,10)]
+        voter=NS(id=10,bot=False,roles=[NS(id=election.COUNCIL_ROLE)],send=dm_send())
         async def members(**kwargs):
             for person in people+[voter]:
                 yield person
         guild=NS(id=election.GUILD_ID,fetch_members=members,get_role=lambda rid:NS(id=rid))
-        context=NS(guild=guild,author=NS(id=10),channel=NS(id=999,send=AsyncMock()))
+        context=NS(guild=guild,author=NS(id=10),channel=NS(id=999,send=dm_send()))
         key=await election.create(context,['Election','3','11/20/2026','8:00','PM','<@&200>'],
                                   store=self.store,now=datetime(2026,11,11,tzinfo=timezone.utc))
         row=self.store.get(key)
         self.assertEqual(election.candidates(row),list(range(1,10)))
         self.assertEqual(row['config']['seats'],3)
-        view=voter.send.call_args.kwargs['view']
+        voter.send.call_args.kwargs['view'].stop()
+        view=election.BallotView(row,10,self.store)
         view.ranking=[1,2]
         view.refresh()
         self.assertTrue(next(child for child in view.children if getattr(child,'label','')=='Submit ballot').disabled)
@@ -238,7 +249,7 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await election.load_receipt(message,row,99),[3,1])
 
     async def test_reminders_are_daily_and_stop_after_submission(self):
-        people={uid:NS(id=uid,send=AsyncMock()) for uid in (10,11,12)}
+        people={uid:NS(id=uid,send=dm_send()) for uid in (10,11,12)}
         guild=NS(fetch_member=AsyncMock(side_effect=lambda uid:people[uid]))
         row=self.store.get(self.key)
         await election.invite_voters(guild,row,store=self.store,now=100,pause=0)
@@ -257,8 +268,8 @@ class ElectionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_blocked_dm_does_not_prevent_other_voters_receiving_ballots(self):
         blocked=NS(id=10,send=AsyncMock(side_effect=discord.Forbidden(NS(status=403,reason='Forbidden'),'blocked')))
-        delivered=NS(id=11,send=AsyncMock())
-        third=NS(id=12,send=AsyncMock())
+        delivered=NS(id=11,send=dm_send())
+        third=NS(id=12,send=dm_send())
         people={10:blocked,11:delivered,12:third}
         guild=NS(fetch_member=AsyncMock(side_effect=lambda uid:people[uid]))
         await election.invite_voters(guild,self.store.get(self.key),store=self.store,now=100,pause=0)

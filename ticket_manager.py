@@ -4,8 +4,10 @@ import logging
 import shelve
 import asyncio
 import re
+from types import SimpleNamespace
 import discord
 from discord import TextChannel
+from discord.channel import _guild_channel_factory
 
 # ──────── REMEMBER SYSTEM ───────────────────────────────────────────
 
@@ -26,6 +28,9 @@ BASE_OPEN=1033246546986291260
 BASE_CLOSED=1033247090282856509
 LEGACY_CLOSED=[BASE_CLOSED,1183992886820343869,1201914070027219016,1224193594353516605]
 _locks={}
+_unknown_channel_types=set()
+SUPPORT_MESSAGE_ID=1033540464441303200
+_recovery_lock=asyncio.Lock()
 
 
 def ticket_lock(guild):
@@ -41,8 +46,37 @@ def save_archive_categories(categories):
     remember("archive_categories",categories)
 
 
+async def fetch_ticket_channels(guild):
+    """Keep ticket discovery working when Discord introduces a channel type."""
+    try:
+        return await guild.fetch_channels()
+    except discord.InvalidData:
+        # discord.py 2.6.4 rejects the whole response if one type is unknown.
+        # Use the same endpoint and constructors, tolerating only unknown
+        # types. HTTP/permission failures still propagate rather than using a
+        # potentially stale cache for capacity checks or category deletion.
+        data=await guild._state.http.get_all_guild_channels(guild.id)
+        channels=[]
+        for payload in data:
+            factory,_=_guild_channel_factory(payload['type'])
+            if factory is not None:
+                channels.append(factory(guild=guild,state=guild._state,data=payload))
+                continue
+            parent=payload.get('parent_id')
+            channels.append(SimpleNamespace(id=int(payload['id']),
+                category_id=int(parent) if parent is not None else None,
+                type=payload['type'],name=payload.get('name','')))
+            identity=(guild.id,payload['type'])
+            if identity not in _unknown_channel_types:
+                logging.getLogger(__name__).warning(
+                    'Ticket discovery is retaining occupancy for unsupported channel type %s in guild %s',
+                    payload['type'],guild.id)
+                _unknown_channel_types.add(identity)
+        return channels
+
+
 async def category_snapshot(guild,kind='closed'):
-    channels=await guild.fetch_channels()
+    channels=await fetch_ticket_channels(guild)
     key=f'ticket_categories:{guild.id}:{kind}'
     saved=remember(key)
     ids=set(saved or [])
@@ -94,7 +128,7 @@ async def cleanup_ticket_categories(guild):
             # Keep one base category as a permission template and a ready landing area.
             for category in categories[1:]:
                 if not any(getattr(c,'category_id',None)==category.id for c in channels):
-                    fresh=await guild.fetch_channels()
+                    fresh=await fetch_ticket_channels(guild)
                     if not any(getattr(c,'category_id',None)==category.id for c in fresh):
                         try:
                             await category.delete(reason='Empty ticket overflow category')
@@ -125,27 +159,23 @@ async def restore_ticket(ticket: TextChannel, user, name, open_category, guild, 
 
 # ──────── OPEN TICKET LOGIC ─────────────────────────────────────────
 
-async def _open_ticket(emoji, user, guild, FF):
+async def _open_ticket(emoji, user, guild, FF, *, notify_existing=True):
     target = str(user.id)
     name = user.display_name.replace(" ", "-")
 
 
-    support_channel = await guild.fetch_channel(FF.support_request_channel)
-    message = await support_channel.fetch_message(1033540464441303200)
     open_categories,all_channels=await category_snapshot(guild,"open")
     open_ids={category.id for category in open_categories}
     mission_control = await guild.fetch_channel(FF.mission_control_channel)
     rank1 = guild.get_role(1205232195703144488)
 
-    if emoji:
-        await message.remove_reaction(emoji, user)
-
     for ticket in all_channels:
         if not isinstance(ticket,TextChannel) or ticket.category_id not in open_ids:
             continue
         if ticket.topic == target:
-            await ticket.edit(name=name)
-            await ticket.send(f"Thank you for reaching out to the Council again. Your private ticket channel is located here <@{user.id}>. Drop a message letting us know what we can help you with!")
+            if notify_existing:
+                await ticket.edit(name=name)
+                await ticket.send(f"Thank you for reaching out to the Council again. Your private ticket channel is located here <@{user.id}>. Drop a message letting us know what we can help you with!")
             return ticket;
 
     for ticket in await get_all_closed_tickets(guild):
@@ -173,11 +203,55 @@ async def _open_ticket(emoji, user, guild, FF):
     remember("new_tickets", new_tickets)
     return ticket;
 
-async def open_ticket(emoji,user,guild,FF):
+async def clear_support_reaction(guild,FF,emoji,user,*,message=None):
+    try:
+        if message is None:
+            channel=await guild.fetch_channel(FF.support_request_channel)
+            message=await channel.fetch_message(SUPPORT_MESSAGE_ID)
+        await message.remove_reaction(emoji,user)
+    except discord.HTTPException:
+        logging.getLogger(__name__).warning('Ticket opened, but could not clear support reaction for %s',user.id)
+
+
+async def open_ticket(emoji,user,guild,FF,*,notify_existing=True):
     async with ticket_lock(guild):
-        ticket=await _open_ticket(emoji,user,guild,FF)
+        ticket=await _open_ticket(emoji,user,guild,FF,notify_existing=notify_existing)
+        # A failed open must leave the request available for startup recovery.
+        if emoji:
+            await clear_support_reaction(guild,FF,emoji,user)
     try:
         await cleanup_ticket_categories(guild)
     except discord.HTTPException:
         logging.getLogger(__name__).exception("Ticket opened, but category cleanup failed")
     return ticket
+
+
+async def recover_support_requests(client,FF):
+    """Reconcile queued reactions on the initial startup maintenance pass and retries."""
+    guild=client.get_guild(FF.guild)
+    if guild is None:
+        return
+    async with _recovery_lock:
+        channel=await guild.fetch_channel(FF.support_request_channel)
+        message=await channel.fetch_message(SUPPORT_MESSAGE_ID)
+        pending={}
+        # Match the live reaction handler: any non-bot reaction requests a ticket.
+        # Read all users before making changes; a partial read is not a request list.
+        for reaction in message.reactions:
+            async for user in reaction.users(limit=None):
+                if not user.bot:
+                    pending.setdefault(user.id,[]).append(reaction.emoji)
+        for uid,emojis in pending.items():
+            try:
+                user=guild.get_member(uid) or await guild.fetch_member(uid)
+                if user.bot:
+                    continue
+                await open_ticket(emojis[0],user,guild,FF,notify_existing=False)
+                for emoji in emojis[1:]:
+                    await clear_support_reaction(guild,FF,emoji,user,message=message)
+            except discord.NotFound:
+                # Someone who left the server cannot be given a ticket.
+                logging.getLogger(__name__).warning('Cannot recover support request for missing member/channel %s',uid)
+            except Exception:
+                # Leave this user's reaction intact and continue other requests.
+                logging.getLogger(__name__).exception('Support request recovery failed for %s; will retry',uid)

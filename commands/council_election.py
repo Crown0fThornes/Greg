@@ -16,12 +16,13 @@ COUNCIL_ROLE=648188387836166168
 ST=timezone(timedelta(hours=-4))
 lock=asyncio.Lock()
 log=logging.getLogger(__name__)
+registered_menus=set()
 HELP='''**Council elections**
 `$election create "Election name" seats month/day/year hour:minute AM/PM @candidate-or-role ...`
 Choose any positive number of seats, with at least that many candidates. Times use ST (UTC−4).
 Role mentions add all their non-bot members as candidates. Omitting seats defaults to 2.
 Current Council members receive DM ballots immediately and reminders every 24 hours until submitted.
-`$vote ID` — receive a private ballot; submit again to replace your vote before closing.
+`$vote ID` — optional fallback to resend the DM invitation. Normal voting needs no server command.
 `$election list` / `$election status ID` — elections and turnout, without interim tallies.
 `$election close ID` — close early and count; normally closes automatically at its deadline.
 `$election results ID` / `$election rounds ID` — aggregate results and count rounds.
@@ -55,8 +56,8 @@ def open_for(row,uid,now):
 def receipt_content(row,ranking):
     lines=[f"**Ballot receipt — Election #{row['id']}: {safe(row['config']['title'])}**"]
     lines.extend(f'{index}. {name(row,uid)}' for index,uid in enumerate(ranking,1))
-    lines += ['', 'Your latest submitted receipt is your vote. Use the server command '
-              f"`$vote {row['id']}` to replace it before closing.",
+    lines += ['', 'Your latest submitted receipt is your vote. Use '
+              'the **Change my vote** button in this DM to replace it before closing.',
               'This receipt counts only after Greg confirms that your ballot was submitted.',
               f"BALLOT-V1:{row['id']}:"+','.join(map(str,ranking))]
     return '\n'.join(lines)
@@ -99,7 +100,7 @@ def election_summary(row,store):
             +('DM delivery needs attention: '+', '.join(f'<@{uid}>' for uid in blocked)+'\n' if blocked else '')+
             f"Closes: <t:{int(config['deadline'])}:F>\n"
             'Candidates: '+', '.join(name(row,uid) for uid in candidates(row))+'\n'
-            f"Council voters receive DM ballots automatically. Use `$vote {row['id']}` for a fresh ballot.\n"
+            'Council voters receive a DM with a **Start / continue voting** button that works until closing.\n'
             'Unsubmitted ballots receive a DM reminder every 24 hours until closing.\n'
             'Counting: STV, Droop quota, fractional surplus transfers. '
             'Tied final seats go to a Senior Member vote. Earlier elimination ties use prior-round totals; '
@@ -177,9 +178,68 @@ async def send_lines(channel,lines):
         await channel.send(page,allowed_mentions=discord.AllowedMentions.none())
 
 
+def track_menu(store,row,uid,message,kind):
+    store.menu(row['id'],uid,message.channel.id,message.id,kind)
+    registered_menus.add((str(store.path),message.id))
+
+
+def ballot_introduction(row):
+    seats=seat_count(row)
+    positions='position' if seats==1 else 'positions'
+    nominees='nominee' if seats==1 else 'nominees'
+    return (f"# {safe(row['config']['title'])}\n\n"
+            f"Voting is now open and ends <t:{int(row['config']['deadline'])}:F>.\n\n"
+            'You will choose candidates in order of your preference (First pick = your top choice).\n\n'
+            f'You are voting to fill **{seats} {positions}**.\n'
+            f'You must rank at least **{seats} {nominees}** but are encouraged to rank as many as you approve of.\n\n'
+            'Ranking more nominees does not dilute your vote for your top choices.\n\n'
+            'It is your right to vote. If you have issues or are concerned your vote was not counted, '
+            'please contact Lincoln.')
+
+
+class BallotEntryView(discord.ui.View):
+    """A durable entry point, including after submitting a ballot."""
+    def __init__(self,row,uid,store):
+        super().__init__(timeout=None)
+        self.row=row
+        self.uid=uid
+        self.store=store
+        button=discord.ui.Button(label='Start / continue voting',style=discord.ButtonStyle.primary,
+                                 custom_id=f"election:{row['id']}:{uid}:open")
+        button.callback=self.open
+        self.add_item(button)
+
+    def text(self):
+        submitted=any(voter['user_id']==self.uid for voter in self.store.receipts(self.row['id']))
+        return (ballot_introduction(self.row)+'\n\n'
+                +('✅ You have submitted a ballot. You may change it before closing.\n\n' if submitted else
+                  'Press **Start / continue voting** below to choose your nominees.\n\n')
+                +'**Press Submit ballot when you are satisfied.**')
+
+    async def interaction_check(self,interaction):
+        if interaction.user.id!=self.uid:
+            await interaction.response.send_message('This is someone else’s ballot.',ephemeral=True)
+            return False
+        return True
+
+    async def open(self,interaction):
+        await interaction.response.defer()
+        try:
+            row=self.store.get(self.row['id'])
+            open_for(row,self.uid,datetime.now(timezone.utc).timestamp())
+            view=BallotView(row,self.uid,self.store)
+            await view.update_message(interaction)
+            self.stop()
+        except ValueError as error:
+            await interaction.followup.send(str(error),ephemeral=True)
+
+    async def on_error(self,interaction,error,item):
+        await BallotView.on_error(self,interaction,error,item)
+
+
 class BallotView(discord.ui.View):
     def __init__(self,row,uid,store):
-        super().__init__(timeout=600)
+        super().__init__(timeout=None)
         self.row=row
         self.uid=uid
         self.store=store
@@ -188,11 +248,7 @@ class BallotView(discord.ui.View):
         self.refresh()
 
     def text(self):
-        lines=[f"**Private ballot — Election #{self.row['id']}: {safe(self.row['config']['title'])}**",
-               f'Choose candidates in preference order: first choice first. Rank at least {seat_count(self.row)} '
-               f'for the {seat_count(self.row)} available seats; '
-               'you may rank every candidate you would accept. Unranked candidates receive no further transfers.',
-               '', '**Your draft ranking:**']
+        lines=[ballot_introduction(self.row), '', '**Your choices so far:**']
         lines.extend(f'{index}. {name(self.row,uid)}' for index,uid in enumerate(self.ranking[:10],1))
         if len(self.ranking)>10:
             lines.append(f'…and {len(self.ranking)-10} more. Press **Review full ranking** to see every choice.')
@@ -201,14 +257,32 @@ class BallotView(discord.ui.View):
             lines.append(f'Candidate page {self.page+1}/{(remaining+24)//25}; use the page buttons to browse.')
         if not self.ranking:
             lines.append('No choices yet. Select your first choice below.')
-        lines += ['', 'Press **Submit ballot** to save this ranking. A draft is not a vote. '
-                  'You can replace your submitted ballot until closing. This menu expires after 10 minutes; '
-                  f"run `$vote {self.row['id']}` in the server for a fresh menu."]
+        lines += ['', '**Press Submit ballot when you are satisfied.**']
         return '\n'.join(lines)
+
+    def draft_content(self):
+        return self.text()+f"\n||DRAFT-V1:{self.row['id']}:{self.page}:"+','.join(map(str,self.ranking))+'||'
+
+    async def update_message(self,interaction):
+        content=self.draft_content()
+        if len(content)<=1900:
+            message=await interaction.edit_original_response(content=content,view=self,attachments=[])
+        else:
+            file=discord.File(io.BytesIO(content.encode('utf-8')),filename=f"draft-{self.row['id']}.txt")
+            try:
+                message=await interaction.edit_original_response(content=self.text(),view=self,attachments=[file])
+            finally:
+                file.close()
+        track_menu(self.store,self.row,self.uid,message,'draft')
 
     async def interaction_check(self,interaction):
         if interaction.user.id!=self.uid:
             await interaction.response.send_message('This is someone else’s ballot.',ephemeral=True)
+            return False
+        try:
+            open_for(self.store.get(self.row['id']),self.uid,datetime.now(timezone.utc).timestamp())
+        except ValueError as error:
+            await interaction.response.send_message(str(error),ephemeral=True)
             return False
         return True
 
@@ -218,43 +292,51 @@ class BallotView(discord.ui.View):
         self.page=min(self.page,max(0,(len(remaining)-1)//25))
         if remaining:
             select=discord.ui.Select(placeholder=f'Choose preference #{len(self.ranking)+1}',
+                custom_id=f"election:{self.row['id']}:{self.uid}:pick",
                 options=[discord.SelectOption(label=candidate['name'][:100],value=str(candidate['id']))
                          for candidate in remaining[self.page*25:(self.page+1)*25]])
             async def choose(interaction):
+                await interaction.response.defer()
                 uid=int(select.values[0])
                 if uid not in self.ranking:
                     self.ranking.append(uid)
                 self.page=0
                 self.refresh()
-                await interaction.response.edit_message(content=self.text(),view=self)
+                await self.update_message(interaction)
             select.callback=choose
             self.add_item(select)
         if len(remaining)>25:
             for delta,label in ((-1,'Previous candidates'),(1,'Next candidates')):
-                button=discord.ui.Button(label=label,disabled=not 0<=self.page+delta<(len(remaining)+24)//25)
+                button=discord.ui.Button(label=label,disabled=not 0<=self.page+delta<(len(remaining)+24)//25,
+                    custom_id=f"election:{self.row['id']}:{self.uid}:page{delta}")
                 async def move(interaction,delta=delta):
+                    await interaction.response.defer()
                     self.page+=delta
                     self.refresh()
-                    await interaction.response.edit_message(content=self.text(),view=self)
+                    await self.update_message(interaction)
                 button.callback=move
                 self.add_item(button)
-        undo=discord.ui.Button(label='Undo last choice',disabled=not self.ranking)
+        undo=discord.ui.Button(label='Undo last choice',disabled=not self.ranking,
+            custom_id=f"election:{self.row['id']}:{self.uid}:undo")
         async def undo_choice(interaction):
+            await interaction.response.defer()
             if self.ranking:
                 self.ranking.pop()
             self.page=0
             self.refresh()
-            await interaction.response.edit_message(content=self.text(),view=self)
+            await self.update_message(interaction)
         undo.callback=undo_choice
         self.add_item(undo)
-        review=discord.ui.Button(label='Review full ranking',disabled=not self.ranking)
+        review=discord.ui.Button(label='Review full ranking',disabled=not self.ranking,
+            custom_id=f"election:{self.row['id']}:{self.uid}:review")
         async def review_ranking(interaction):
             await interaction.response.defer()
             await send_lines(interaction.channel,['**Your current draft ranking (not yet submitted):**']+
                              [f'{index}. {name(self.row,uid)}' for index,uid in enumerate(self.ranking,1)])
         review.callback=review_ranking
         self.add_item(review)
-        submit=discord.ui.Button(label='Submit ballot',style=discord.ButtonStyle.success,disabled=len(self.ranking)<seat_count(self.row))
+        submit=discord.ui.Button(label='Submit ballot',style=discord.ButtonStyle.success,disabled=len(self.ranking)<seat_count(self.row),
+            custom_id=f"election:{self.row['id']}:{self.uid}:submit")
         submit.callback=self.submit
         self.add_item(submit)
 
@@ -280,7 +362,10 @@ class BallotView(discord.ui.View):
                 open_for(row,self.uid,when)
                 self.store.submit(row['id'],self.uid,interaction.channel.id,receipt.id,when)
                 self.stop()
-                await interaction.edit_original_response(content='✅ Your ballot was submitted. Your latest submitted ballot counts.',view=None)
+                entry=BallotEntryView(row,self.uid,self.store)
+                entry.children[0].label='Change my vote'
+                message=await interaction.edit_original_response(content=entry.text(),view=entry,attachments=[])
+                track_menu(self.store,row,self.uid,message,'entry')
         except ValueError as error:
             await interaction.followup.send(str(error),ephemeral=True)
 
@@ -299,9 +384,10 @@ async def open_ballot(context,key,*,store=None):
     if context.guild.id!=row['config']['guild_id']:
         raise ValueError('Use this election’s server to request a ballot.')
     open_for(row,context.author.id,datetime.now(timezone.utc).timestamp())
-    view=BallotView(row,context.author.id,store)
+    view=BallotEntryView(row,context.author.id,store)
     try:
-        await context.author.send(view.text(),view=view,allowed_mentions=discord.AllowedMentions.none())
+        message=await context.author.send(view.text(),view=view,allowed_mentions=discord.AllowedMentions.none())
+        track_menu(store,row,context.author.id,message,'entry')
     except discord.Forbidden:
         raise ValueError('Please allow DMs from Greg, then run the command again.') from None
     await context.message.add_reaction('✅')
@@ -389,6 +475,8 @@ async def create(context,args,*,store=None,now=None):
     key=store.create(dict(title=title,deadline=deadline.timestamp(),guild_id=context.guild.id,
         channel_id=context.channel.id,creator_id=context.author.id,created_at=timestamp,
         candidates=choices,voters=sorted(set(voters)),seats=seats))
+    for uid in voters:
+        store.mark_repaired(key,uid)
     await send_lines(context.channel,election_summary(store.get(key),store).splitlines())
     await invite_voters(context.guild,store.get(key),store=store,members=member_map,now=timestamp)
     invitations=store.invitations(key)
@@ -422,11 +510,14 @@ async def invite_voters(guild,row,*,store=None,members=None,now=None,pause=0.25)
             previous=store.invitations(row['id']).get(uid)
             if not store.claim_invitation(row['id'],uid,check_time):
                 continue
-            view=BallotView(current,uid,store)
+            view=BallotEntryView(current,uid,store)
             try:
                 member=(members or {}).get(uid) or await guild.fetch_member(uid)
-                prefix='**Voting reminder: your ballot has not been submitted yet.**\n\n' if previous else '**Council voting is open!**\n\n'
-                await member.send(prefix+view.text(),view=view,allowed_mentions=discord.AllowedMentions.none())
+                content=view.text()
+                if previous:
+                    content+='\n\n**Voting reminder:** We haven’t received your submitted ballot yet.'
+                message=await member.send(content,view=view,allowed_mentions=discord.AllowedMentions.none())
+                track_menu(store,current,uid,message,'entry')
             except (discord.Forbidden,discord.NotFound):
                 view.stop()
                 store.invitation_status(row['id'],uid,'blocked')
@@ -479,6 +570,12 @@ async def close_due(client,*,store=None):
     store=store or ElectionStore()
     now=datetime.now(timezone.utc).timestamp()
     for row in store.all(limit=None):
+        if row['status']=='open' and row['config']['deadline']>now:
+            from commands.election_recovery import restore
+            try:
+                await restore(client,row,store)
+            except Exception as error:
+                log.error('Election #%s menu restoration failed (%s)',row['id'],type(error).__name__)
         if (row['status']=='open' and row['config']['deadline']<=now) or row['status']=='counting' or (row['status']=='closed' and row['delivery']=='waiting'):
             try:
                 await close_election(client,row['id'],store=store)

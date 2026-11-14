@@ -30,9 +30,9 @@ through the usual command permissions but must be on that list to vote.
 
 ## Voting
 
-Greg immediately sends each eligible Council member a private DM ballot when
-the election opens. If someone needs another menu, they can run `$vote ID` in
-the server; that server request receives a ✅. The menu lets the voter choose candidates
+Greg immediately sends each eligible Council member a DM with a **Start /
+continue voting** button when the election opens. That button opens the ballot
+in the same DM, without a server command. The menu lets the voter choose candidates
 one at a time in preference order, undo their last choice, and submit after
 ranking at least as many candidates as the number of winning seats. For
 example, three seats require three rankings. They may rank every candidate
@@ -51,9 +51,24 @@ at closing. Earlier receipts remain in the DM but do not count. Receipt text
 alone is not confirmation: the menu must also confirm successful submission.
 Ballot text entered as an ordinary DM is not accepted; use the menu buttons.
 
-Menus expire after ten minutes. After expiry or a bot restart, run `$vote ID`
-again in the server for a new menu. Already submitted ballots survive restarts.
-If DMs are blocked, Greg asks the voter to enable them and retry.
+Menus have no inactivity timeout and remain usable until voting closes. After
+submission the same message has a **Change my vote** button. Every component
+has a stable identifier for re-registration after a bot restart. Each draft
+selection updates a private checkpoint in the DM message itself (or a private
+attachment for a long draft), allowing the choices and candidate page to be
+restored without storing rankings in the local database.
+
+The election maintenance pass restores controls after a restart, normally on
+its first run and at most the normal five-minute polling interval once the
+existing automated jobs are running. On first upgrade it also scans each
+voter's election-period DMs once, replacing old expiring ballot menus with the
+durable entry button. Submitted receipt references are not changed. Older
+unsubmitted drafts have no checkpoint and must be started again through the
+button. Closed or expired elections are not reopened by this repair.
+
+`$vote ID` remains an optional fallback that resends the invitation, rather
+than a required part of normal voting. If DMs are blocked, the voter must
+enable them before Greg can deliver the invitation.
 
 ## Unsubmitted ballots and reminders
 
@@ -124,14 +139,16 @@ automatically posting a duplicate; the saved result remains available through
 ## Storage and privacy
 
 Feature code lives in `commands/council_election.py`, `election_count.py`, and
-`election_store.py`, with small registration wrappers in `commands/commands.py`.
+`election_store.py`, plus `election_recovery.py` for restart/legacy-menu repair,
+with small registration wrappers in `commands/commands.py`.
 It uses Discord's DM interaction menus; no changes to `custom_types.py`,
 `command_handler.py`, `responses.py`, or `greg3.py` are required.
 
 `data/council_elections.sqlite3` stores election settings, eligibility, each
-voter's DM/receipt message IDs and submission timestamp, and aggregate results.
-It does **not** store individual rankings. Those remain in bot-authored Discord
-DM receipts, are loaded temporarily into memory for counting, and are not
+voter's DM/receipt message IDs and submission timestamp, menu message references,
+delivery/repair status, and aggregate results. It does **not** store individual
+rankings. Submitted ballots and unfinished drafts remain in bot-authored Discord
+DM messages or their attachments, are loaded temporarily into memory, and are not
 written to logs. A voter cannot change their submitted ranking by editing
 their own messages. Only explicit menu submissions replace the vote reference.
 
