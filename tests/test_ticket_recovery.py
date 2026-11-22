@@ -1,4 +1,7 @@
 from types import SimpleNamespace as NS
+import ast
+import datetime
+from pathlib import Path
 import unittest
 from unittest.mock import AsyncMock,patch
 
@@ -9,7 +12,7 @@ class RecoveryTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.ff=NS(guild=1,support_request_channel=10,mission_control_channel=11)
         self.users={uid:NS(id=uid,bot=False,display_name=f'User {uid}') for uid in (1,2)}
-        self.message=NS(reactions=[],remove_reaction=AsyncMock())
+        self.message=NS(reactions=[],remove_reaction=AsyncMock(),add_reaction=AsyncMock())
         self.channel=NS(fetch_message=AsyncMock(return_value=self.message))
         self.guild=NS(id=1,fetch_channel=AsyncMock(return_value=self.channel),
                       get_member=lambda uid:self.users.get(uid),fetch_member=AsyncMock())
@@ -67,3 +70,47 @@ class RecoveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertIs(result,existing)
         existing.edit.assert_not_awaited()
         existing.send.assert_not_awaited()
+
+    async def test_seasonal_logo_is_added_and_only_gregs_old_seed_is_removed(self):
+        import discord
+        regular=discord.PartialEmoji.from_str(tickets.FF_LOGO)
+        farmmas=discord.PartialEmoji.from_str(tickets.FARMMAS_FF_LOGO)
+        self.guild.me=NS(id=99,bot=True)
+        self.message.reactions=[NS(emoji=regular,me=True)]
+        await tickets.ensure_support_logo(self.message,self.guild,tickets.FARMMAS_FF_LOGO)
+        self.message.add_reaction.assert_awaited_once_with(tickets.FARMMAS_FF_LOGO)
+
+        self.message.remove_reaction.assert_awaited_once_with(regular,self.guild.me)
+        self.message.add_reaction.reset_mock()
+        self.message.remove_reaction.reset_mock()
+        self.message.reactions=[NS(emoji=regular,me=False),NS(emoji=farmmas,me=True)]
+        await tickets.ensure_support_logo(self.message,self.guild,tickets.FARMMAS_FF_LOGO)
+        self.message.add_reaction.assert_not_awaited()
+        self.message.remove_reaction.assert_not_awaited()
+
+    async def test_both_logo_reactions_recover_tickets(self):
+        import discord
+        self.message.reactions=[self.reaction(discord.PartialEmoji.from_str(tickets.FF_LOGO),[self.users[1]]),
+                                self.reaction(discord.PartialEmoji.from_str(tickets.FARMMAS_FF_LOGO),[self.users[2]])]
+        for reaction in self.message.reactions:
+            reaction.me=False
+        with patch.object(tickets,'open_ticket',new=AsyncMock()) as opening:
+            await tickets.recover_support_requests(self.client,self.ff,logo=tickets.FARMMAS_FF_LOGO)
+        self.assertEqual([call.args[1].id for call in opening.call_args_list],[1,2])
+        self.message.add_reaction.assert_awaited_once_with(tickets.FARMMAS_FF_LOGO)
+
+
+class SeasonalTests(unittest.TestCase):
+    def test_support_seed_matches_existing_seasonal_date_boundaries(self):
+        source=Path(__file__).resolve().parents[1]/'commands/commands.py'
+        tree=ast.parse(source.read_text())
+        functions=[node for node in tree.body if getattr(node,'name',None) in ('get_code_replacement','is_within_dates')]
+        for month,day,expected in ((11,8,tickets.FF_LOGO),(11,9,tickets.FARMMAS_FF_LOGO),
+                                   (12,31,tickets.FARMMAS_FF_LOGO),(1,1,tickets.FF_LOGO)):
+            class Clock(datetime.datetime):
+                @classmethod
+                def now(cls):
+                    return cls(2026,month,day)
+            env=dict(datetime=NS(datetime=Clock))
+            exec(compile(ast.Module(body=functions,type_ignores=[]),str(source),'exec'),env)
+            self.assertEqual(env['get_code_replacement']('&FF_LOGO'),expected)

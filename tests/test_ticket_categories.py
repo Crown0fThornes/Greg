@@ -20,7 +20,7 @@ class CategoryTests(unittest.IsolatedAsyncioTestCase):
         self.patch.start()
         self.addCleanup(self.patch.stop)
         self.channels=[]
-        self.guild=NS(id=1,fetch_channels=AsyncMock(side_effect=lambda:list(self.channels)))
+        self.guild=NS(id=1,fetch_channels=AsyncMock(side_effect=lambda:list(self.channels)),categories=[])
         async def create(**kwargs):
             category=self.category(999,kwargs['name'])
             category.overwrites=kwargs['overwrites']
@@ -31,14 +31,17 @@ class CategoryTests(unittest.IsolatedAsyncioTestCase):
         category=Mock(spec=discord.CategoryChannel)
         category.id,category.name,category.position=uid,name,uid
         category.overwrites={'private':'permissions'}
+        category.channels=[]
         category.delete=AsyncMock(side_effect=lambda **kwargs:self.channels.remove(category))
         self.channels.append(category)
+        self.guild.categories.append(category)
         return category
 
     def channel(self,uid,category):
         channel=Mock(spec=discord.TextChannel)
         channel.id,channel.category_id=uid,category.id
         self.channels.append(channel)
+        category.channels.append(channel)
         return channel
 
     async def test_deleted_category_ids_are_pruned_without_fetching_them(self):
@@ -152,3 +155,45 @@ class CategoryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(result),1)
         self.assertIsInstance(result[0],discord.TextChannel)
         self.assertEqual(result[0].topic,'123')
+
+    async def test_fast_closed_lookup_reads_only_ticket_category_children(self):
+        base=self.category(tickets.BASE_CLOSED,'closed-tickets')
+        closed=self.channel(7,base)
+        unrelated=self.category(10,'general')
+        self.channel(8,unrelated)
+        opened=self.category(tickets.BASE_OPEN,'open-tickets')
+        self.channel(9,opened)
+        self.data['archive_categories']=[base.id]
+        result=await tickets.get_all_closed_tickets(self.guild,fresh=False)
+        self.assertEqual(result,[closed])
+        self.guild.fetch_channels.assert_not_awaited()
+
+    async def test_fast_lookup_fetches_only_missing_known_category_ids(self):
+        base=self.category(tickets.BASE_CLOSED,'closed-tickets')
+        self.data['archive_categories']=[base.id,444]
+        self.guild.fetch_channel=AsyncMock(side_effect=discord.NotFound(NS(status=404,reason='Not Found'),'deleted'))
+        await tickets.get_all_closed_tickets(self.guild,fresh=False)
+        self.guild.fetch_channel.assert_awaited_once_with(444)
+        self.assertEqual(self.data['archive_categories'],[base.id])
+        self.guild.fetch_channels.assert_not_awaited()
+
+    async def test_open_restores_from_ticket_categories_without_full_server_fetch_or_cleanup(self):
+        opened=self.category(tickets.BASE_OPEN,'open-tickets')
+        closed=self.category(tickets.BASE_CLOSED,'closed-tickets')
+        archived=self.channel(7,closed)
+        archived.topic='123'
+        unrelated=self.category(10,'general')
+        self.channel(8,unrelated).topic='123'
+        self.data['archive_categories']=[closed.id]
+        self.guild.get_role=lambda uid:None
+        self.guild.fetch_channel=AsyncMock(return_value=NS())
+        user=NS(id=123,display_name='Test User')
+        ff=NS(mission_control_channel=11)
+        with patch.object(tickets,'restore_ticket',new=AsyncMock()) as restore, \
+             patch.object(tickets,'cleanup_ticket_categories',new=AsyncMock()) as cleanup:
+            result=await tickets.open_ticket(None,user,self.guild,ff)
+        self.assertIs(result,archived)
+        self.assertIs(restore.call_args.args[3],opened)
+        self.guild.fetch_channels.assert_not_awaited()
+        self.guild.fetch_channel.assert_awaited_once_with(11)
+        cleanup.assert_not_awaited()

@@ -1,12 +1,14 @@
 # Dynamic ticket categories
 
-`ticket_manager.py` reconciles saved IDs against `guild.fetch_channels()` before
-listing or allocating ticket space. Deleted IDs are pruned; absence of an archive
+`ticket_manager.py` reconciles saved IDs against live channel listings during
+maintenance. Opening tickets uses cached ticket categories and their children,
+fetching only known category IDs missing from the cache. Deleted IDs are pruned; absence of an archive
 category does not prevent opening a ticket. The old archive IDs are migration
 hints rather than mandatory fetch targets. Matching `closed-tickets-N` and
 `open-tickets-N` overflow categories are discovered automatically.
 
-Ticket opening/reopening scans every active open category and closed category,
+Ticket opening/reopening checks active open-ticket categories for duplicates
+and searches only closed-ticket categories for an archived ticket,
 then chooses an open category with room. Archived tickets reuse any closed
 category with fewer than 50 child channels. A new overflow category is created
 only when necessary and copies the existing ticket-category overwrites. If all
@@ -27,7 +29,10 @@ Archive behavior remains two days of inactivity (unless the last message is
 `keep`). A missing user is transcribed/deleted only after an actual Discord
 NotFound response; permission/network failures do not imply departure. Existing
 six-month transcription behavior remains. Empty message histories are safe.
-Cleanup also runs after ticket openings/restorations and maintenance.
+Cleanup runs during archive/transcription maintenance, not after each ticket
+opening/restoration. Opening a ticket does not fetch the server-wide channel
+list, including when allocating an open category. Startup/daily recovery also
+reuses the request message rather than fetching it separately for every user.
 
 No channels/categories are changed merely by editing or testing the code. Restart
 Greg to load it. Manage Channels and the existing ticket permissions are required.
@@ -62,3 +67,11 @@ opening error leaves the request for a subsequent retry. One failed request
 does not stop recovery for other users. Bots are ignored; users who have left
 the server are skipped. Failure to remove a reaction does not report an already
 opened ticket as failed.
+
+Recovery also seeds Greg's own reaction with `get_code_replacement('&FF_LOGO')`,
+using the existing `is_within_dates` behavior: Farmmas FF logo November 9 through
+December 31 inclusive, regular FF logo from January 1. If the other seasonal
+logo has Greg's own seed, only his reaction is removed; human reactions stay
+available for recovery. Both logos are accepted by the live handler and the
+recovery scan throughout the year. A failure to seed the logo does not prevent
+pending requests from being processed.
