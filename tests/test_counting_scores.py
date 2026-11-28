@@ -6,6 +6,8 @@ from types import SimpleNamespace as NS
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
+import discord
+
 from commands import counting_scores as scores
 from commands.counting_game import CountingStore, CHANNEL_ID
 from tests.test_counting_game import Channel, CountingGame
@@ -172,6 +174,74 @@ class AsyncScoreTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(scores.score(self.store,1),12)
         with self.store.connect() as db:
             self.assertEqual(db.execute('SELECT status FROM counting_month').fetchone()[0],'sent')
+
+    async def test_restrict_at_minus_1000_and_restore_only_posting_at_new_month(self):
+        member=NS(id=1)
+        overwrite=discord.PermissionOverwrite(read_message_history=True)
+        async def set_permissions(target,*,overwrite: object,reason):
+            channel.current=overwrite or discord.PermissionOverwrite()
+        channel=NS(current=overwrite,guild=NS(get_member=lambda uid:member),
+                   overwrites_for=lambda target:channel.current,
+                   set_permissions=AsyncMock(side_effect=set_permissions))
+        effects=scores.CountingEffects(channel,self.store)
+        def penalty(mid,delta):
+            self.store.save(self.state,score_event=dict(message_id=mid,user_id=1,delta=delta,
+                occurred=datetime(2026,11,28,tzinfo=timezone.utc).timestamp(),milestone=False))
+        with patch.object(scores,'permission_month',return_value='2026-11'):
+            penalty(1,-999)
+            await effects.permissions()
+            channel.set_permissions.assert_not_awaited()
+            penalty(2,-1)
+            await effects.permissions()
+            self.assertFalse(channel.current.send_messages)
+            self.assertTrue(channel.current.read_message_history)
+            await effects.permissions()
+            channel.set_permissions.assert_awaited_once()
+        with patch.object(scores,'permission_month',return_value='2026-12'):
+            await effects.permissions()
+            self.assertIsNone(channel.current.send_messages)
+            self.assertTrue(channel.current.read_message_history)
+            await effects.permissions()
+        self.assertEqual(channel.set_permissions.await_count,2)
+        self.assertEqual(scores.score(self.store,1),-1000)
+
+    async def test_permission_restore_survives_restart_and_retains_previous_allow(self):
+        member=NS(id=1)
+        channel=NS(current=discord.PermissionOverwrite(send_messages=True),
+                   guild=NS(get_member=lambda uid:member))
+        channel.overwrites_for=lambda target:channel.current
+        async def set_permissions(target,*,overwrite,reason):
+            channel.current=overwrite or discord.PermissionOverwrite()
+        channel.set_permissions=AsyncMock(side_effect=set_permissions)
+        with self.store.connect() as db:
+            db.execute("INSERT INTO counting_restriction VALUES (1,'2026-11','new',NULL)")
+        with patch.object(scores,'permission_month',return_value='2026-11'):
+            await scores.CountingEffects(channel,self.store).permissions()
+        self.assertFalse(channel.current.send_messages)
+        with patch.object(scores,'permission_month',return_value='2026-12'):
+            await scores.CountingEffects(channel,self.store).permissions()
+        self.assertTrue(channel.current.send_messages)
+
+    async def test_permission_failure_retries_without_losing_original_overwrite(self):
+        member=NS(id=1)
+        channel=NS(guild=NS(get_member=lambda uid:member),
+                   overwrites_for=lambda target:discord.PermissionOverwrite(),
+                   set_permissions=AsyncMock(side_effect=[OSError('offline'),None]))
+        with self.store.connect() as db:
+            db.execute("INSERT INTO counting_restriction VALUES (1,'2026-11','new',NULL)")
+        with patch.object(scores,'permission_month',return_value='2026-11'):
+            with self.assertRaises(OSError):
+                await scores.CountingEffects(channel,self.store).permissions()
+            await scores.CountingEffects(channel,self.store).permissions()
+        with self.store.connect() as db:
+            row=db.execute('SELECT state,previous_send FROM counting_restriction').fetchone()
+        self.assertEqual(row,('active',None))
+
+    async def test_permission_month_uses_fixed_server_time(self):
+        before=datetime(2026,12,1,3,59,tzinfo=timezone.utc).timestamp()
+        after=datetime(2026,12,1,4,0,tzinfo=timezone.utc).timestamp()
+        self.assertEqual(scores.permission_month(before),'2026-11')
+        self.assertEqual(scores.permission_month(after),'2026-12')
 
     async def test_no_rollover_before_january(self):
         client=Mock()

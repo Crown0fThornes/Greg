@@ -1,7 +1,7 @@
 """Transactional counting scores; inventory mirrors and reactions stay off the fast path."""
 import asyncio
 import calendar
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import json
 import logging
 import random
@@ -15,8 +15,15 @@ NEIGHBORS_ROLE=1181330910747054211
 ANNOUNCEMENTS=784150346397253682
 ITEM_NAME='Counting Game Score'
 ITEM_TYPE='counting_score'
+RESTRICTION_LIMIT=-1000
 log=logging.getLogger(__name__)
 monthly_lock=asyncio.Lock()
+
+
+def permission_month(timestamp=None):
+    # Server time is fixed UTC−4, including during daylight saving changes.
+    return datetime.fromtimestamp(time.time() if timestamp is None else timestamp,
+                                  timezone(timedelta(hours=-4))).strftime('%Y-%m')
 
 
 def milestone(value):
@@ -38,6 +45,8 @@ def event(message,kind,*,value=0,expected=0):
 
 
 def schema(db):
+    db.execute('CREATE TABLE IF NOT EXISTS counting_restriction ('
+               'user_id INTEGER PRIMARY KEY,period TEXT NOT NULL,state TEXT NOT NULL,previous_send INTEGER)')
     db.execute('CREATE TABLE IF NOT EXISTS counting_event ('
                'message_id INTEGER PRIMARY KEY,user_id INTEGER NOT NULL,delta TEXT NOT NULL,occurred REAL NOT NULL)')
     db.execute('CREATE INDEX IF NOT EXISTS counting_event_user ON counting_event(user_id,occurred)')
@@ -79,6 +88,11 @@ def record(db,score_event):
         (int(previous[0]) if previous else 0)+e['delta']
     db.execute('INSERT INTO counting_score VALUES (?,?,1,1) ON CONFLICT(user_id) DO UPDATE SET '
                'points=excluded.points,played=1,dirty=1',(e['user_id'],str(points)))
+    if e['delta']<0 and points<=RESTRICTION_LIMIT:
+        db.execute("INSERT INTO counting_restriction VALUES (?,?,'new',NULL) "
+                   "ON CONFLICT(user_id) DO UPDATE SET period=excluded.period,state='new',previous_send=NULL "
+                   "WHERE counting_restriction.state='done'",
+                   (e['user_id'],permission_month(e['occurred'])))
     if e['milestone']:
         db.execute("INSERT OR IGNORE INTO counting_reaction VALUES (?,NULL,'waiting',0)",(e['message_id'],))
 
@@ -118,6 +132,7 @@ class CountingEffects:
     def __init__(self,channel,store):
         self.channel,self.store=channel,store
         self.task=None
+        self.permission_retry={}
 
     def start(self):
         if self.task is None or self.task.done():
@@ -162,10 +177,49 @@ class CountingEffects:
             with self.store.connect() as db:
                 db.execute('UPDATE counting_reaction SET status=? WHERE message_id=?',(status,mid))
 
+    async def permissions(self):
+        month=permission_month()
+        with self.store.connect() as db:
+            pending=list(db.execute("SELECT user_id,period,state,previous_send FROM counting_restriction WHERE state!='done'"))
+        for uid,period,state,previous in pending:
+            if period==month and state=='active':
+                continue
+            if self.permission_retry.get(uid,0)>time.monotonic():
+                continue
+            try:
+                member=self.channel.guild.get_member(uid) or await self.channel.guild.fetch_member(uid)
+            except discord.NotFound:
+                # Retain the record: a returning member may still have an overwrite.
+                self.permission_retry[uid]=time.monotonic()+300
+                continue
+            overwrite=self.channel.overwrites_for(member)
+            if period!=month:
+                if state!='new':
+                    # Only undo our send_messages denial, preserving other edits.
+                    if overwrite.send_messages is False:
+                        overwrite.send_messages=None if previous is None else bool(previous)
+                        await self.channel.set_permissions(member,overwrite=None if overwrite.is_empty() else overwrite,
+                            reason='New month: counting game posting restriction ended')
+                with self.store.connect() as db:
+                    db.execute("UPDATE counting_restriction SET state='done' WHERE user_id=? AND period=?",(uid,period))
+                continue
+            if state=='new':
+                previous=overwrite.send_messages
+                # Persist the original value before Discord I/O so restarts are safe.
+                with self.store.connect() as db:
+                    db.execute("UPDATE counting_restriction SET state='applying',previous_send=? WHERE user_id=? AND period=?",
+                               (previous,uid,period))
+            overwrite.send_messages=False
+            await self.channel.set_permissions(member,overwrite=overwrite,
+                reason='Counting game score reached −1,000; posting restricted until next month')
+            with self.store.connect() as db:
+                db.execute("UPDATE counting_restriction SET state='active' WHERE user_id=? AND period=?",(uid,period))
+
     async def run(self):
         while True:
             delay=1
             try:
+                await self.permissions()
                 await self.sync()
                 await self.reactions()
             except asyncio.CancelledError:
