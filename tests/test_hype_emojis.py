@@ -140,6 +140,7 @@ class HypeTests(unittest.IsolatedAsyncioTestCase):
         env=dict(commands=NS(hype_announcement_reactions=callback),CHANNEL_ID_DONT_RESPOND=999)
         exec(compile(ast.Module(body=[node],type_ignores=[]),'greg3.py','exec'),env)
         message=self.message('@everyone',everyone=True,bot=True)
+        env['route_counting_message']=lambda message:False
         await env['on_message'](message)
         callback.assert_awaited_once_with(message)
 

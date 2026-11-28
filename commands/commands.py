@@ -2085,46 +2085,9 @@ async def find(activator: Neighbor, context: Context):
 
 @command_handler.Uncontested(type="MESSAGE", desc="counting game")
 async def counting_game(context: Context):
-    channel_game_state = {};
-    
-    # Ensure the game only runs in the designated channel
-    if context.channel.id != 1184669547505131641:
-        return
-
-    # Prevent the bot itself from participating
-    if context.message.author.id == 691338084444274728:
-        return
-
-    # Initialize the game state for the channel if not already present
-    if context.channel.id not in channel_game_state:
-        last = [message async for message in context.channel.history(limit=1)][0];
-        try:
-            last = int(last.content)
-            channel_game_state[context.channel.id] = {"expected_number": last + 1, "last_author_id": None}
-        except (ValueError, IndexError):
-            channel_game_state[context.channel.id] = {"expected_number": 1, "last_author_id": None}
-
-
-    # Retrieve the current state for the channel
-    state = channel_game_state[context.channel.id]
-
-    try:
-        # Parse the user's message as an integer
-        current_number = int(context.message.content)
-
-        # Check if the number is out of sequence or the same user posted consecutively
-        if current_number != state["expected_number"] or context.message.author.id == state["last_author_id"]:
-            await context.send("Whoops! Someone messed up. Gonna have to start over. #sorrynotsorry")
-            await context.send("1")
-            state["expected_number"] = 2  # Reset the counter to the next number
-            state["last_author_id"] = None  # Reset the last user
-        else:
-            # Update the state with the next expected number and the current author
-            state["expected_number"] += 1
-            state["last_author_id"] = context.message.author.id
-    except ValueError:
-        # If the message isn't a valid number, delete it
-        await context.message.delete()
+    # Compatibility entry point; greg3 routes this channel before slow handlers.
+    from commands.counting_game import route_message
+    route_message(context.message)
 
 
 
@@ -2170,6 +2133,9 @@ async def handle_bad_words(context: Context):
 
 @command_handler.Uncontested(type = "MESSAGE", desc = "Incrememnts a Neighbor's server XP each time they send a message.", priority = 2, generic = True)
 async def message_xp(context: Context):
+    # Counting has its own score and must never award Neighbor XP.
+    if context.channel.id == 1184669547505131641:
+        return
 
     neighbor = Neighbor(context.author_id, context.guild.id);
 
@@ -5746,8 +5712,20 @@ async def reckoning_warning(client):
         Context(target)
     )
 
+@command_handler.Loop(hours=1, desc="Recover missed counting leaderboard announcements")
+async def recover_counting_rewards(client):
+    from commands.counting_scores import monthly_rewards
+    await monthly_rewards(client)
+
+
 @command_handler.Scheduled(time="00:01", day_of_month=2, desc="Monthly XP reset")
 async def xp_reset(client):
+    from commands.counting_scores import monthly_rewards
+    try:
+        await monthly_rewards(client)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception('Counting leaderboard needs retry; continuing XP reckoning')
     # if not est_time.hour == 0 or not est_time.minute == 0:
     #     return;
     print('xp reset!');
@@ -5768,7 +5746,7 @@ async def xp_reset(client):
     await bc.send("It's about that time!");
     for i in range(5):
         await bc.send(f"{5-i}...");
-        time.sleep(5);
+        await asyncio.sleep(5);
     neighbors = Neighbor.read_all_neighbors();
     from commands.monthly_community_prizes import snapshot_xp_leaderboard
     snapshot_xp_leaderboard(guild, neighbors)
@@ -8134,6 +8112,10 @@ async def profile(activator: Neighbor, context: Context):
 
     target_neighbor.expire_items();
 
+    if context.guild.id==FF.guild:
+        from commands.counting_scores import sync_profile,display as display_counting_score
+        counting_points=sync_profile(target_neighbor)
+
     pretty_profile = target_neighbor.get_item_of_name("Prettier Profile");
 
     nick = context.guild.get_member(target_member.id);
@@ -8178,7 +8160,7 @@ async def profile(activator: Neighbor, context: Context):
         if original_len > displayed:
             profile += "*Use `$inventory` to view full inventory*";
         await context.send(profile);
-    elif pretty_profile is None:
+    else:
         neighborhood = get_neighborhood_from_user(target_member);
         family = get_family_from_user(target_member)['name'].upper();
         profile = f"**{target_member.display_name}**\n";
@@ -8187,6 +8169,7 @@ async def profile(activator: Neighbor, context: Context):
         # if not neighborhood is None and not family is None:
         profile += f"NH: {neighborhood}\n";
         profile += f"Family: {family}\n";
+        profile += f"Counting Game Score: {display_counting_score(counting_points)}\n"
         
         introductions_channel = await context.guild.fetch_channel(783713419831279697)
         
@@ -8309,6 +8292,10 @@ async def inventory(activator: Neighbor, context: Context):
 
     target_neighbor.expire_items();
 
+    if context.guild.id==FF.guild:
+        from commands.counting_scores import sync_profile
+        sync_profile(target_neighbor)
+
     pretty_profile = target_neighbor.get_item_of_name("Prettier Profile");
 
     profile = "\nFull Inventory:\n";
@@ -8318,7 +8305,11 @@ async def inventory(activator: Neighbor, context: Context):
     else:
         inventory.sort(key = lambda x : 10000000000 if x.expiration == -1 else x.expiration);
         for item in inventory:
-            profile += "> " + str(item) + "\n";
+            if item.type=='counting_score':
+                from commands.counting_scores import display as display_counting_score
+                profile += '> Counting Game Score: '+display_counting_score(int(item.values.get('points',0)))+'\n'
+            else:
+                profile += "> " + str(item) + "\n";
 
     await context.send(profile);
 

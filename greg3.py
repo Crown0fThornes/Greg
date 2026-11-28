@@ -16,6 +16,7 @@ from id_bundle import FF
 from phoenix_bundle import PHOENIX
 import time
 from persistence.rolodex import Rolodex
+from commands.counting_game import CHANNEL_ID as COUNTING_CHANNEL_ID, route_message as route_counting_message, start_counting_game
 
 rolodex = None
 
@@ -102,6 +103,8 @@ else:
 @client.event
 async def on_ready():
     print("All systems go!");
+    if COUNTING_CHANNEL_ID != CHANNEL_ID_DONT_RESPOND:
+        await start_counting_game(client)
     # Observe cached members; cache absence alone must not imply a departure.
     for guild in client.guilds:
         for member in guild.members:
@@ -256,6 +259,8 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    if message.channel.id != CHANNEL_ID_DONT_RESPOND and route_counting_message(message):
+        return
     if message.content == "$sync" and message.author.id == 355169964027805698:
         sync(custom_types)
         sync(command_handler);
